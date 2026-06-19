@@ -1,0 +1,17 @@
+# Swift / SwiftPM
+.build/
+.swiftpm/
+dist/
+
+# macOS
+.DS_Store
+
+# Example app build artifacts
+examples/native/build/
+examples/rnshowcase/ios/
+examples/rnshowcase/node_modules/
+examples/rnshowcase/.expo/
+examples/*/build/
+
+# Logs / runtime
+*.log
