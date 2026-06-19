@@ -3,10 +3,10 @@
 #   brew install https://raw.githubusercontent.com/hanfann/wand/main/Formula/wand.rb
 # Bump `url`/`sha256` for each tagged release.
 class Wand < Formula
-  desc "Autonomous iOS Simulator E2E driver for AI agents"
+  desc "Agent-driven Apple Simulator automation (iOS, iPadOS, watchOS)"
   homepage "https://github.com/hanfann/wand"
-  url "https://github.com/hanfann/wand/archive/refs/tags/v0.1.3.tar.gz"
-  sha256 "e5dfb46541eb4b8abaddeea1fa7244268151fb909022fc465b925020dda22907"
+  url "https://github.com/hanfann/wand/archive/refs/tags/v0.1.0.tar.gz"
+  sha256 "6c3ec18c78c5cf9a4979ef6124d7ec698eff76f0dd6786c3c82d532068c701c8"
   license "MIT"
   head "https://github.com/hanfann/wand.git", branch: "main"
 
