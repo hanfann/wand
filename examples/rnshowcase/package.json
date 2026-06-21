@@ -14,5 +14,13 @@
     "ios": "expo run:ios",
     "web": "expo start --web"
   },
+  "overrides": {
+    "shell-quote": "1.8.4",
+    "js-yaml": "4.2.0",
+    "@babel/core": "7.29.6",
+    "uuid@<11.1.1": "11.1.1",
+    "ws@>=7.0.0 <8.0.0": "7.5.11",
+    "ws@>=8.0.0 <8.21.0": "8.21.0"
+  },
   "private": true
 }
