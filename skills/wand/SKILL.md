@@ -87,6 +87,15 @@ wand assert "#error" gone
 
 - First call boots the daemon + warms accessibility (a few seconds, once); then ~60 ms.
 - Prefer `ui`/`see`/`assert` over `screenshot` to save tokens.
+- **Prefer label/ref taps over raw `x y`.** `tap "<label>"` · `tapocr "<text>"` ·
+  `#id` · `eN` are robust; raw coordinates are the last resort, for targets with
+  no label (icon-only buttons).
+- **Coordinates are *points*, and only `ui`/`see` report them correctly.** The
+  `@x,y` from `ui`/`see` are simulator points. A `screenshot` is at native scale
+  (2×–3× on most devices), so any coordinate you eyeball off a screenshot is ~2×
+  too large and lands off-target — often off-screen entirely, where the tap
+  silently no-ops. Never read tap coordinates from a screenshot; take them from
+  `ui`/`see`.
 - React Native: a plain `View`'s `testID` only shows in the tree if the view is
   `accessible={true}`; `Pressable`/`TextInput` are fine. When in doubt, tap by
   visible text (OCR) instead.
