@@ -3,6 +3,12 @@
 All notable changes to Wand are documented here. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [Unreleased]
+
+### Fixed
+- Load SimulatorKit from `Contents/SharedFrameworks` too. Newer Xcodes moved it
+  there, so the daemon failed to start with `SimulatorKit=0x0`.
+
 ## [0.1.0] — 2026-06-19
 
 First release of wand — a fork of [testa](https://github.com/valewnrt/testa)

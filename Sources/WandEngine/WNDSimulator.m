@@ -75,8 +75,16 @@ static NSString *WNDDeveloperDir(void) {
   dispatch_once(&once, ^{
     NSString *dev = WNDDeveloperDir();
     gCSHandle = dlopen("/Library/Developer/PrivateFrameworks/CoreSimulator.framework/CoreSimulator", RTLD_NOW);
-    NSString *skPath = [dev stringByAppendingString:@"/Library/PrivateFrameworks/SimulatorKit.framework/SimulatorKit"];
-    gSKHandle = dlopen(skPath.UTF8String, RTLD_NOW);
+    // Newer Xcodes moved SimulatorKit from Developer/Library/PrivateFrameworks
+    // to Contents/SharedFrameworks (a sibling of Developer). Try both.
+    NSArray<NSString *> *skPaths = @[
+      [dev stringByAppendingString:@"/Library/PrivateFrameworks/SimulatorKit.framework/SimulatorKit"],
+      [[dev stringByDeletingLastPathComponent] stringByAppendingString:@"/SharedFrameworks/SimulatorKit.framework/SimulatorKit"],
+    ];
+    for (NSString *skPath in skPaths) {
+      gSKHandle = dlopen(skPath.UTF8String, RTLD_NOW);
+      if (gSKHandle) break;
+    }
     gAXHandle = dlopen("/System/Library/PrivateFrameworks/AccessibilityPlatformTranslation.framework/AccessibilityPlatformTranslation", RTLD_NOW);
     ok = (gCSHandle != NULL && gSKHandle != NULL);
   });
