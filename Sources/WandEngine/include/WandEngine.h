@@ -13,14 +13,19 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *udid;
 @property (nonatomic, readonly) NSString *name;
 @property (nonatomic, readonly) CGSize screenPointSize; // logical points
+@property (nonatomic, readonly) BOOL isWatch;
 @property (nonatomic, readonly) CGFloat screenScale;    // 2.0 / 3.0
 
 /// First booted simulator, or nil with error if none / framework load failed.
 + (nullable instancetype)bootedSimulatorWithError:(NSError **)error;
 
 /// Specific simulator by UDID (must be booted).
-+ (nullable instancetype)simulatorWithUDID:(NSString *)udid error:(NSError **)error
++ (nullable instancetype)simulatorWithUDID:(nullable NSString *)udid error:(NSError **)error
     NS_SWIFT_NAME(withUDID(_:));
+
+/// Optional guest digitizer transport for watchOS 27. Native crown/keyboard
+/// events continue through SimulatorKit's legacy client.
+- (void)setGuestTouchSender:(NSString * _Nullable (^ _Nonnull)(NSData *))sender;
 
 // --- HID gestures (points, top-left origin) ---
 
@@ -72,6 +77,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// role, label, id, value, x, y, w, h, enabled, traits, depth.
 - (nullable NSArray<NSDictionary<NSString *, id> *> *)accessibilityTreeWithError:(NSError **)error
     NS_SWIFT_NAME(accessibilityTree());
+
+/// Coarse framebuffer signature for settling when watchOS exposes only an app AX node.
+- (uint64_t)screenFingerprint;
 
 /// In-process screenshot (framebuffer IOSurface -> PNG). No subprocess.
 - (BOOL)screenshotToPath:(NSString *)path error:(NSError **)error

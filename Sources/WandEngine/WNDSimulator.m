@@ -16,15 +16,23 @@
 
 static NSString *const WNDErrorDomain = @"com.wand.engine";
 
-// IndigoHIDMessageForMouseNSEvent(point0, point1, target, eventType, BOOL)
-// Returns a heap message; we read its touch payload and rebuild our own.
-typedef WNDIndigoMessage *(*WNDMouseEventFn)(CGPoint *p0, CGPoint *p1, int target, int eventType, BOOL flag);
+// Native builder ABI includes the coordinate-space width and height.
+typedef WNDIndigoMessage *(*WNDMouseEventFn)(CGPoint *p0, CGPoint *p1, int target, int eventType, int edge, double width, double height);
 // IndigoHIDMessageForKeyboardArbitrary(usageCode, op) — op 1=down 2=up.
 typedef WNDIndigoMessage *(*WNDKeyboardFn)(int keyCode, int op);
 // IndigoHIDMessageForDigitalCrownEvent(delta) — watchOS Digital Crown. A single
 // double arg: the rotation delta (sign = direction). Returns a 0xC0 message.
 // Signature recovered from SimulatorKit disassembly (one d0 arg → stur at +0x3c).
 typedef WNDIndigoMessage *(*WNDCrownFn)(double delta);
+
+static size_t WNDMessageSize(WNDIndigoMessage *message) {
+  if (!message) return 0;
+  uint32_t stride = message->innerSize;
+  uint8_t count = message->eventType; // Number of payloads, not the input kind.
+  if ((stride != 0x90 && stride != 0xA0) || count < 1 || count > 4) return 0;
+  size_t size = 0x20 + stride * count;
+  return malloc_size(message) >= size ? size : 0;
+}
 
 static void *gCSHandle = NULL;  // CoreSimulator
 static void *gSKHandle = NULL;  // SimulatorKit
@@ -62,6 +70,8 @@ static NSString *WNDDeveloperDir(void) {
   CGSize _pixelSize;
   BOOL _isWatch;
   NSString *_lastSendError;
+  NSString * _Nullable (^_guestSender)(NSData *);
+
 }
 @end
 
@@ -146,6 +156,7 @@ static NSString *WNDDeveloperDir(void) {
   self = [super init];
   if (!self) return nil;
   _device = device;
+
   _udid = [device UDID].UUIDString;
   _name = [device name];
 
@@ -187,71 +198,68 @@ static NSString *WNDDeveloperDir(void) {
                      (pt.y * _screenScale) / _pixelSize.height);
 }
 
-// Build a single-finger touch message at a normalized ratio. direction: 1=down 2=up.
-// We use Apple's IndigoHIDMessageForMouseNSEvent to obtain a correctly-initialized
-// touch payload (it fills the magic fields), patch the ratio, then rebuild a
-// 0x140 two-payload touch message exactly as the guest dispatcher expects.
+// Keep Apple's complete message, including its runtime-dependent payload stride,
+// capability bits and digitizer summary. Supported native strides: 0x90/0xA0.
+// The final doubles are the coordinate-space dimensions (see Apple's caller);
+// normalized points therefore use 1 x 1. Omitting them divides by undefined data.
 - (WNDIndigoMessage *)buildTouchMessageAtRatio:(CGPoint)ratio direction:(int)direction sizeOut:(size_t *)sizeOut {
-  CGPoint pt = ratio;
-  WNDIndigoMessage *tmpl = _mouseFn ? _mouseFn(&pt, NULL, 0x32, direction, NO) : NULL;
-  WNDIndigoTouch touch;
-  if (tmpl) {
-    memcpy(&touch, &tmpl->payload.event.touch, sizeof(WNDIndigoTouch));
-  } else {
-    memset(&touch, 0, sizeof(WNDIndigoTouch));
+  if (!_mouseFn) return NULL;
+  WNDIndigoMessage *message = _mouseFn(&ratio, NULL, 0x32, direction, 0, 1.0, 1.0);
+  size_t size = WNDMessageSize(message);
+  if (size && message->innerSize == 0x90) {
+    for (uint8_t i = 0; i < message->eventType; i++) {
+      char *payload = (char *)message + 0x20 + i * message->innerSize;
+      memcpy(payload + 0x1c, &ratio.x, sizeof(double));
+      memcpy(payload + 0x24, &ratio.y, sizeof(double));
+    }
   }
-  // The function does not reliably store our coordinates — patch them.
-  touch.xRatio = ratio.x;
-  touch.yRatio = ratio.y;
-
-  size_t messageSize = sizeof(WNDIndigoMessage) + sizeof(WNDIndigoPayload); // 0x140
-  if (sizeOut) *sizeOut = messageSize;
-  size_t stride = sizeof(WNDIndigoPayload); // 0x90
-
-  WNDIndigoMessage *message = calloc(1, messageSize);
-  message->innerSize = (unsigned int)sizeof(WNDIndigoPayload);
-  message->eventType = WND_INDIGO_EVENTTYPE_TOUCH;
-  message->payload.field1 = 0x0000000b; // eventKind = touch
-  message->payload.timestamp = mach_absolute_time();
-  memcpy(&(message->payload.event.touch), &touch, sizeof(WNDIndigoTouch));
-
-  // Duplicate the payload into the second slot and set the phase markers.
-  void *src = &(message->payload);
-  void *dst = (char *)src + stride;
-  memcpy(dst, src, stride);
-  WNDIndigoPayload *second = (WNDIndigoPayload *)dst;
-  second->event.touch.field1 = 0x00000001;
-  second->event.touch.field2 = 0x00000002;
-
-  if (tmpl) free(tmpl);
+  if (sizeOut) *sizeOut = size;
   return message;
 }
 
-// Hand the bytes to the client. `freeWhenDone:YES` => the client owns/frees the copy.
+// The guest bridge acknowledges each Mach send. Keep the legacy backend for
+// older Xcodes; completion errors and timeouts must both fail the command.
 - (BOOL)sendMessage:(WNDIndigoMessage *)message size:(size_t)size wait:(BOOL)wait {
-  if (!_hidClient) return NO;
-  BOOL dbg = (getenv("WAND_HID_DEBUG") != NULL);
+  if (!message || size == 0) {
+    _lastSendError = @"invalid or unsupported native HID message";
+    return NO;
+  }
+  if (!_hidClient) { _lastSendError = @"HID client unavailable"; return NO; }
   void *copy = malloc(size);
   memcpy(copy, message, size);
-  dispatch_semaphore_t sem = (wait || dbg) ? dispatch_semaphore_create(0) : NULL;
-  __block NSError *sendErr = nil;
-  [_hidClient sendWithMessage:copy freeWhenDone:YES completionQueue:_hidQueue completion:^(NSError *err) {
-    sendErr = err;
-    if (sem) dispatch_semaphore_signal(sem);
+  dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+  __block NSError *sendError = nil;
+  [_hidClient sendWithMessage:copy freeWhenDone:YES completionQueue:_hidQueue completion:^(NSError *error) {
+    sendError = error;
+    dispatch_semaphore_signal(sem);
   }];
-  if (sem) {
-    dispatch_semaphore_wait(sem, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)));
+  if (dispatch_semaphore_wait(sem, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC)) != 0) {
+    _lastSendError = @"HID send timed out";
+    return NO;
   }
-  if (sem && sendErr) _lastSendError = sendErr.localizedDescription;  // surface to the daemon
-  if (dbg) {
-    fprintf(stderr, "[WAND_HID] send size=%zu eventType=%u completion=%s\n",
-            size, message->eventType, sendErr ? sendErr.localizedDescription.UTF8String : "ok");
+  if (sendError) { _lastSendError = sendError.localizedDescription; return NO; }
+  if (getenv("WAND_HID_DEBUG")) {
+    fprintf(stderr, "[WAND_HID] native stride=0x%x count=%u bytes=%zu acknowledged\n", message->innerSize, message->eventType, size);
   }
   return YES;
 }
 
+- (void)setGuestTouchSender:(NSString * _Nullable (^)(NSData *))sender {
+  _guestSender = [sender copy];
+}
+
+- (BOOL)sendGuestTouches:(CGPoint *)points count:(uint32_t)count direction:(uint32_t)direction {
+  uint32_t header[] = {direction, count};
+  NSMutableData *packet = [NSMutableData dataWithBytes:header length:sizeof(header)];
+  [packet appendBytes:points length:count * sizeof(CGPoint)];
+  NSString *failure = _guestSender(packet);
+  if (failure) _lastSendError = failure;
+  return failure == nil;
+}
+
 - (BOOL)touchAtPoint:(CGPoint)pt direction:(int)direction wait:(BOOL)wait {
   CGPoint r = [self ratioForPoint:pt];
+  if (_guestSender) return [self sendGuestTouches:&r count:1 direction:direction];
   size_t sz = 0;
   WNDIndigoMessage *m = [self buildTouchMessageAtRatio:r direction:direction sizeOut:&sz];
   BOOL ok = [self sendMessage:m size:sz wait:wait];
@@ -259,70 +267,80 @@ static NSString *WNDDeveloperDir(void) {
   return ok;
 }
 
-// Two simultaneous touch points. Passing a non-NULL second point makes the
-// SimulatorKit function emit a 3-payload multi-touch message; we patch the
-// ratios at their known byte offsets (finger1, digitizer summary, finger2).
+// Let the native builder author all finger and summary payloads. Their stride
+// changed in Xcode 27, so patching hard-coded finger offsets corrupts the packet.
 - (BOOL)twoFingerTouchAtPoint1:(CGPoint)p1 point2:(CGPoint)p2 direction:(int)direction wait:(BOOL)wait {
   if (!_mouseFn) return NO;
-  CGPoint r1 = [self ratioForPoint:p1];
-  CGPoint r2 = [self ratioForPoint:p2];
-  CGPoint a = r1, b = r2;
-  WNDIndigoMessage *msg = _mouseFn(&a, &b, 0x32, direction, NO);
-  if (!msg) return NO;
-  size_t size = malloc_size(msg);
-  char *bytes = (char *)msg;
-  memcpy(bytes + 0x3C, &r1.x, sizeof(double));   // finger 1
-  memcpy(bytes + 0x44, &r1.y, sizeof(double));
-  memcpy(bytes + 0xDC, &r1.x, sizeof(double));   // digitizer summary (mirrors f1)
-  memcpy(bytes + 0xE4, &r1.y, sizeof(double));
-  memcpy(bytes + 0x17C, &r2.x, sizeof(double));  // finger 2
-  memcpy(bytes + 0x184, &r2.y, sizeof(double));
-  BOOL ok = [self sendMessage:(WNDIndigoMessage *)msg size:size wait:wait];
-  free(msg);
+  CGPoint r1 = [self ratioForPoint:p1], r2 = [self ratioForPoint:p2];
+  if (_guestSender) { CGPoint points[] = {r1, r2}; return [self sendGuestTouches:points count:2 direction:direction]; }
+  WNDIndigoMessage *message = _mouseFn(&r1, &r2, 0x32, direction, 0, 1.0, 1.0);
+  size_t size = WNDMessageSize(message);
+  if (size && message->innerSize == 0x90) {
+    for (uint8_t i = 0; i < message->eventType; i++) {
+      CGPoint point = i == 2 ? r2 : r1;
+      char *payload = (char *)message + 0x20 + i * message->innerSize;
+      memcpy(payload + 0x1c, &point.x, sizeof(double));
+      memcpy(payload + 0x24, &point.y, sizeof(double));
+    }
+  }
+  BOOL ok = [self sendMessage:message size:size wait:wait];
+  free(message);
   return ok;
 }
 
 #pragma mark - Gestures
 
 - (BOOL)tapAtX:(double)x y:(double)y error:(NSError **)error {
-  if (!_hidClient) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
+  if (!_hidClient && !_guestSender) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
   CGPoint p = CGPointMake(x, y);
-  [self touchAtPoint:p direction:WND_BUTTON_TYPE_DOWN wait:YES];
+  if (![self touchAtPoint:p direction:WND_BUTTON_TYPE_DOWN wait:YES]) {
+    if (error) *error = WNDMakeError(13, _lastSendError); return NO;
+  }
   usleep(60 * 1000);
-  [self touchAtPoint:p direction:WND_BUTTON_TYPE_UP wait:YES];
+  if (![self touchAtPoint:p direction:WND_BUTTON_TYPE_UP wait:YES]) {
+    if (error) *error = WNDMakeError(13, _lastSendError); return NO;
+  }
   return YES;
 }
 
 - (BOOL)longPressAtX:(double)x y:(double)y duration:(double)seconds error:(NSError **)error {
-  if (!_hidClient) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
+  if (!_hidClient && !_guestSender) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
   CGPoint p = CGPointMake(x, y);
-  [self touchAtPoint:p direction:WND_BUTTON_TYPE_DOWN wait:YES];
+  if (![self touchAtPoint:p direction:WND_BUTTON_TYPE_DOWN wait:YES]) {
+    if (error) *error = WNDMakeError(13, _lastSendError); return NO;
+  }
   usleep((useconds_t)(seconds * 1e6));
-  [self touchAtPoint:p direction:WND_BUTTON_TYPE_UP wait:YES];
+  if (![self touchAtPoint:p direction:WND_BUTTON_TYPE_UP wait:YES]) {
+    if (error) *error = WNDMakeError(13, _lastSendError); return NO;
+  }
   return YES;
 }
 
 - (BOOL)swipeFromX:(double)x1 y:(double)y1 toX:(double)x2 y:(double)y2
           duration:(double)duration error:(NSError **)error {
-  if (!_hidClient) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
+  if (!_hidClient && !_guestSender) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
   return [self dragFromX:x1 y:y1 toX:x2 y:y2 holdDuration:0 moveDuration:duration error:error];
 }
 
 - (BOOL)dragFromX:(double)x1 y:(double)y1 toX:(double)x2 y:(double)y2
       holdDuration:(double)holdDuration moveDuration:(double)moveDuration error:(NSError **)error {
-  if (!_hidClient) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
+  if (!_hidClient && !_guestSender) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
 
   CGPoint start = CGPointMake(x1, y1);
   CGPoint end = CGPointMake(x2, y2);
 
   // Touch down at the start.
-  [self touchAtPoint:start direction:WND_BUTTON_TYPE_DOWN wait:YES];
+  if (![self touchAtPoint:start direction:WND_BUTTON_TYPE_DOWN wait:YES]) {
+    if (error) *error = WNDMakeError(13, _lastSendError); return NO;
+  }
 
   // Hold (drag-and-drop pickup) — re-emit the contact so recognizers fire.
   if (holdDuration > 0) {
     NSUInteger holdSteps = MAX((NSUInteger)1, (NSUInteger)(holdDuration / 0.05));
     for (NSUInteger i = 0; i < holdSteps; i++) {
-      [self touchAtPoint:start direction:WND_BUTTON_TYPE_DOWN wait:NO];
+      if (![self touchAtPoint:start direction:6 wait:NO]) {
+        if (error) *error = WNDMakeError(13, _lastSendError); return NO;
+      }
       usleep(50 * 1000);
     }
   } else {
@@ -337,12 +355,16 @@ static NSString *WNDDeveloperDir(void) {
     double t = (double)i / (double)steps;
     CGPoint p = CGPointMake(start.x + (end.x - start.x) * t,
                             start.y + (end.y - start.y) * t);
-    [self touchAtPoint:p direction:WND_BUTTON_TYPE_DOWN wait:NO];
+    if (![self touchAtPoint:p direction:6 wait:NO]) {
+      if (error) *error = WNDMakeError(13, _lastSendError); return NO;
+    }
     usleep(perStep);
   }
 
   // Release at the end.
-  [self touchAtPoint:end direction:WND_BUTTON_TYPE_UP wait:YES];
+  if (![self touchAtPoint:end direction:WND_BUTTON_TYPE_UP wait:YES]) {
+    if (error) *error = WNDMakeError(13, _lastSendError); return NO;
+  }
   return YES;
 }
 
@@ -361,7 +383,7 @@ static NSString *WNDDeveloperDir(void) {
   for (NSUInteger i = 1; i <= steps; i++) {
     double t = (double)i / (double)steps;
     positions(t, &p1, &p2);
-    [self twoFingerTouchAtPoint1:p1 point2:p2 direction:WND_BUTTON_TYPE_DOWN wait:NO];
+    [self twoFingerTouchAtPoint1:p1 point2:p2 direction:6 wait:NO];
     usleep(perStep);
   }
   positions(1.0, &p1, &p2);
@@ -369,7 +391,7 @@ static NSString *WNDDeveloperDir(void) {
 }
 
 - (BOOL)pinchAtX:(double)x y:(double)y scale:(double)scale duration:(double)duration error:(NSError **)error {
-  if (!_hidClient || !_mouseFn) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
+  if ((!_hidClient && !_guestSender) || !_mouseFn) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
   CGPoint center = CGPointMake(x, y);
   double base = MIN(_screenPointSize.width, _screenPointSize.height) / 4.0;
   double startGap = (scale >= 1.0) ? base : base * scale;
@@ -383,7 +405,7 @@ static NSString *WNDDeveloperDir(void) {
 }
 
 - (BOOL)rotateAtX:(double)x y:(double)y radians:(double)radians duration:(double)duration error:(NSError **)error {
-  if (!_hidClient || !_mouseFn) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
+  if ((!_hidClient && !_guestSender) || !_mouseFn) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
   CGPoint center = CGPointMake(x, y);
   double radius = MIN(_screenPointSize.width, _screenPointSize.height) / 5.0;
   [self twoFingerGestureDuration:duration positions:^(double t, CGPoint *p1, CGPoint *p2) {
@@ -407,9 +429,10 @@ static NSString *WNDDeveloperDir(void) {
   for (NSUInteger i = 0; i < steps; i++) {
     WNDIndigoMessage *m = _crownFn(per);
     if (!m) continue;
-    size_t size = malloc_size(m);
-    [self sendMessage:m size:size wait:NO];
+    size_t size = WNDMessageSize(m);
+    BOOL ok = [self sendMessage:m size:size wait:NO];
     free(m);
+    if (!ok) { if (error) *error = WNDMakeError(13, _lastSendError); return NO; }
     usleep(perStep);
   }
   return YES;
@@ -461,7 +484,7 @@ static BOOL WNDUsageForChar(unichar c, int *usage, BOOL *shift) {
   if (!_keyboardFn) return NO;
   WNDIndigoMessage *m = _keyboardFn(usage, down ? WND_BUTTON_TYPE_DOWN : WND_BUTTON_TYPE_UP);
   if (!m) return NO;
-  size_t size = malloc_size(m);
+  size_t size = WNDMessageSize(m);
   BOOL ok = [self sendMessage:m size:size wait:NO];
   free(m);
   return ok;
@@ -480,14 +503,15 @@ static BOOL WNDUsageForChar(unichar c, int *usage, BOOL *shift) {
     usleep(5 * 1000);
     if (shift) { [self sendKeyUsage:0xE1 down:NO]; usleep(6 * 1000); }
   }
+  if (_lastSendError) { if (error) *error = WNDMakeError(13, _lastSendError); return NO; }
   return YES;
 }
 
 - (BOOL)pressKeyUsage:(int)usage error:(NSError **)error {
   if (!_keyboardFn) { if (error) *error = WNDMakeError(11, @"Keyboard HID unavailable"); return NO; }
-  [self sendKeyUsage:usage down:YES];
+  if (![self sendKeyUsage:usage down:YES]) { if (error) *error = WNDMakeError(13, _lastSendError); return NO; }
   usleep(9 * 1000);
-  [self sendKeyUsage:usage down:NO];
+  if (![self sendKeyUsage:usage down:NO]) { if (error) *error = WNDMakeError(13, _lastSendError); return NO; }
   return YES;
 }
 
@@ -652,6 +676,25 @@ static BOOL WNDUsageForChar(unichar c, int *usage, BOOL *shift) {
   return cg;
 }
 
+- (uint64_t)screenFingerprint {
+  CGImageRef image = [self copyScreenCGImage];
+  if (!image) return 0;
+  uint8_t pixels[64 * 64] = {0};
+  CGColorSpaceRef space = CGColorSpaceCreateDeviceGray();
+  CGContextRef context = CGBitmapContextCreate(pixels, 64, 64, 8, 64, space, kCGImageAlphaNone);
+  CGColorSpaceRelease(space);
+  if (!context) { CGImageRelease(image); return 0; }
+  CGContextDrawImage(context, CGRectMake(0, 0, 64, 64), image);
+  CGContextRelease(context);
+  CGImageRelease(image);
+  uint64_t signature = 14695981039346656037ULL;
+  for (size_t i = 0; i < sizeof(pixels); i++) {
+    signature ^= pixels[i] & 0xf0;
+    signature *= 1099511628211ULL;
+  }
+  return signature;
+}
+
 - (BOOL)screenshotToPath:(NSString *)path error:(NSError **)error {
   CGImageRef cg = [self copyScreenCGImage];
   if (!cg) { if (error) *error = WNDMakeError(30, @"could not capture framebuffer"); return NO; }
@@ -743,36 +786,28 @@ static BOOL WNDUsageForChar(unichar c, int *usage, BOOL *shift) {
 }
 
 + (NSString *)layoutDescription {
-  BOOL payloadOK = (sizeof(WNDIndigoPayload) == 0x90);
-  BOOL messageOK = (sizeof(WNDIndigoMessage) == 0xB0);
-  BOOL touchOK   = (sizeof(WNDIndigoMessage) + sizeof(WNDIndigoPayload) == 0x140);
-  return [NSString stringWithFormat:
-    @"Indigo layout: payload=0x%zx(%@) message=0x%zx(%@) touchMsg=0x%zx(%@) touch=0x%zx",
-    sizeof(WNDIndigoPayload), payloadOK ? @"OK" : @"BAD",
-    sizeof(WNDIndigoMessage), messageOK ? @"OK" : @"BAD",
-    sizeof(WNDIndigoMessage) + sizeof(WNDIndigoPayload), touchOK ? @"OK" : @"BAD",
-    sizeof(WNDIndigoTouch)];
+  NSError *error = nil;
+  if (![self loadFrameworks:&error]) return error.localizedDescription;
+  WNDMouseEventFn builder = (WNDMouseEventFn)dlsym(gSKHandle, "IndigoHIDMessageForMouseNSEvent");
+  if (!builder) return @"native touch builder unavailable";
+  CGPoint point = CGPointMake(0.25, 0.75);
+  WNDIndigoMessage *message = builder(&point, NULL, 0x32, 1, 0, 1.0, 1.0);
+  size_t size = WNDMessageSize(message);
+  NSString *description = [NSString stringWithFormat:@"Native Indigo: payload=0x%x count=%u touchMsg=0x%zx (%@)",
+    message ? message->innerSize : 0, message ? message->eventType : 0, size, size ? @"OK" : @"unsupported"];
+  free(message);
+  return description;
 }
 
 + (nullable NSString *)wireFormatError {
-  // Test hook: exercise the fail-loud path without a mismatched Xcode.
-  if (getenv("WAND_FORCE_UNSUPPORTED")) {
-    return @"forced unsupported build (WAND_FORCE_UNSUPPORTED set) — test of the fail-loud guard.";
-  }
-  if (sizeof(WNDIndigoPayload) == 0x90 &&
-      sizeof(WNDIndigoMessage) == 0xB0 &&
-      sizeof(WNDIndigoMessage) + sizeof(WNDIndigoPayload) == 0x140) {
-    return nil;
-  }
-  return [NSString stringWithFormat:
-    @"unsupported SimulatorKit/Indigo wire format (payload=0x%zx message=0x%zx, expected 0x90/0xB0). "
-     "This Xcode's Simulator internals differ from what wand was verified against — refusing to "
-     "inject input to avoid sending wrong events. Please file an issue with your `xcodebuild -version`.",
-    sizeof(WNDIndigoPayload), sizeof(WNDIndigoMessage)];
+  if (getenv("WAND_FORCE_UNSUPPORTED")) return @"forced unsupported build (WAND_FORCE_UNSUPPORTED set) — test of the fail-loud guard.";
+  NSString *layout = [self layoutDescription];
+  if ([layout hasSuffix:@"(OK)"]) return nil;
+  return [@"unsupported native SimulatorKit HID format: " stringByAppendingString:layout];
 }
 
 - (nullable NSString *)readinessError {
-  if (!_hidClient) return @"HID client unavailable (SimDeviceLegacyHIDClient failed to init) — cannot inject input.";
+  if (!_hidClient && !_guestSender) return @"HID client unavailable (SimDeviceLegacyHIDClient failed to init) — cannot inject input.";
   if (!_mouseFn)   return @"required symbol IndigoHIDMessageForMouseNSEvent not found in SimulatorKit — incompatible Xcode build.";
   if (!_keyboardFn) return @"required symbol IndigoHIDMessageForKeyboardArbitrary not found in SimulatorKit — incompatible Xcode build.";
   return nil;  // crown symbol is optional (watchOS-only; guarded at call site)

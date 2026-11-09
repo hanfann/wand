@@ -7,6 +7,7 @@ import WandKit
 // ref resolution + diffing). One command per connection; commands are serialized
 // against the single simulator, so no locking is needed.
 final class Daemon {
+    private let ownerLock: Int32
     let sim: WNDSimulator
     var last: Snapshot?
     var recorder: Process?
@@ -22,6 +23,7 @@ final class Daemon {
     // set, the daemon refuses input with this message instead of sending wrong
     // bytes — fail loud, never silent-wrong.
     let startupError: String?
+    var guestHID: GuestHIDTransport?
 
     // Commands that inject HID events; their replies are checked for send errors.
     static let inputCommands: Set<String> = [
@@ -36,9 +38,23 @@ final class Daemon {
     }
 
     init(sim: WNDSimulator) {
+        let lock = open(Net.socketPath(sim.udid) + ".owner.lock", O_CREAT | O_RDWR | O_CLOEXEC, 0o600)
+        guard lock >= 0, flock(lock, LOCK_EX | LOCK_NB) == 0 else { exit(0) }
+        self.ownerLock = lock
+        signal(SIGPIPE, SIG_IGN)
         self.sim = sim
         self.bootPids = Client.deviceBootPids(sim.udid)
-        self.startupError = WNDSimulator.wireFormatError() ?? sim.readinessError()
+        var error = WNDSimulator.wireFormatError()
+        if error == nil, sim.isWatch {
+            do {
+                if try GuestHIDTransport.isNeeded(udid: sim.udid) {
+                    let transport = try GuestHIDTransport(udid: sim.udid)
+                    self.guestHID = transport
+                    sim.setGuestTouchSender { transport.send($0) }
+                }
+            } catch let failure { error = failure.localizedDescription }
+        }
+        self.startupError = error ?? sim.readinessError()
     }
 
     // Stale if the device shut down, or if every launchd_sim we bound to is gone
@@ -102,15 +118,20 @@ final class Daemon {
     // Poll the tree until two consecutive reads are identical (UI quiescent) or
     // the timeout elapses — waits out animations/navigation without guessing.
     func settle(maxMs: Int = 1500) {
-        var prev = ""
+        var previous = ""
+        var stableReads = 0
         let start = Date()
         while Date().timeIntervalSince(start) * 1000 < Double(maxMs) {
             guard let tree = try? sim.accessibilityTree() else { break }
-            let sig = "\(tree.count)|" + tree.prefix(80).compactMap {
+            let sparse = tree.count <= 1
+            var signature = "\(tree.count)|" + tree.prefix(80).compactMap {
                 ($0["label"] as? String) ?? ($0["value"] as? String) ?? ($0["role"] as? String)
             }.joined(separator: "·")
-            if sig == prev && !sig.isEmpty { return }
-            prev = sig
+            if sparse { signature += "|pixels:\(sim.screenFingerprint())" }
+            stableReads = signature == previous ? stableReads + 1 : 0
+            if stableReads >= (sparse ? 3 : 1),
+               Date().timeIntervalSince(start) >= (sparse ? 0.65 : 0.09) { return }
+            previous = signature
             usleep(90 * 1000)
         }
     }
@@ -384,13 +405,13 @@ final class Daemon {
                         try sim.turnCrown(by: delta, steps: 8, duration: 0.10)
                         usleep(120 * 1000)                  // let each detent settle (kills momentum)
                     }
-                    settle()
+                    settle(maxMs: 3000)
                     return Reply(ok: true, text: "crown \(dir) \(clicks)")
                 }
                 let delta = Double(a[0]) ?? 0
                 let steps = a.count >= 2 ? (UInt(a[1]) ?? 24) : 24
                 try sim.turnCrown(by: delta, steps: steps, duration: 0.25)
-                settle()
+                settle(maxMs: 3000)
                 return Reply(ok: true, text: "crowned \(delta)")
 
             case "scroll" where !a.isEmpty:

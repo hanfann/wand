@@ -77,6 +77,14 @@ enum Client {
         // Healthy daemon → use it. A stale-session sentinel is treated like "no
         // daemon": respawn a fresh process and retry the same command.
         if let r = sendOnce(udid, argv), r.1 != staleSentinel { return r }
+        // Concurrent clients must not each spawn a daemon for the same watch.
+        let startupLock = open(Net.socketPath(udid) + ".startup.lock", O_CREAT | O_RDWR | O_CLOEXEC, 0o600)
+        guard startupLock >= 0, flock(startupLock, LOCK_EX) == 0 else {
+            if startupLock >= 0 { close(startupLock) }
+            return (false, "cannot lock daemon startup")
+        }
+        defer { flock(startupLock, LOCK_UN); close(startupLock) }
+        if let r = sendOnce(udid, argv), r.1 != staleSentinel { return r }
         usleep(200 * 1000)  // let the exiting stale daemon release the socket
         spawnDaemon(udid)
         for _ in 0..<200 {  // up to ~20s for cold framework warmup

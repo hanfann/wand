@@ -85,7 +85,37 @@ wand assert "#welcome" exists # → PASS / FAIL (exit 0/1)
 ```
 
 > First call boots a background daemon and warms accessibility (a few seconds,
-> once). Every call after is ~60 ms. Requires macOS + Xcode 26 (iOS 26 sims), Swift 6.
+> once). Every call after is ~60 ms. Requires macOS, full Xcode with the target Simulator SDK, and Swift 6.
+
+### Xcode 27 watchOS and DeviceHub
+
+watchOS 27 touch input uses one persistent helper inside the selected simulator. It
+sends IOKit digitizer events through that watch's touchscreen service. Crown and
+keyboard events retain the native SimulatorKit path. DeviceHub can stay open and
+show the actions; Wand does not move the host mouse or require app changes.
+
+The first watch command compiles the small embedded helper with the selected
+Xcode's Watch Simulator SDK and caches it under `~/.wand/hid`. Subsequent commands
+reuse it. `wand --udid <udid> stop` closes the helper as well as its daemon. A lost
+helper fails the current command, then the next command reconnects and releases
+any old contact. Ambiguous taps are never automatically replayed.
+
+For a screenshot-based input/recovery check (Settings root visible, disposable watch):
+
+```sh
+swift examples/watch/touch-smoke.swift WATCH_UDID "$PWD/.build/debug/wand" /tmp/wand-smoke
+```
+
+This checks 20 navigation taps, helper recovery, dragging and crown scrolling.
+It uses Apple's frameworks and does not need OCR or third-party packages.
+
+Keep the Mac unlocked during visible simulator checks. A locked/sleeping host can
+hide DeviceHub windows and stall app launches. Reuse one DeviceHub window and
+select devices in its sidebar; shut down disposable simulators after each check.
+
+This compatibility change targets watchOS 27.2 on Xcode 27.2. The iOS/iPadOS path
+and older Xcodes retain their native backend; they have not been revalidated as
+part of the watchOS fix.
 
 ## The loop
 
