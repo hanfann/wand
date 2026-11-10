@@ -2,6 +2,22 @@ import XCTest
 @testable import WandKit
 
 final class SnapshotTests: XCTestCase {
+    func testInputRefusesAmbiguityAndUnsafeCenters() throws {
+        let rows: [[String: Any]] = [
+            ["role": "AXButton", "label": "Save", "x": 0.0, "y": 0.0, "w": 40.0, "h": 30.0],
+            ["role": "AXButton", "label": "Save", "x": 0.0, "y": 50.0, "w": 40.0, "h": 30.0],
+            ["role": "AXButton", "id": "partial", "x": 90.0, "y": 0.0, "w": 40.0, "h": 30.0]
+        ]
+        let snapshot = Snapshot(elements: rows, screenW: 100, screenH: 100)
+        XCTAssertThrowsError(try snapshot.resolveForInput("Save"))
+        XCTAssertEqual(try snapshot.resolveForInput("e2")?.cy, 65)
+        XCTAssertThrowsError(try snapshot.resolveForInput("#partial"))
+        XCTAssertThrowsError(try sample().resolveForInput("#off"))
+        XCTAssertThrowsError(try sample().resolveForInput("#row-99"))
+        XCTAssertNotNil(try sample().resolveForInput("#row-99", requiresVisibleCenter: false))
+        XCTAssertNil(try snapshot.resolveForInput("e999"))
+    }
+
     func testDiffKeepsDuplicateControlsAndChangedGeometry() {
         let rows: [[String: Any]] = [
             ["role": "AXButton", "label": "Save", "x": 0.0, "y": 0.0, "w": 40.0, "h": 30.0],

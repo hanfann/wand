@@ -131,6 +131,45 @@ public struct Snapshot {
         }
     }
 
+    /// Input cannot safely choose the first of several matches, a disabled
+    /// control, or a center outside the viewport. Observation stays permissive.
+    public func resolveForInput(_ selector: String, requiresVisibleCenter: Bool = true) throws -> UIElement? {
+        let sel = selector.trimmingCharacters(in: .whitespaces)
+        guard !sel.isEmpty, sel != "#" else { return nil }
+        var candidates: [UIElement]
+        if sel.hasPrefix("e"), Int(sel.dropFirst()) != nil {
+            candidates = byRef[sel].map { [$0] } ?? []
+        } else if sel.hasPrefix("#") {
+            let id = String(sel.dropFirst())
+            candidates = all.filter { $0.id == id }
+            if candidates.isEmpty { candidates = all.filter { $0.id?.localizedCaseInsensitiveContains(id) == true } }
+        } else {
+            let text = sel.lowercased()
+            candidates = all.filter { $0.label?.lowercased() == text || $0.value?.lowercased() == text }
+            if candidates.isEmpty {
+                candidates = all.filter { $0.label?.lowercased().contains(text) == true || $0.value?.lowercased().contains(text) == true }
+            }
+        }
+        let visible = candidates.filter(\.onScreen)
+        if !visible.isEmpty { candidates = visible }
+        guard candidates.count <= 1 else { throw TargetError.ambiguous }
+        guard let element = candidates.first else { return nil }
+        guard element.enabled else { throw TargetError.disabled }
+        if requiresVisibleCenter {
+            guard element.onScreen, element.cx >= 0, element.cy >= 0,
+                  screenW <= 0 || Double(element.cx) < screenW,
+                  screenH <= 0 || Double(element.cy) < screenH else { throw TargetError.offscreen }
+        }
+        return element
+    }
+
+    public enum TargetError: String, LocalizedError {
+        case ambiguous = "ambiguous accessibility target; use a fresh eN reference or unique identifier"
+        case disabled = "accessibility target is disabled; no input sent"
+        case offscreen = "accessibility target center is off-screen; scroll into view before input"
+        public var errorDescription: String? { rawValue }
+    }
+
     /// Token-saving diff: what changed vs a previous snapshot, keyed by identity.
     public func diff(from prev: Snapshot) -> String {
         // Occurrence-qualified identities preserve repeated labels/IDs instead

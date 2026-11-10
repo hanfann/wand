@@ -1,0 +1,8 @@
+cli_small {"n": 30, "median_ms": 19.649, "p95_ms": 26.296, "max_ms": 54.328, "output_bytes": 5}
+cli_128k {"n": 30, "median_ms": 24.686, "p95_ms": 29.327, "max_ms": 30.397, "output_bytes": 131073}
+mcp_100_catalogs {"n": 10, "median_ms": 20.15, "p95_ms": 22.721, "max_ms": 22.721, "output_bytes": 54990}
+warm_info {"n": 30, "median_ms": 19.311, "p95_ms": 28.079, "max_ms": 30.065, "output_bytes": 89}
+warm_ui {"n": 30, "median_ms": 29.718, "p95_ms": 33.965, "max_ms": 42.963, "output_bytes": 56}
+batch_20_ping {"n": 30, "median_ms": 22.068, "p95_ms": 26.458, "max_ms": 29.075, "output_bytes": 671}
+screenshot {"n": 30, "median_ms": 28.701, "p95_ms": 38.53, "max_ms": 38.893, "output_bytes": 78}
+ocr_fast_and_cache {"n": 10, "median_ms": 28.455, "p95_ms": 200.825, "max_ms": 200.825, "output_bytes": 127}

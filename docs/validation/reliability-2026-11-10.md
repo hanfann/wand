@@ -15,7 +15,7 @@ counted as a successful app action.
 
 | Gate | Observed result |
 |---|---|
-| Unit tests | 40 passed, including worker pipes, deadlines, cleanup and OCR selection |
+| Unit tests | 41 passed, including worker pipes, deadlines, cleanup and OCR selection |
 | HID wire contract | Pass: types, phases, multitouch, keyboard, native Crown, interruption |
 | Display contract | Pass: all four transforms; valid, malformed, inactive and ambiguous reports |
 | Lifecycle | Pass: startup lock deadline, kill unready owned child, worker/startup parent death |
@@ -35,6 +35,12 @@ counted as a successful app action.
 Timing/memory and the 100-Crown run precede the final display/setvalue patches;
 those changes are separately exercised by final live tests. Do not describe the
 whole table as one immutable-binary run. Raw samples include maxima and failures.
+
+The final watch retest caught a batch timing failure after individual navigation
+and Crown passed. The watch settling floor was raised from 650 ms to 1 s; the
+2 s observed tap p95 budget remains unchanged. A hosted CI setup attempt timed
+out in initial `simctl list` before any UI tests; its cold discovery allowance
+was raised to 120 s without relaxing warm performance gates.
 
 ## Failure handling and tradeoffs
 

@@ -15,14 +15,16 @@ def run(args, timeout=60, **kw):
     return subprocess.run(args, check=True, timeout=timeout, **kw)
 
 try:
-    catalog = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', '-j'], timeout=20))
+    catalog = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', '-j'], timeout=120))
     runtimes = [r for r in catalog['runtimes'] if r.get('isAvailable') and r['identifier'].split('.')[-1].startswith('iOS-')]
     assert runtimes, 'No available iOS runtime; live correctness gate cannot run'
     runtime = max(runtimes, key=lambda r: tuple(int(n) for n in r['version'].split('.')))
     supported = {d['identifier'] for d in runtime.get('supportedDeviceTypes', [])}
     types = [d for d in catalog['devicetypes'] if d['name'].startswith('iPhone') and (not supported or d['identifier'] in supported)]
     assert types, 'No supported iPhone device type'
-    udid = subprocess.check_output(['xcrun', 'simctl', 'create', 'Wand CI owned', types[-1]['identifier'], runtime['identifier']], text=True, timeout=30).strip()
+    preferred = next((d for d in types if d['name'] == 'iPhone 17 Pro'), types[-1])
+    print('Live gate:', preferred['name'], runtime['version'], flush=True)
+    udid = subprocess.check_output(['xcrun', 'simctl', 'create', 'Wand CI owned', preferred['identifier'], runtime['identifier']], text=True, timeout=30).strip()
     env = dict(os.environ, WAND_UDID=udid, WAND=wand, WAND_OUTCOME_TIMEOUT_SECONDS="20",
                WAND_EVIDENCE_DIR=str(evidence / "portrait"))
     run(['xcrun', 'simctl', 'boot', udid])

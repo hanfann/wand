@@ -164,7 +164,7 @@ final class Daemon {
     func settle(maxMs: Int = 1500) {
         let start = ProcessInfo.processInfo.systemUptime
         let deadline = start + Double(maxMs) / 1000
-        let minimum = sim.isWatch ? 0.65 : 0.18
+        let minimum = sim.isWatch ? 1.0 : 0.18
         var previous: UInt64 = 0, stableReads = 0
         while ProcessInfo.processInfo.systemUptime < deadline && !clientDisconnected() {
             let signature = sim.screenFingerprint()
@@ -178,8 +178,20 @@ final class Daemon {
 
     // Resolve a selector to its element center (for gesture targeting by id/label).
     func center(_ sel: String) throws -> (Double, Double)? {
-        guard let el = try currentForResolve(sel).resolve(sel) else { return nil }
+        guard let el = try currentForResolve(sel).resolveForInput(sel) else { return nil }
         return (Double(el.cx), Double(el.cy))
+    }
+
+    private func setFieldValue(_ selector: String, _ value: String) throws {
+        guard let element = try currentForResolve(selector).resolveForInput(selector, requiresVisibleCenter: false),
+              element.id != nil || element.label != nil else {
+            throw NSError(domain: "wand.ax", code: 1, userInfo: [NSLocalizedDescriptionKey:
+                "field not found or has no stable AX identity; refresh ui before setting its value"])
+        }
+        // AX sets and focuses the field itself. A preliminary tap can raise a
+        // keyboard that hides the target before AX can resolve it.
+        try accessibility.setValue(value, identifier: element.id, label: element.label)
+        settle()
     }
 
     // OCR fallback: find visible text on screen (works with no app accessibility).
@@ -317,14 +329,8 @@ final class Daemon {
                 return Reply(ok: false, text: "could not scroll to \(sel)")
 
             case "clear" where !a.isEmpty:
-                let sel = a[0]
-                let el = try currentForResolve(sel).resolve(sel)
-                let ident = el?.id ?? (sel.hasPrefix("#") ? String(sel.dropFirst()) : nil)
-                let label = el?.label ?? (!sel.hasPrefix("#") && !sel.hasPrefix("e") ? sel : nil)
-                if el != nil { try sim.tap(x: Double(el!.cx), y: Double(el!.cy)); usleep(150 * 1000) }
-                try accessibility.setValue("", identifier: ident, label: label)
-                settle()
-                return Reply(ok: true, text: "cleared \(sel)")
+                try setFieldValue(a[0], "")
+                return Reply(ok: true, text: "cleared \(a[0])")
 
             case "find" where !a.isEmpty:
                 let snap = try snapshot()
@@ -339,7 +345,7 @@ final class Daemon {
                     return Reply(ok: true, text: "tapped @\(Int(num(0))),\(Int(num(1)))")
                 }
                 let sel = a.joined(separator: " ")
-                if let el = try currentForResolve(sel).resolve(sel) {
+                if let el = try currentForResolve(sel).resolveForInput(sel) {
                     try sim.tap(x: Double(el.cx), y: Double(el.cy)); settle()
                     return Reply(ok: true, text: "tapped \(el.ref) \(el.shortRole) \(el.label ?? el.id ?? "")")
                 }
@@ -366,7 +372,7 @@ final class Daemon {
                 return Reply(ok: true, text: "typed")
 
             case "typein" where a.count >= 2:
-                guard let el = try currentForResolve(a[0]).resolve(a[0]) else {
+                guard let el = try currentForResolve(a[0]).resolveForInput(a[0]) else {
                     return Reply(ok: false, text: "not found: \(a[0])")
                 }
                 try sim.tap(x: Double(el.cx), y: Double(el.cy)); usleep(200 * 1000)
@@ -490,16 +496,8 @@ final class Daemon {
                 return Reply(ok: true, text: "\(lines.count) text regions (OCR)\n" + lines.joined(separator: "\n"))
 
             case "setvalue" where a.count >= 2:
-                let sel = a[0]
-                let text = a[1...].joined(separator: " ")
-                let el = try currentForResolve(sel).resolve(sel)
-                let ident = el?.id ?? (sel.hasPrefix("#") ? String(sel.dropFirst()) : nil)
-                let label = el?.label ?? (!sel.hasPrefix("#") && !sel.hasPrefix("e") ? sel : nil)
-                // AX sets and focuses the field itself. Tapping first can raise
-                // a keyboard that hides the target before AX can resolve it.
-                try accessibility.setValue(text, identifier: ident, label: label)
-                settle()
-                return Reply(ok: true, text: "set value of \(sel)")
+                try setFieldValue(a[0], a[1...].joined(separator: " "))
+                return Reply(ok: true, text: "set value of \(a[0])")
 
             case "assert" where !a.isEmpty:
                 let snap = try snapshot()

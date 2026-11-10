@@ -26,8 +26,8 @@ After a binary update, restart only your task's selected daemon (`stop`) to load
   fast matches are tried first; uncertain/missing text uses accurate fallback.
   Accurate Vision model initialization can time out on macOS 27. Use screenshot
   coordinates then; repeating the same failed query is not progress. Observe after navigation/layout changes
-  before reusing coordinates/refs; eN refs expire after input. Named targets refresh
-  geometry; asynchronous app changes can still require a fresh observation.
+  before reusing coordinates/refs; eN refs expire after input. Ambiguous/disabled/off-screen AX input targets fail before input; use a fresh
+  ref or unique ID. Named targets refresh geometry; asynchronous app changes can still require a fresh observation.
 - Screenshots and point coordinates follow the active interface orientation.
   Unsupported or ambiguous display geometry fails before input.
 - Touches use **points**; screenshot positions use **pixels**. Divide screenshot

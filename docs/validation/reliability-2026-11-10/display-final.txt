@@ -1,0 +1,1 @@
+PASS: four orientations; valid panel geometry; malformed/inactive/ambiguous displays refuse targeting

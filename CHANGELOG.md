@@ -10,6 +10,8 @@ All notable changes to Wand are documented here. Format roughly follows
 - Keep MCP responsive to cancellation without replaying ambiguous input.
 - Align screenshots, input and AX coordinates using active display orientation;
   reject ambiguous/malformed display geometry before sending input.
+- Reject ambiguous, disabled and off-screen AX input targets; share field setting
+  between `clear` and `setvalue`, with exact identifier precedence.
 - Set AX values directly so opening a keyboard cannot hide the target first;
   reject unsupported HID Unicode before tapping and map printable US ASCII fully.
 - Prefer unique, confident exact fast-OCR targets; reject ambiguous/uncertain hits.
