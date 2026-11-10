@@ -30,6 +30,8 @@
 int main(void) { @autoreleasepool {
   NSError *error=nil;
   assert([WNDSimulator loadFrameworks:&error]);
+  if (WNDUsesDTUHID()) assert(gSKHandle==NULL);
+  assert([WNDSimulator loadLegacyInputFramework:&error]);
   GestureProbe *probe=[GestureProbe new];
   [probe useNativeBuilder];
   for (int phase=1;phase<=6;phase++) {

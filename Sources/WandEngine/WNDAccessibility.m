@@ -10,6 +10,7 @@
 
 #import <AppKit/AppKit.h>
 #import <objc/runtime.h>
+#import <dlfcn.h>
 
 @interface WNDAXDispatcher () {
   NSMutableDictionary<NSString *, id> *_tokenToDevice;
@@ -37,6 +38,10 @@
 
 - (id)translator {
   if (!_translator) {
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+      dlopen("/System/Library/PrivateFrameworks/AccessibilityPlatformTranslation.framework/AccessibilityPlatformTranslation", RTLD_NOW);
+    });
     Class cls = objc_getClass("AXPTranslator");
     if (cls) {
       _translator = [(id<WNDAXPTranslatorClass>)cls sharedInstance];

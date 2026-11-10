@@ -39,7 +39,6 @@ static size_t WNDMessageSize(WNDIndigoMessage *message) {
 
 static void *gCSHandle = NULL;  // CoreSimulator
 static void *gSKHandle = NULL;  // SimulatorKit
-static void *gAXHandle = NULL;  // AccessibilityPlatformTranslation
 
 static NSError *WNDMakeError(NSInteger code, NSString *msg) {
   return [NSError errorWithDomain:WNDErrorDomain code:code
@@ -47,7 +46,7 @@ static NSError *WNDMakeError(NSInteger code, NSString *msg) {
 }
 
 // Resolve the active developer dir (DEVELOPER_DIR env, else `xcode-select -p`).
-static NSString *WNDDeveloperDir(void) {
+static NSString *WNDResolveDeveloperDir(void) {
   const char *env = getenv("DEVELOPER_DIR");
   if (env && strlen(env) > 0) {
     return [NSString stringWithUTF8String:env];
@@ -62,9 +61,21 @@ static NSString *WNDDeveloperDir(void) {
   return trimmed.length ? trimmed : @"/Applications/Xcode.app/Contents/Developer";
 }
 
+static NSString *WNDDeveloperDir(void) {
+  static NSString *selected;
+  static dispatch_once_t once;
+  dispatch_once(&once, ^{ selected = WNDResolveDeveloperDir(); });
+  return selected;
+}
+
 static BOOL WNDUsesDTUHID(void) {
-  NSString *info = [[WNDDeveloperDir() stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"Info.plist"];
-  return [[NSDictionary dictionaryWithContentsOfFile:info][@"CFBundleShortVersionString"] integerValue] >= 27;
+  static BOOL modern;
+  static dispatch_once_t once;
+  dispatch_once(&once, ^{
+    NSString *info = [[WNDDeveloperDir() stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"Info.plist"];
+    modern = [[NSDictionary dictionaryWithContentsOfFile:info][@"CFBundleShortVersionString"] integerValue] >= 27;
+  });
+  return modern;
 }
 
 @interface WNDSimulator () {
@@ -88,12 +99,10 @@ static BOOL WNDUsesDTUHID(void) {
 
 #pragma mark - Framework loading
 
-+ (BOOL)loadFrameworks:(NSError **)error {
++ (BOOL)loadLegacyInputFramework:(NSError **)error {
   static dispatch_once_t once;
-  static BOOL ok = NO;
   dispatch_once(&once, ^{
     NSString *dev = WNDDeveloperDir();
-    gCSHandle = dlopen("/Library/Developer/PrivateFrameworks/CoreSimulator.framework/CoreSimulator", RTLD_NOW);
     // Newer Xcodes moved SimulatorKit from Developer/Library/PrivateFrameworks
     // to Contents/SharedFrameworks (a sibling of Developer). Try both.
     NSArray<NSString *> *skPaths = @[
@@ -104,15 +113,23 @@ static BOOL WNDUsesDTUHID(void) {
       gSKHandle = dlopen(skPath.UTF8String, RTLD_NOW);
       if (gSKHandle) break;
     }
-    gAXHandle = dlopen("/System/Library/PrivateFrameworks/AccessibilityPlatformTranslation.framework/AccessibilityPlatformTranslation", RTLD_NOW);
-    ok = (gCSHandle != NULL && gSKHandle != NULL);
   });
-  if (!ok && error) {
-    *error = WNDMakeError(1, [NSString stringWithFormat:
-      @"Failed to load private frameworks (CoreSimulator=%p SimulatorKit=%p). dlerror: %s",
-      gCSHandle, gSKHandle, dlerror()]);
+  if (!gSKHandle && error) *error = WNDMakeError(1, @"Failed to load SimulatorKit from the selected Xcode");
+  return gSKHandle != NULL;
+}
+
++ (BOOL)loadFrameworks:(NSError **)error {
+  static dispatch_once_t once;
+  dispatch_once(&once, ^{
+    gCSHandle = dlopen("/Library/Developer/PrivateFrameworks/CoreSimulator.framework/CoreSimulator", RTLD_NOW);
+  });
+  if (!gCSHandle) {
+    if (error) *error = WNDMakeError(1, @"Failed to load CoreSimulator");
+    return NO;
   }
-  return ok;
+  // DTUHID uses CoreSimulator directly. SimulatorKit is only for Indigo and
+  // the explicit native-layout diagnostic; AX loads in its isolated worker.
+  return WNDUsesDTUHID() || [self loadLegacyInputFramework:error];
 }
 
 #pragma mark - Discovery
@@ -197,9 +214,11 @@ static BOOL WNDUsesDTUHID(void) {
   }
   _hidQueue = dispatch_queue_create("com.wand.hid", DISPATCH_QUEUE_SERIAL);
   _axQueue = dispatch_queue_create("com.wand.ax", DISPATCH_QUEUE_SERIAL);
-  _mouseFn = (WNDMouseEventFn)dlsym(gSKHandle, "IndigoHIDMessageForMouseNSEvent");
-  _keyboardFn = (WNDKeyboardFn)dlsym(gSKHandle, "IndigoHIDMessageForKeyboardArbitrary");
-  _crownFn = (WNDCrownFn)dlsym(gSKHandle, "IndigoHIDMessageForDigitalCrownEvent");
+  if (gSKHandle) {
+    _mouseFn = (WNDMouseEventFn)dlsym(gSKHandle, "IndigoHIDMessageForMouseNSEvent");
+    _keyboardFn = (WNDKeyboardFn)dlsym(gSKHandle, "IndigoHIDMessageForKeyboardArbitrary");
+    _crownFn = (WNDCrownFn)dlsym(gSKHandle, "IndigoHIDMessageForDigitalCrownEvent");
+  }
   return self;
 }
 
@@ -807,7 +826,7 @@ static BOOL WNDUsageForChar(unichar c, int *usage, BOOL *shift) {
 
 + (NSString *)layoutDescription {
   NSError *error = nil;
-  if (![self loadFrameworks:&error]) return error.localizedDescription;
+  if (![self loadFrameworks:&error] || ![self loadLegacyInputFramework:&error]) return error.localizedDescription;
   WNDMouseEventFn builder = (WNDMouseEventFn)dlsym(gSKHandle, "IndigoHIDMessageForMouseNSEvent");
   if (!builder) return @"native touch builder unavailable";
   CGPoint point = CGPointMake(0.25, 0.75);
