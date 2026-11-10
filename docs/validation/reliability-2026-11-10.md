@@ -53,6 +53,12 @@ Xcode 26.6 and 27.2 on their matching GitHub images, with no fallback to a diffe
 major version. Runner availability was checked against the official
 [GitHub image catalog](https://github.com/actions/runner-images).
 
+The first explicit matrix reached simulator setup but both jobs timed out while
+building/installing the fixture alongside a booted simulator. The harness now
+compiles before boot, logs each phase, kills its owned subprocess group on timeout,
+and preserves setup/cleanup diagnostics even when UI tests never start. Its
+process-group timeout and cleanup-after-diagnostics-failure tests pass.
+
 ## Failure handling and tradeoffs
 
 AX requests have a 5 s deadline and 2 s cooldown after failure; the worker is killed

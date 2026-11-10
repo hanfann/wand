@@ -1,0 +1,5 @@
+13:40:59 /bin/echo ok
+13:40:59 /bin/sh -c 'sleep 30 & echo $!; wait'
+Process diagnostics unavailable: Command 'ps' timed out after 5 seconds
+PASS: CI timeout stops the entire owned subprocess group
+PASS: setup and diagnostics failure still shut down/delete the owned simulator
