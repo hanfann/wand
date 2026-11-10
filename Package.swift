@@ -38,5 +38,10 @@ let package = Package(
             dependencies: ["WandKit"],
             path: "Tests/WandKitTests"
         ),
+        .testTarget(
+            name: "WandTests",
+            dependencies: ["wand"],
+            path: "Tests/WandTests"
+        ),
     ]
 )

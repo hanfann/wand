@@ -237,8 +237,13 @@ OCR or screenshots instead of repeated empty queries. Only capture images that
 add evidence, and keep screenshot pixel coordinates distinct from touch points.
 
 OCR runs in a disposable CPU worker (3s fast / 5s accurate deadline), keeping the
-input daemon responsive after a Vision stall. Identical PNG content and recognition
-mode reuse the last OCR result; input is never targeted from a time-based cache.
+input daemon responsive after a Vision stall. Fast recognition and accurate fallback
+share one captured frame. The latest exact PNG and point dimensions retain separate
+results for both modes; every new operation captures again before checking that cache.
+After an accurate timeout, automatic fallback pauses for 60s instead of repeatedly
+waiting 5s. `see accurate` explicitly retries; success restores automatic fallback.
+Cancellation does not trigger cooldown. Cooldown refuses input rather than accepting
+uncertain text; input is never targeted from a time-based cache.
 
 ## How it works
 

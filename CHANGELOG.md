@@ -5,6 +5,9 @@ All notable changes to Wand are documented here. Format roughly follows
 
 ## [Unreleased]
 
+- Share one frame between fast OCR and accurate fallback, retaining both results
+  for the latest exact image and point geometry. Cool down automatic accurate OCR
+  for 60s after a timeout; preserve explicit retries and cancellation recovery.
 - Isolate accessibility in a persistent worker with a 5 s deadline; stop workers
   after owner death. Bound startup ownership, cancellation and subprocess drains.
 - Keep MCP responsive to cancellation without replaying ambiguous input.

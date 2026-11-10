@@ -196,19 +196,20 @@ final class Daemon {
 
     // OCR fallback: find visible text on screen (works with no app accessibility).
     func ocrCenter(matching query: String) throws -> (Double, Double, String)? {
-        let width = Double(sim.screenPointSize.width), height = Double(sim.screenPointSize.height)
-        let fast = try ocr.recognize(sim: sim)
-        do {
-            if let hit = try OCRTarget.resolve(query, observations: fast, width: width, height: height,
-                                               exactOnly: true, minConfidence: 0.8) {
-                return (hit.x, hit.y, hit.text)
-            }
-        } catch OCRTarget.Failure.uncertain { /* Ask accurate OCR before accepting uncertain text. */ }
-        // Ambiguous text never chooses an arbitrary occurrence. Accurate fallback
-        // may time out on Apple's model initialization; fail without input then.
-        let observations = try ocr.recognize(sim: sim, accurate: true)
-        guard let hit = try OCRTarget.resolve(query, observations: observations, width: width, height: height) else { return nil }
-        return (hit.x, hit.y, hit.text)
+        try ocr.withFrame(sim: sim) { frame in
+            let fast = try ocr.recognize(frame: frame)
+            do {
+                if let hit = try OCRTarget.resolve(query, observations: fast, width: frame.width, height: frame.height,
+                                                   exactOnly: true, minConfidence: 0.8) {
+                    return (hit.x, hit.y, hit.text)
+                }
+            } catch OCRTarget.Failure.uncertain { /* Ask accurate OCR before accepting uncertain text. */ }
+            // Both modes inspect the same pixels. Ambiguity, timeout and cooldown
+            // refuse input; none may choose a lower-confidence target instead.
+            let observations = try ocr.recognize(frame: frame, accurate: true, automatic: true)
+            guard let hit = try OCRTarget.resolve(query, observations: observations, width: frame.width, height: frame.height) else { return nil }
+            return (hit.x, hit.y, hit.text)
+        }
     }
 
     static func clean(_ sel: String) -> String {

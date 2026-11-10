@@ -18,6 +18,7 @@ Established before the deep-audit candidate was measured:
 | MCP cancellation | active socket released within 500 ms; queued input never sent |
 | Display geometry | upright screenshot and matching input/AX points in verified orientations |
 | OCR stall | fast worker killed by 3.5 s / accurate by 5.5 s; next info under 100 ms |
+| OCR fallback recovery | one capture for both modes; no new worker during 60s automatic cooldown; explicit retry allowed; cancellation never starts cooldown |
 | Daemon cold start, ready simulator | under 10 s, exactly one daemon; no guest HID helper |
 | Watch tap including settling | p95 under 2 s on Settings navigation |
 | Navigation | zero incorrect screen transitions in 100 observed actions |

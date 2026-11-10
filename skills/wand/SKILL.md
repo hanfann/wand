@@ -24,7 +24,9 @@ skill. After a binary update, `stop` only your selected daemon to load the new b
    AX has a 5s worker deadline; OCR has 3s fast / 5s accurate deadlines. Accurate
    Vision stalls on the tested Xcode 27.2 host: do not retry it repeatedly.
    OCR taps require unique confident text, trying exact fast matches first and
-   accurate fallback for uncertain/missing text. Stalls leave coordinate input usable.
+   accurate fallback for uncertain/missing text on the same frame. An accurate timeout
+   pauses automatic fallback for 60s; `see accurate` explicitly retries. Stalls leave
+   coordinate input usable; cooldown never permits a lower-confidence tap.
 5. Touches, AX and OCR use **points**; screenshots use **pixels**. Divide screenshot
    coordinates by `info` scale. Geometry follows active interface orientation;
    unsupported/ambiguous display geometry fails before input.

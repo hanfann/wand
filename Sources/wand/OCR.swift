@@ -9,30 +9,80 @@ import Darwin
 // Vision can hang during model initialization. Run it outside the input daemon
 // with a deadline so screenshots, taps and stop remain available after a stall.
 final class OCRService {
+    struct Frame {
+        fileprivate let path: String
+        fileprivate let key: String
+        let width: Double
+        let height: Double
+    }
+
+    enum Failure: String, LocalizedError {
+        case timedOut = "OCR timed out; input daemon remains usable. Use screenshot and point coordinates"
+        case cancelled = "OCR cancelled; no input was sent"
+        case coolingDown = "Automatic accurate OCR is cooling down for up to 60s after a timeout. Use screenshot coordinates or explicitly retry with see accurate"
+        case workerFailed = "OCR failed; use screenshot and point coordinates"
+        var errorDescription: String? { rawValue }
+    }
+
     var cancelled: (() -> Bool)?
+    private let workerExecutable: String
+    private let temporaryDirectory: String
+    private let now: () -> TimeInterval
+    private var accurateUnavailableUntil: TimeInterval = 0
     private var cachedKey: String?
-    private var cached: [[String: Any]] = []
+    // At most one image, with independent results for its two recognition modes.
+    private var cached: [Bool: [[String: Any]]] = [:]
+
+    init(workerExecutable: String = Client.executablePath(),
+         temporaryDirectory: String = Net.socketDir(),
+         now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
+        self.workerExecutable = workerExecutable
+        self.temporaryDirectory = temporaryDirectory
+        self.now = now
+    }
 
     func recognize(sim: WNDSimulator, accurate: Bool = false) throws -> [[String: Any]] {
-        let prefix = Net.socketDir() + "/ocr-" + UUID().uuidString
-        let imagePath = prefix + ".png", resultPath = prefix + ".json"
-        defer {
-            try? FileManager.default.removeItem(atPath: imagePath)
-            try? FileManager.default.removeItem(atPath: resultPath)
-        }
-        try sim.screenshot(toPath: imagePath)
-        let bytes = try Data(contentsOf: URL(fileURLWithPath: imagePath))
-        let key = SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
-            + "|\(sim.screenPointSize)|\(accurate)"
-        if key == cachedKey { return cached }
+        try withFrame(sim: sim) { try recognize(frame: $0, accurate: accurate) }
+    }
 
+    func withFrame<T>(sim: WNDSimulator, body: (Frame) throws -> T) throws -> T {
+        try withFrame(width: Double(sim.screenPointSize.width), height: Double(sim.screenPointSize.height),
+                      capture: { try sim.screenshot(toPath: $0) }, body: body)
+    }
+
+    // A frame only lives for this operation, including both fallback attempts.
+    // Every later operation captures again before consulting the exact-image cache.
+    func withFrame<T>(width: Double, height: Double, capture: (String) throws -> Void,
+                      body: (Frame) throws -> T) throws -> T {
+        try checkCancellation()
+        let path = temporaryDirectory + "/ocr-" + UUID().uuidString + ".png"
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        FileManager.default.createFile(atPath: path, contents: nil, attributes: [.posixPermissions: 0o600])
+        try capture(path)
+        let bytes = try Data(contentsOf: URL(fileURLWithPath: path))
+        let key = SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
+            + "|\(width)|\(height)"
+        return try body(Frame(path: path, key: key, width: width, height: height))
+    }
+
+    func recognize(frame: Frame, accurate: Bool = false, automatic: Bool = false) throws -> [[String: Any]] {
+        try checkCancellation()
+        if frame.key != cachedKey {
+            cachedKey = frame.key
+            cached.removeAll(keepingCapacity: true)
+        }
+        if let observations = cached[accurate] { return observations }
+        if accurate && automatic && now() < accurateUnavailableUntil { throw Failure.coolingDown }
+
+        let resultPath = temporaryDirectory + "/ocr-" + UUID().uuidString + ".json"
+        defer { try? FileManager.default.removeItem(atPath: resultPath) }
         FileManager.default.createFile(atPath: resultPath, contents: nil, attributes: [.posixPermissions: 0o600])
         let result = try FileHandle(forWritingTo: URL(fileURLWithPath: resultPath))
         defer { try? result.close() }
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: Client.executablePath())
-        process.arguments = ["__ocr", imagePath, String(Double(sim.screenPointSize.width)),
-                             String(Double(sim.screenPointSize.height)), accurate ? "accurate" : "fast"]
+        process.executableURL = URL(fileURLWithPath: workerExecutable)
+        process.arguments = ["__ocr", frame.path, String(frame.width),
+                             String(frame.height), accurate ? "accurate" : "fast"]
         process.standardOutput = result
         process.standardError = FileHandle.nullDevice
         process.standardInput = FileHandle.nullDevice
@@ -40,23 +90,27 @@ final class OCRService {
         let deadline = ProcessInfo.processInfo.systemUptime + (accurate ? 5 : 3)
         while process.isRunning && cancelled?() != true && ProcessInfo.processInfo.systemUptime < deadline { usleep(20_000) }
         if process.isRunning {
+            let wasCancelled = cancelled?() == true
             process.terminate()
             usleep(50_000)
             if process.isRunning { kill(process.processIdentifier, SIGKILL) }
-            throw failure("OCR timed out or was cancelled; input daemon remains usable. Use screenshot and point coordinates")
+            if wasCancelled { throw Failure.cancelled }
+            if accurate { accurateUnavailableUntil = now() + 60 }
+            throw Failure.timedOut
         }
+        try checkCancellation()
         let data = try Data(contentsOf: URL(fileURLWithPath: resultPath))
         guard process.terminationStatus == 0,
               let observations = (try? JSONSerialization.jsonObject(with: data)) as? [[String: Any]] else {
-            throw failure("OCR failed; use screenshot and point coordinates")
+            throw Failure.workerFailed
         }
-        cachedKey = key
-        cached = observations
+        if accurate { accurateUnavailableUntil = 0 }
+        cached[accurate] = observations
         return observations
     }
 
-    private func failure(_ message: String) -> NSError {
-        NSError(domain: "wand.ocr", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
+    private func checkCancellation() throws {
+        if cancelled?() == true { throw Failure.cancelled }
     }
 
     static func worker(_ args: [String]) -> Never {
