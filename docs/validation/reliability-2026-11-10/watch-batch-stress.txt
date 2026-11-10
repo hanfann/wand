@@ -1,0 +1,25 @@
+PASS: Settings app is foreground before input
+PASS: HID transport needs no guest helper process
+PASS: vertical drag scrolls
+PASS: crown returns to top
+PASS: native Crown down 1 scrolls
+PASS: native Crown up 1 returns to top
+Verified native Crown transitions: 2
+PASS: Settings root verified before batch
+PASS: batch navigation 1 returns to Settings
+PASS: batch navigation 2 returns to Settings
+PASS: batch navigation 3 returns to Settings
+PASS: batch navigation 4 returns to Settings
+PASS: batch navigation 5 returns to Settings
+PASS: batch navigation 6 returns to Settings
+PASS: batch navigation 7 returns to Settings
+PASS: batch navigation 8 returns to Settings
+PASS: batch navigation 9 returns to Settings
+PASS: batch navigation 10 returns to Settings
+PASS: batch numeric-preflight reports failure
+PASS: batch numeric-preflight prevents the tap
+PASS: batch preflight reports failure
+PASS: batch preflight prevents the tap
+PASS: batch stop-on-error reports failure
+PASS: batch stop-on-error prevents the tap
+Watch input smoke test complete; screenshots: /tmp/wand-reliability/watch-batch-stress

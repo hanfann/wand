@@ -99,8 +99,11 @@ if skipCrown {
     print("Verified native Crown transitions: \(crownCycles * 2)")
 }
 require(difference(baseline, try capture("before-batch")) < 0.025, "Settings root verified before batch")
-try command("batch", "[[\"tap\",\"\(x)\",\"\(y)\"],[\"tap\",\"\(backX)\",\"\(backY)\"]]")
-require(difference(baseline, try capture("batch-return")) < 0.025, "batch navigation returns to Settings")
+let batchCycles = max(1, Int(ProcessInfo.processInfo.environment["WAND_BATCH_CYCLES"] ?? "1") ?? 1)
+for index in 1...batchCycles {
+    try command("batch", "[[\"tap\",\"\(x)\",\"\(y)\"],[\"tap\",\"\(backX)\",\"\(backY)\"]]")
+    require(difference(baseline, try capture("batch-return-\(index)")) < 0.025, "batch navigation \(index) returns to Settings")
+}
 for (name, json) in [
     ("numeric-preflight", "[[\"tap\",\"\(x)\",\"\(y)\"],[\"key\",\"nan\"]]"),
     ("preflight", "[[\"tap\",\"\(x)\",\"\(y)\"],[\"typo\"]]"),

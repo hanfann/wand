@@ -1,5 +1,6 @@
 {
-  "binary_sha256": "c5702ca559dc8dccc0e57a2c5d4ed015652c6c8969b840588c46abc2554ef628",
+  "binary_sha256": "1323aafd4cf3bd08b718faaf406a2d5f45517d3b4e852e77f06181dccf8ea2ed",
   "xcode": "Xcode 27.2\nBuild version 27B52",
-  "note": "Current candidate; performance/resource/100-Crown evidence predates final display and setvalue changes. Final watch retest recorded separately."
+  "note": "Final guard/settle candidate. watch-settle.txt and unit-guards.txt exercise this build; ipad-final predates guards/settle and validates display/setvalue. CI rechecks final iPhone input.",
+  "commit": "06ddaf7"
 }

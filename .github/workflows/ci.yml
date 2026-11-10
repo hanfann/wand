@@ -7,13 +7,22 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    name: Xcode ${{ matrix.xcode }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-26
+            xcode: '26.6'
+          - runner: xcode-27
+            xcode: '27.2'
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select latest Xcode
-        run: sudo xcode-select -s /Applications/Xcode_26.app || sudo xcode-select -s /Applications/Xcode.app
+      - name: Select required Xcode
+        run: sudo xcode-select -s /Applications/Xcode_${{ matrix.xcode }}.app
 
       - name: Versions
         run: swift --version && xcodebuild -version
@@ -47,6 +56,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: live-input-evidence
+          name: live-input-evidence-xcode-${{ matrix.xcode }}
           path: live-evidence/
           retention-days: 7

@@ -23,24 +23,35 @@ counted as a successful app action.
 | Transport | Pass: fragmented Unicode, partial EOF, no lost-reply replay, persistent requests |
 | Compact catalog | 502 bytes versus 7,142 bytes; 93% less serialized catalog, not an exact token count |
 | Watch AX fault injection | Frozen worker fails in 5.013 s; next tap 427 ms, screenshot 105 ms, stop 15 ms |
+| Final watch candidate | 20 navigation actions, 10 Crown transitions, batch/preflight guards pass; tap p95 1,362 ms |
 | Native Crown | 100 actual down/up transitions passed on the 40mm watch; screenshot comparisons |
 | iPad landscape | Seven of seven gesture/text outcomes passed, including Unicode; upright 2316×1512 screenshots |
 | Memory, daemon + AX worker | 1,000 warm reads: +0.297 MiB; idle CPU 0% |
-| Warm CLI / 128 KB reply p95 | 26.30 / 29.33 ms, both below 50 ms |
-| Warm info / AX / 20-ping batch p95 | 28.08 / 33.97 / 26.46 ms |
-| Watch screenshot p95 | 38.53 ms, below 100 ms |
-| Fast OCR, watch Settings | Fresh ~201 ms; cached median 28.46 ms |
+| Final warm CLI / 128 KB reply p95 | 13.94 / 12.72 ms, both below 50 ms |
+| Final warm info / AX / 20-ping batch p95 | 10.68 / 18.48 / 10.76 ms |
+| Final watch screenshot p95 | 18.15 ms, below 100 ms |
+| Final fast OCR, watch Settings | Fresh ~136 ms; cached median 16.65 ms |
 | OCR accuracy corpus | **Failed overall gate**: fast 29/32 exact labels with correct centers; accurate 0/32 due to deadlines |
 
-Timing/memory and the 100-Crown run precede the final display/setvalue patches;
-those changes are separately exercised by final live tests. Do not describe the
-whole table as one immutable-binary run. Raw samples include maxima and failures.
+Memory and the 100-Crown run precede the final display/setvalue patches;
+those changes are separately exercised by final live tests. The later target
+guards/1 s watch settling candidate passes 41 unit tests and the final watch
+suite (`unit-guards.txt`, `watch-settle.txt`); hosted iPhone checks cover it too. Do not describe the
+whole table as one immutable-binary run. Raw samples include maxima and failures. `performance-final.json` records 30
+quiet samples per warm path on the final candidate (10 for OCR). The earlier
+performance run had higher host load; this is not a controlled speedup claim.
+Ten further two-tap navigation batches passed with the revised settling floor
+(`watch-batch-stress.txt`).
 
 The final watch retest caught a batch timing failure after individual navigation
 and Crown passed. The watch settling floor was raised from 650 ms to 1 s; the
 2 s observed tap p95 budget remains unchanged. A hosted CI setup attempt timed
 out in initial `simctl list` before any UI tests; its cold discovery allowance
-was raised to 120 s without relaxing warm performance gates.
+was raised to 120 s without relaxing warm performance gates. Its old runner
+also silently selected Xcode 16.4 through the fallback. CI now explicitly selects
+Xcode 26.6 and 27.2 on their matching GitHub images, with no fallback to a different
+major version. Runner availability was checked against the official
+[GitHub image catalog](https://github.com/actions/runner-images).
 
 ## Failure handling and tradeoffs
 
@@ -72,7 +83,8 @@ helper caches are not executed or silently removed.
   model/ANE compilation with CPU/default compute, multiple revisions and the newer
   API. Even a 120 s isolated probe failed. Those experiments were reverted. Fast
   OCR works; uncertain/ambiguous targets fail safely and screenshots remain usable.
-  A 32-label corpus is too small to claim universal recognition accuracy.
+  Scaling fast OCR 2×/3× fixed one label but introduced other mistakes, so no
+  preprocessing was added. A 32-label corpus is too small to claim universal recognition accuracy.
 - Cold iOS initialization under severe host memory pressure (load >400) failed
   setup/AX readiness before input could be qualified. A warm six-case iPad run
   passed. These are separate results; no boot-time reliability claim is made.
