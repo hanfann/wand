@@ -241,9 +241,13 @@ final class Daemon {
 
     private func dispatch(_ argv: [String]) -> Reply {
         guard let cmd = argv.first else { return Reply(ok: false, text: "bad request") }
-        do { try CommandValidation.validate(argv) }
-        catch { return Reply(ok: false, text: error.localizedDescription) }
         let a = Array(argv.dropFirst())
+        // Retain the preflighted batch instead of decoding/validating it again.
+        let batch: CommandBatch?
+        do {
+            batch = cmd == "batch" ? try CommandBatch(arguments: a) : nil
+            if batch == nil { try CommandValidation.validate(argv) }
+        } catch { return Reply(ok: false, text: error.localizedDescription) }
         func num(_ i: Int) -> Double { i < a.count ? (Double(a[i]) ?? 0) : 0 }
 
         // Unsupported input must fail loudly. Read-only diagnostics remain usable.
@@ -269,24 +273,11 @@ final class Daemon {
                 try sim.refreshDisplayGeometry()
                 if previousOrientation != sim.displayOrientation || previousSize != sim.screenPointSize { referencesValid = false }
             }
-            switch cmd {
-            case "batch":
-                guard a.count == 1 else { return Reply(ok: false, text: "batch needs a JSON array of command arrays") }
-                let batch = try CommandBatch(json: a[0])
-                var output: [String] = []
-                for (index, command) in batch.commands.enumerated() {
-                    if clientDisconnected() {
-                        return Reply(ok: false, text: "client disconnected; remaining batch steps did not run; prior steps may have applied")
-                    }
-                    let reply = execute(command)
-                    output.append("\(index + 1) \(reply.ok ? "OK" : "FAIL") \(reply.text)")
-                    if !reply.ok {
-                        output.append("stopped; remaining commands did not run. Inspect state before retrying")
-                        return Reply(ok: false, text: output.joined(separator: "\n"), exitAfterReply: reply.exitAfterReply)
-                    }
-                }
-                return Reply(ok: true, text: output.joined(separator: "\n"))
+            if let batch {
+                return Self.executeBatch(batch, cancelled: clientDisconnected, execute: execute)
+            }
 
+            switch cmd {
             case "ping":
                 return Reply(ok: true, text: "pong \(sim.name)")
 

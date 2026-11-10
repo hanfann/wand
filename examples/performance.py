@@ -74,6 +74,7 @@ thread.start()
 try:
     measure('cli_small', [wand, '--udid', udid, 'ping'])
     measure('cli_128k', [wand, '--udid', udid, 'large'])
+    measure('cli_batch_20_ping', [wand, '--udid', udid, 'batch', json.dumps([['ping']] * 20)])
     requests = b''.join(json.dumps(dict(jsonrpc='2.0', id=i, method='tools/list')).encode() + b'\n' for i in range(100))
     measure('mcp_100_catalogs', [wand, 'mcp', '--compact'], count=10, stdin=requests)
 finally:

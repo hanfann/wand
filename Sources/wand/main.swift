@@ -33,6 +33,7 @@ wand — autonomous Apple-simulator (iOS · iPadOS · watchOS) E2E driver for AI
   Sequences:
     wand batch '[["tap","40","80"],["ui","diff"]]'
     wand batch -                   read the same JSON from stdin; stop at first failure
+    wand batch --summary <JSON|->  completed count and final result, or failed step
 
   App / device:
     wand devices                   booted simulators
@@ -163,10 +164,16 @@ case "setup":
     runSetup()
 
 case "batch":
-    guard argv.count == 2 else { err("batch needs JSON or - for stdin"); exit(1) }
-    let json = argv[1] == "-"
-        ? String(decoding: FileHandle.standardInput.readDataToEndOfFile(), as: UTF8.self) : argv[1]
-    route(requireUDID(explicitUDID), ["batch", json])
+    var arguments = Array(argv.dropFirst())
+    guard arguments.count == 1 || (arguments.count == 2 && arguments[0] == "--summary") else {
+        err("batch expects [--summary] followed by JSON or - for stdin"); exit(1)
+    }
+    if arguments.last == "-" {
+        arguments[arguments.count - 1] = String(decoding: FileHandle.standardInput.readDataToEndOfFile(), as: UTF8.self)
+    }
+    do { _ = try CommandBatch(arguments: arguments) }
+    catch { err(error.localizedDescription); exit(1) }
+    route(requireUDID(explicitUDID), ["batch"] + arguments)
 
 case "help", "-h", "--help":
     out(usage)

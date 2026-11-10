@@ -30,6 +30,7 @@ Established before the deep-audit candidate was measured:
 | Invalid input / batch | no NaN crash, no silent numeric zero, validate all steps before first action |
 | Observation | diff exposes movement, disabled state, ref changes and duplicate removals |
 | Compact MCP catalog | under 1 KB minified; preserve explicit targeting |
+| Optional batch summary | at least 80% fewer UTF-8 response bytes on the 32-step fixture; identical execution order, exact final/error text, no replay |
 | Resource use | daemon plus worker RSS growth below 20 MB over 1,000 warm reads; idle CPU under 1% over 5 s |
 | Cleanup | no task-owned helper/worker/recording process or scratch files after stop; no extra running sims |
 

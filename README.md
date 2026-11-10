@@ -232,6 +232,11 @@ wand --udid <ID> see accurate "Continue"  # slower recognition, bounded to 5s
 Batches run 1–64 known commands in order with normal settling, stop on the first
 failure, and never roll back earlier actions. Observe between steps whose next
 coordinates depend on the result. An ambiguous lost reply is never replayed.
+Use `batch --summary <JSON|->` (MCP `run` accepts `summary: true`) when only the
+final result matters. It returns the completed count and final result, or the
+failed step and full error. Successful intermediate results are omitted. End with
+`ui diff`, `assert`, or `screenshot` to verify the outcome; command completion alone
+does not prove a screen transition. Omit summary to retain every step's output.
 Use `find`, `assert` or `ui diff` on useful AX trees; app-only watch trees need
 OCR or screenshots instead of repeated empty queries. Only capture images that
 add evidence, and keep screenshot pixel coordinates distinct from touch points.

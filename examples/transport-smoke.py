@@ -69,6 +69,7 @@ for mode in [[], ['--compact']]:
     catalogs.append(tools)
 assert len(catalogs[1]) == 1 and catalogs[1][0]['name'] == 'run'
 sizes = [len(json.dumps(catalog, separators=(',', ':'))) for catalog in catalogs]
+assert sizes[1] < 1000, sizes
 print('PASS: full and compact MCP catalogs support explicit targets')
 print('Catalog bytes: {} -> {} ({:.1%} reduction); {} -> {} tools'.format(
     sizes[0], sizes[1], 1 - sizes[1] / sizes[0], len(catalogs[0]), len(catalogs[1])))

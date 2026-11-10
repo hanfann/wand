@@ -37,12 +37,14 @@ skill. After a binary update, `stop` only your selected daemon to load the new b
 Batch known steps whose next action does not depend on an unseen result:
 
 ```sh
-wand --udid <ID> batch '[["tap","40","80"],["ui","diff"]]'
-# JSON can also be piped to: wand --udid <ID> batch -
+wand --udid <ID> batch --summary '[["tap","40","80"],["ui","diff"]]'
+# JSON can also be piped to: wand --udid <ID> batch --summary -
 ```
 
 Batches settle and stop at the first error; prior steps remain applied. Lost
 replies and ambiguous input never replay automatically. Inspect before retrying.
+`--summary` keeps the count and final result or failed step; omit it when every
+intermediate result matters. End with `ui diff`, `assert`, or `screenshot` to verify.
 
 ## Lifecycle and cleanup
 
@@ -70,7 +72,7 @@ Settings root visible. iOS: `examples/native/e2e.sh` with explicit `WAND_UDID` a
 fixture installed. Both assert actual outcomes. Coverage, budgets and limits:
 `docs/validation/reliability-2026-11-10.md`, `docs/performance.md`.
 
-`mcp --compact` exposes one `run` tool (`udid`, `commands` using batch format).
+`mcp --compact` exposes one `run` tool (`udid`, `commands`, optional `summary: true`).
 `setup --mcp` registers compact mode with Claude; `mcp` / `setup --full-mcp` retain
 legacy tools. Cancellation skips queued work and later batch steps; dispatched
 input may finish. Observe before resuming.

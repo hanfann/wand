@@ -168,12 +168,13 @@ enum MCP {
 
     static func run(compact: Bool = false, defaultUDID: String? = nil) {
         let runTool = Tool(name: "run",
-            description: "Run ordered Wand commands on an explicit simulator. Coordinates are points. Stops at first error; inspect state before retrying. Use ui diff/find/assert for compact output; screenshot when watch AX is sparse. See wand help or the Wand skill for commands.",
-            schema: obj(["udid": pStr, "commands": ["type": "array", "minItems": 1, "maxItems": 64,
+            description: "Run ordered Wand commands on an explicit simulator. Coordinates are points. Stops at first error; inspect before retrying. summary=true returns count and final result or failed step; end with ui diff/assert/screenshot to verify. See wand help or skill.",
+            schema: obj(["udid": pStr, "summary": ["type": "boolean"], "commands": ["type": "array", "minItems": 1, "maxItems": 64,
                 "items": ["type": "array", "minItems": 1, "items": pStr]]], required: ["commands"])) { args in
                 guard let commands = args["commands"] as? [[String]],
                       let data = try? JSONSerialization.data(withJSONObject: commands) else { return ["batch", "null"] }
-                return ["batch", String(decoding: data, as: UTF8.self)]
+                return ["batch"] + (args["summary"] as? Bool == true ? ["--summary"] : [])
+                    + [String(decoding: data, as: UTF8.self)]
             }
         let toolList = compact ? [runTool] : tools()
         let toolsByName = Dictionary(uniqueKeysWithValues: toolList.map { ($0.name, $0) })

@@ -5,6 +5,9 @@ All notable changes to Wand are documented here. Format roughly follows
 
 ## [Unreleased]
 
+- Add optional `batch --summary` / MCP `summary: true` output: completed count and
+  final result or exact failed step, without retaining intermediate success text.
+  Preflight CLI/MCP batches before simulator dispatch; preserve full output by default.
 - Share one frame between fast OCR and accurate fallback, retaining both results
   for the latest exact image and point geometry. Cool down automatic accurate OCR
   for 60s after a timeout; preserve explicit retries and cancellation recovery.
