@@ -22,7 +22,14 @@ public final class LineReader {
         var chunk = [UInt8](repeating: 0, count: 16 * 1024)
         while true {
             if cancelled?() == true { return nil }
-            if let newline = pending[scanned...].firstIndex(of: 10) {
+            // Search contiguous bytes directly. Generic Data collection traversal
+            // spends time on per-byte indexing for large AX/JSON replies.
+            let newline: Int? = pending.withUnsafeBytes { bytes in
+                guard scanned < bytes.count, let base = bytes.baseAddress,
+                      let found = memchr(base.advanced(by: scanned), 10, bytes.count - scanned) else { return nil }
+                return base.distance(to: UnsafeRawPointer(found))
+            }
+            if let newline {
                 guard newline - offset <= maxBytes else { return nil }
                 let line = String(data: pending[offset..<newline], encoding: .utf8)
                 offset = newline + 1

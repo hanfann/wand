@@ -21,27 +21,42 @@ parser.add_argument('wand', type=Path)
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--udid')
 parser.add_argument('--samples', type=int, default=30)
+parser.add_argument('--compare-to', type=Path, help='Interleave a baseline binary with the candidate on the same inputs')
 args = parser.parse_args()
 if args.samples < 5:
     parser.error("--samples must be at least 5 for useful percentiles")
+if args.compare_to and args.udid:
+    parser.error("--compare-to isolates CLI/stub transport; qualify live daemon versions separately")
 wand = str(args.wand.resolve())
 measurements = {}
 
 def measure(name, command, count=None, stdin=None):
-    times = []
-    for _ in range(count or args.samples):
-        start = time.perf_counter()
-        result = subprocess.run(command, input=stdin, capture_output=True, timeout=30)
-        elapsed = (time.perf_counter() - start) * 1000
-        if result.returncode:
-            raise RuntimeError((name, result.stderr.decode(errors='replace')))
-        times.append(elapsed)
-    ordered = sorted(times)
-    measurements[name] = dict(n=len(times), median_ms=statistics.median(times),
-        p95_ms=ordered[math.ceil(.95 * len(times)) - 1], max_ms=max(times),
-        output_bytes=len(result.stdout), samples_ms=times)
-    print(name, json.dumps({k: round(v, 3) if isinstance(v, float) else v
-        for k, v in measurements[name].items() if k != 'samples_ms'}), flush=True)
+    commands = {'candidate': command}
+    if args.compare_to:
+        commands = {'baseline': [str(args.compare_to.resolve()), *command[1:]], **commands}
+    samples = {label: [] for label in commands}
+    output_bytes = {}
+    # Warm both binaries once, then alternate execution order to reduce host drift.
+    for index in range(-1, count or args.samples):
+        order = list(commands) if index % 2 == 0 else list(reversed(commands))
+        for label in order:
+            start = time.perf_counter()
+            result = subprocess.run(commands[label], input=stdin, capture_output=True, timeout=30)
+            elapsed = (time.perf_counter() - start) * 1000
+            if result.returncode:
+                raise RuntimeError((name, label, result.stderr.decode(errors='replace')))
+            if index >= 0: samples[label].append(elapsed)
+            output_bytes[label] = len(result.stdout)
+    summary = {}
+    for label, times in samples.items():
+        ordered = sorted(times)
+        summary[label] = dict(n=len(times), median_ms=statistics.median(times),
+            p95_ms=ordered[math.ceil(.95 * len(times)) - 1], max_ms=max(times),
+            output_bytes=output_bytes[label], samples_ms=times)
+    measurements[name] = summary if args.compare_to else summary['candidate']
+    printable = {label: {k: round(v, 3) if isinstance(v, float) else v
+        for k, v in row.items() if k != 'samples_ms'} for label, row in summary.items()}
+    print(name, json.dumps(printable if args.compare_to else printable['candidate']), flush=True)
 
 # Fixed fake daemon isolates CLI/socket/JSON overhead from CoreSimulator.
 udid = 'perf-' + uuid.uuid4().hex
@@ -66,7 +81,8 @@ def serve():
                     break
                 request.extend(chunk)
             command = json.loads(request)
-            text = 'x' * 131072 if command[0] == 'large' else 'pong'
+            size = {'large': 131072, 'huge': 4 * 1024 * 1024}.get(command[0])
+            text = 'x' * size if size else 'pong'
             connection.sendall(json.dumps(dict(ok=True, text=text)).encode() + b'\n')
 
 thread = threading.Thread(target=serve)
@@ -74,6 +90,7 @@ thread.start()
 try:
     measure('cli_small', [wand, '--udid', udid, 'ping'])
     measure('cli_128k', [wand, '--udid', udid, 'large'])
+    measure('cli_4m', [wand, '--udid', udid, 'huge'])
     measure('cli_batch_20_ping', [wand, '--udid', udid, 'batch', json.dumps([['ping']] * 20)])
     requests = b''.join(json.dumps(dict(jsonrpc='2.0', id=i, method='tools/list')).encode() + b'\n' for i in range(100))
     measure('mcp_100_catalogs', [wand, 'mcp', '--compact'], count=10, stdin=requests)

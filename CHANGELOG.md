@@ -5,6 +5,9 @@ All notable changes to Wand are documented here. Format roughly follows
 
 ## [Unreleased]
 
+- Scan NDJSON reply buffers as contiguous bytes, reducing large-frame parsing
+  overhead without changing UTF-8 checks, frame limits, deadlines or cancellation.
+  Add interleaved baseline/candidate CLI benchmarks and a 4 MiB reply case.
 - Retain subprocess diagnostic tails in a bounded circular buffer, avoiding repeated
   multi-megabyte copies on output overflow while preserving exact bytes, exit status
   and timeout handling. Small outputs allocate only as they arrive.

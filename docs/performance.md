@@ -28,6 +28,7 @@ Established before the deep-audit candidate was measured:
 | Control-plane failure | monotonic subprocess deadline, bounded output, no replay after timeout |
 | Subprocess output overflow | exact final byte tail with unchanged truncation/status/deadlines; 32 MiB emitter with 8 MiB tail improves p95 by at least 20%; small-output p95 stays within the regression budget |
 | Framing | Unicode, fragmented/coalesced messages, bounded frames, partial EOF rejected |
+| Large-frame scanning | at least 20% lower isolated 4 MiB framing p95; unchanged UTF-8/order/limits/cancellation; report complete CLI timings separately |
 | Invalid input / batch | no NaN crash, no silent numeric zero, validate all steps before first action |
 | Observation | diff exposes movement, disabled state, ref changes and duplicate removals |
 | Compact MCP catalog | under 1 KB minified; preserve explicit targeting |
@@ -53,6 +54,8 @@ python3 examples/lifecycle-regressions.py .build/release/wand
 swift build -c release
 python3 examples/transport-smoke.py .build/release/wand
 python3 examples/performance.py .build/release/wand --output /tmp/wand-perf.json
+# Interleave two CLI binaries against the same stub daemon (not live simulator work):
+python3 examples/performance.py .build/release/wand --compare-to /path/to/baseline/wand --output /tmp/wand-compare.json
 # Existing booted disposable watch only; these commands do not boot/reset it:
 python3 examples/performance.py .build/release/wand --udid WATCH_UDID --output /tmp/wand-live.json
 WAND_SMOKE_CYCLES=50 swift examples/watch/touch-smoke.swift WATCH_UDID /absolute/path/to/wand /tmp/wand-smoke
