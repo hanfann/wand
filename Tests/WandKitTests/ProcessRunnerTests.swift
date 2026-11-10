@@ -54,17 +54,23 @@ final class ProcessRunnerTests: XCTestCase {
         XCTAssertEqual(ProcessRunner.run("/nonexistent/wand-test", []).status, -1)
     }
 
-    func testExitedParentCannotLeaveAnEndlessOutputDrain() {
+    func testExitedParentCannotLeaveAnEndlessOutputDrain() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("wand-drain-\(UUID())")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let executable = directory.appendingPathComponent("emitter").path
+        let build = ProcessRunner.run("/usr/bin/clang", [root.appendingPathComponent("examples/process-output-emitter.c").path,
+                                                        "-O2", "-o", executable], timeout: 30)
+        XCTAssertEqual(build.status, 0, build.output)
+        guard build.status == 0 else { return }
+        // Exclude fixture compilation/interpreter startup. The native fixture's
+        // handshake guarantees output has started before its parent exits.
         let start = ProcessInfo.processInfo.systemUptime
-        let script = """
-        import os, signal
-        if os.fork(): os._exit(0)
-        signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-        signal.alarm(3)
-        while True: os.write(1, b'x' * 16384)
-        """
-        let result = ProcessRunner.run("/usr/bin/python3", ["-c", script], timeout: 5, outputLimit: 256)
+        let result = ProcessRunner.run(executable, ["--orphan-writer"], timeout: 5, outputLimit: 256)
         XCTAssertEqual(result.status, 0)
+        XCTAssertFalse(result.timedOut)
+        XCTAssertTrue(result.output.contains("truncated"))
         XCTAssertLessThan(ProcessInfo.processInfo.systemUptime - start, 3)
         XCTAssertLessThan(result.output.utf8.count, 350)
     }

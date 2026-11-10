@@ -5,6 +5,11 @@ All notable changes to Wand are documented here. Format roughly follows
 
 ## [Unreleased]
 
+- Make OCR optional in the shared agent workflow; use screenshots directly for
+  custom/canvas/pixel UI when accessibility is incomplete. Add confidence-aware
+  offline evaluation with a single-timeout stop and separate readability gates.
+- Isolate the output-drain regression fixture from Python startup and synchronize
+  descendant output before parent exit, retaining the existing timing budget.
 - Add opt-in `profile` output with nested exclusive phase timing and daemon CPU,
   plus app-independent workflow scenarios with explicit text/image assertions.
 - Defer unnecessary frame sampling during the watch's mandatory settling period;

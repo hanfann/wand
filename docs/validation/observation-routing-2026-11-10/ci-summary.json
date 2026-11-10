@@ -1,0 +1,12 @@
+{
+  "run": 42829551972,
+  "xcode26": {
+    "failed_test": "testExitedParentCannotLeaveAnEndlessOutputDrain",
+    "elapsed_seconds": 3.3923192916666665,
+    "budget_seconds": 3
+  },
+  "xcode27": {
+    "unit_tests": "passed",
+    "live_input": "blocked before input by simctl install timeout; process diagnostics and cleanup also timed out"
+  }
+}

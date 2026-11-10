@@ -44,8 +44,9 @@ targeting more precise.
 - Optional MCP: `wand mcp --compact` (one tool); register with `wand setup --mcp`.
   The legacy tool catalog remains available with `wand mcp`.
 - Select a device with `--udid` or `WAND_UDID`. Wand refuses ambiguous defaults.
-- On an app-only watch AX tree, try filtered `see` once, then use screenshots if
-  needed. OCR has a deadline and cannot wedge the input daemon. Watch screenshots
+- On an app-only watch AX tree, use screenshots and visually verified coordinates.
+  OCR is optional when local text extraction helps; do not require it for custom
+  or pixel UI. OCR has a deadline and cannot wedge the input daemon. Watch screenshots
   are often 2×; divide pixel coordinates by the `wand info` scale before tapping.
 - Reuse one DeviceHub window, keep the host unlocked, and shut down task-owned
   throwaways after testing. See the skill for watch-specific handling.

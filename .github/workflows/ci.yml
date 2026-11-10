@@ -74,6 +74,7 @@ jobs:
           python3 examples/transport-smoke.py .build/release/wand
           python3 examples/protocol-regressions.py .build/release/wand
           python3 -B examples/test_workflows.py
+          python3 -B examples/ocr/test_evaluate.py
           python3 examples/lifecycle-regressions.py .build/release/wand
           python3 examples/native/ci-test.py
 
