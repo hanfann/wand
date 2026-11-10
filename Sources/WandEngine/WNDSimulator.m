@@ -207,7 +207,7 @@ static BOOL WNDUsesDTUHID(void) {
 
 - (BOOL)refreshDisplayGeometryWithError:(NSError **)error {
   if (!_displayInfo) return YES; // Watch has a fixed, upright panel.
-  NSDictionary *info = [_displayInfo readWithError:error];
+  NSDictionary *info = _modernHID ? [_displayInfo readWithError:error] : [_displayInfo readLegacyWithError:error];
   if (!info) return NO;
   _pixelSize = CGSizeMake([info[@"width"] doubleValue], [info[@"height"] doubleValue]);
   _screenScale = [info[@"scale"] doubleValue];

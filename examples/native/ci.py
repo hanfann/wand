@@ -62,7 +62,7 @@ def main():
         supported = {d['identifier'] for d in runtime.get('supportedDeviceTypes', [])}
         types = [d for d in catalog['devicetypes'] if d['name'].startswith('iPhone') and (not supported or d['identifier'] in supported)]
         assert types, 'No supported iPhone device type'
-        preferred = next((d for d in types if d['name'] == 'iPhone 17 Pro'), types[-1])
+        preferred = next((d for d in types if d['name'] == 'iPhone 14'), types[-1])
         udid = output(['xcrun', 'simctl', 'create', 'Wand CI owned', preferred['identifier'], runtime['identifier']], timeout=30).strip()
         (EVIDENCE / 'device.json').write_text(json.dumps(dict(udid=udid, device=preferred['name'], runtime=runtime['version']), indent=2))
         env = dict(os.environ, WAND_UDID=udid, WAND=WAND, WAND_OUTCOME_TIMEOUT_SECONDS='20',

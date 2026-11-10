@@ -3,11 +3,23 @@
 #import "WNDDisplayInfo.h"
 #import "WNDXPC.h"
 
+// The older runtime exposes presented UI orientation on the primary screen's
+// properties. This is interface orientation, not physical device attitude.
+@protocol WNDLegacyScreenProperties <NSObject>
+- (unsigned int)uiOrientation;
+- (unsigned int)screenID;
+@end
+@protocol WNDLegacyScreen <NSObject>
+- (id<WNDLegacyScreenProperties>)screenProperties;
+@end
+
 @implementation WNDDisplayInfo {
   id<WNDSimDevice> _device;
   xpc_connection_t _connection;
   dispatch_queue_t _queue;
   NSString *_version;
+  id<WNDLegacyScreen> _legacyScreen;
+  BOOL _legacyTimedOut;
 }
 - (instancetype)initWithDevice:(id<WNDSimDevice>)device {
   if ((self = [super init])) {
@@ -16,6 +28,51 @@
     _version = [[NSBundle bundleWithPath:@"/Library/Developer/PrivateFrameworks/CoreDevice.framework"] objectForInfoDictionaryKey:@"CFBundleVersion"];
   }
   return self;
+}
+- (NSDictionary *)readLegacyWithError:(NSError **)error {
+  if (_legacyTimedOut) {
+    if (error) *error = [NSError errorWithDomain:@"wand.display" code:2 userInfo:@{NSLocalizedDescriptionKey:
+      @"Legacy display read previously stalled; stop this daemon before retrying"}];
+    return nil;
+  }
+  dispatch_semaphore_t ready = dispatch_semaphore_create(0);
+  __block NSDictionary *result = nil;
+  dispatch_async(_queue, ^{ @autoreleasepool {
+    NSDictionary *value = nil;
+    @try {
+      if (!self->_legacyScreen) {
+        id<WNDLegacyScreen> primary = nil;
+        for (id<WNDIOPort> port in [(id<WNDIOClient>)[self->_device io] ioPorts]) {
+          id descriptor = [port descriptor];
+          if (![descriptor respondsToSelector:@selector(screenProperties)]) continue;
+          id<WNDLegacyScreenProperties> properties = [(id<WNDLegacyScreen>)descriptor screenProperties];
+          if (!properties || [properties screenID] != 0) continue;
+          if (primary) { primary = nil; break; }
+          primary = descriptor;
+        }
+        self->_legacyScreen = primary;
+      }
+      unsigned int orientation = [[self->_legacyScreen screenProperties] uiOrientation];
+      // UIInterfaceOrientation -> EXIF panel-to-interface rotation.
+      NSNumber *exif = @{@1:@1, @2:@3, @3:@6, @4:@8}[@(orientation)];
+      id<WNDDeviceType> type = (id<WNDDeviceType>)[self->_device deviceType];
+      CGSize pixels = [type mainScreenSize];
+      double scale = [type mainScreenScale];
+      if (exif && isfinite(pixels.width) && isfinite(pixels.height) && isfinite(scale) &&
+          pixels.width > 0 && pixels.height > 0 && scale > 0) {
+        value = @{@"exif":exif, @"width":@(pixels.width), @"height":@(pixels.height), @"scale":@(scale)};
+      }
+    } @catch (__unused NSException *exception) {}
+    @synchronized (ready) { result = value; }
+    dispatch_semaphore_signal(ready);
+  }});
+  BOOL timedOut = dispatch_semaphore_wait(ready, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)) != 0;
+  NSDictionary *value = nil;
+  @synchronized (ready) { value = result; }
+  if (timedOut) { _legacyTimedOut = YES; value = nil; } // never accumulate stuck reads
+  if (!value && error) *error = [NSError errorWithDomain:@"wand.display" code:2 userInfo:@{NSLocalizedDescriptionKey:
+    timedOut ? @"Legacy display geometry deadline exceeded; no input sent" : @"Legacy primary screen orientation unavailable; no input sent"}];
+  return value;
 }
 - (NSDictionary *)readWithError:(NSError **)error {
   NSError *failure = nil;

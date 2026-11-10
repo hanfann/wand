@@ -68,8 +68,12 @@ ready is killed at the client's 20 s total deadline or after its parent dies.
 Cancellation releases socket waits and skips subsequent batch steps. An input
 already accepted by the simulator may finish; nothing automatically replays it.
 
-Display geometry uses CoreDevice's active interface orientation independently of
-AX. Screenshots, point size, OCR and touch coordinates now agree in landscape.
+Xcode 27 display geometry uses CoreDevice's active interface orientation
+independently of AX. The Xcode 26 live gate exposed its missing CoreDevice display
+service, so older hosts read the primary `SimScreenProperties.uiOrientation`
+instead, bounded to 1 s with no accumulating stuck reads. This is presented
+orientation, not physical attitude; see the independent
+[protocol observations](https://github.com/sethdeckard/deviceterm/blob/main/Sources/CoreSimulatorBridge/as-tested.md#display-orientation). Screenshots, point size, OCR and touch coordinates now agree in landscape.
 A missing or ambiguous report refuses input. Multiple integrated displays are
 not qualified and fail explicitly rather than guessing panel routing. The
 read-only geometry query adds one bounded round trip on non-watch commands.
@@ -100,7 +104,10 @@ helper caches are not executed or silently removed.
   unavailable. Landscape is live-tested; all four mathematical transforms are
   contract-tested. Do not claim four live orientation passes from this evidence.
 - Older Xcode/runtime combinations and multi-panel devices require separate live
-  qualification. The required GitHub live gate exercises its available iPhone runtime.
+  qualification. The required GitHub live gate exercises its available iPhone runtime. CI prefers
+  iPhone 14 on 7 GiB runners; iPhone 17 Pro setup on Xcode 27 timed out before
+  input, including after compiling before boot. That failure is retained as a
+  setup limitation, not an input pass.
 - Private framework connection setup and kernel calls are not universally
   interruptible. A bounded client wait does not cancel work accepted by CoreSimulator.
 

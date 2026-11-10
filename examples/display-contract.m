@@ -5,6 +5,31 @@
 @interface WNDDisplayInfo (TestDecode)
 - (NSDictionary *)decode:(xpc_object_t)reply;
 @end
+@interface TestProperties : NSObject
+@property unsigned int uiOrientation, screenID;
+@end
+@implementation TestProperties @end
+@interface TestScreen : NSObject
+@property(nonatomic, strong) id screenProperties;
+@end
+@implementation TestScreen @end
+@interface TestPort : NSObject
+@property(nonatomic, strong) id descriptor;
+@end
+@implementation TestPort @end
+@interface TestIO : NSObject
+@property(nonatomic, strong) NSArray *ioPorts;
+@end
+@implementation TestIO @end
+@interface TestDeviceType : NSObject
+@property CGSize mainScreenSize;
+@property float mainScreenScale;
+@end
+@implementation TestDeviceType @end
+@interface TestDevice : NSObject
+@property(nonatomic, strong) id io, deviceType;
+@end
+@implementation TestDevice @end
 static void point(CGPoint p, double x, double y) { assert(fabs(p.x-x)<0.0001 && fabs(p.y-y)<0.0001); }
 int main(void) { @autoreleasepool {
   CGSize panel=CGSizeMake(100,200);
@@ -55,5 +80,24 @@ int main(void) { @autoreleasepool {
   xpc_array_set_value(size,0,xpc_double_create(1512));
   assert([reader decode:reply]!=nil);
   xpc_array_append_value(displays,item); assert([reader decode:reply]==nil);
-  puts("PASS: four orientations; valid panel geometry; malformed/inactive/ambiguous displays refuse targeting");
+  TestProperties *properties=[TestProperties new];
+  TestScreen *screen=[TestScreen new]; screen.screenProperties=properties;
+  TestPort *port=[TestPort new]; port.descriptor=screen;
+  TestIO *io=[TestIO new]; io.ioPorts=@[port];
+  TestDeviceType *typeInfo=[TestDeviceType new]; typeInfo.mainScreenSize=CGSizeMake(1200,2600); typeInfo.mainScreenScale=3;
+  TestDevice *device=[TestDevice new]; device.io=io; device.deviceType=typeInfo;
+  WNDDisplayInfo *legacy=[[WNDDisplayInfo alloc] initWithDevice:(id)device];
+  NSArray *expected=@[@1,@3,@6,@8];
+  for (unsigned int orientation=1;orientation<=4;orientation++) {
+    properties.uiOrientation=orientation;
+    NSDictionary *decoded=[legacy readLegacyWithError:nil];
+    assert([decoded[@"exif"] isEqual:expected[orientation-1]]);
+    assert([decoded[@"width"] intValue]==1200 && [decoded[@"scale"] intValue]==3);
+  }
+  properties.uiOrientation=0; assert([legacy readLegacyWithError:nil]==nil);
+  properties.uiOrientation=1; assert([legacy readLegacyWithError:nil]!=nil);
+  io.ioPorts=@[port,port];
+  legacy=[[WNDDisplayInfo alloc] initWithDevice:(id)device];
+  assert([legacy readLegacyWithError:nil]==nil);
+  puts("PASS: modern/legacy orientations; valid panel geometry; malformed/inactive/ambiguous displays refuse targeting");
 }}

@@ -30,7 +30,7 @@ def fake_run(args, *positional, **kwargs):
     commands.append(args)
     if 'install' in args: raise subprocess.TimeoutExpired(args, 60)
     return subprocess.CompletedProcess(args, 0)
-catalog = '{"runtimes":[{"isAvailable":true,"identifier":"test.iOS-27","version":"27"}],"devicetypes":[{"name":"iPhone 17 Pro","identifier":"test"}]}'
+catalog = '{"runtimes":[{"isAvailable":true,"identifier":"test.iOS-27","version":"27"}],"devicetypes":[{"name":"iPhone 14","identifier":"test"}]}'
 with tempfile.TemporaryDirectory() as directory, patch.object(ci, 'EVIDENCE', Path(directory)), \
      patch.object(ci, 'output', side_effect=[catalog, 'owned-test']), patch.object(ci, 'run', side_effect=fake_run), \
      patch.object(ci.subprocess, 'run', side_effect=subprocess.TimeoutExpired('ps', 5)):
