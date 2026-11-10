@@ -52,7 +52,9 @@ check() {
   if ! "$@"; then
     echo "  FAIL  $name (input command failed)"; fail=$((fail+1))
     capture_case "$name"
-    return
+    # A partial gesture can leave a contact down. Later cases would measure
+    # contaminated state; preserve the failure and stop without replaying input.
+    exit 1
   fi
   local got="" deadline=$((SECONDS + ${WAND_OUTCOME_TIMEOUT_SECONDS:-5}))
   # Keyboard/navigation transitions can briefly hide the status AX node.

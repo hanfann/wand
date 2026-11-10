@@ -228,7 +228,10 @@ static BOOL WNDUsesDTUHID(void) {
 // normalized points therefore use 1 x 1. Omitting them divides by undefined data.
 - (WNDIndigoMessage *)buildTouchMessageAtRatio:(CGPoint)ratio direction:(int)direction sizeOut:(size_t *)sizeOut {
   if (!_mouseFn) return NULL;
-  WNDIndigoMessage *message = _mouseFn(&ratio, NULL, 0x32, direction, 0, 1.0, 1.0);
+  // Indigo's single-contact builder rejects mouse-drag events. A continued
+  // contact is another down at the updated point, unlike DTUHID's move phase.
+  int event = direction == 6 ? WND_BUTTON_TYPE_DOWN : direction;
+  WNDIndigoMessage *message = _mouseFn(&ratio, NULL, 0x32, event, 0, 1.0, 1.0);
   size_t size = WNDMessageSize(message);
   if (size && message->innerSize == 0x90) {
     for (uint8_t i = 0; i < message->eventType; i++) {
@@ -283,7 +286,7 @@ static BOOL WNDUsesDTUHID(void) {
 - (BOOL)twoFingerTouchAtPoint1:(CGPoint)p1 point2:(CGPoint)p2 direction:(int)direction wait:(BOOL)wait {
   CGPoint r1 = [self ratioForPoint:p1], r2 = [self ratioForPoint:p2];
   if (_modernHID) { _lastSendError = [_modernHID touch:r1 second:&r2 phase:direction]; return !_lastSendError; }
-  if (!_mouseFn) return NO;
+  if (!_mouseFn) { _lastSendError = @"native HID builder unavailable"; return NO; }
   WNDIndigoMessage *message = _mouseFn(&r1, &r2, 0x32, direction, 0, 1.0, 1.0);
   size_t size = WNDMessageSize(message);
   if (size && message->innerSize == 0x90) {
@@ -381,7 +384,7 @@ static BOOL WNDUsesDTUHID(void) {
 
 // Two-finger gesture along a parameterized path. `pointsAtT` yields the two
 // finger positions for t in [0,1]. Down, interpolate, up.
-- (void)twoFingerGestureDuration:(double)duration
+- (BOOL)twoFingerGestureDuration:(double)duration
                         positions:(void (^)(double t, CGPoint *p1, CGPoint *p2))positions {
   double dur = duration > 0 ? duration : 0.4;
   NSUInteger steps = MAX((NSUInteger)4, (NSUInteger)(dur / 0.012));
@@ -389,16 +392,16 @@ static BOOL WNDUsesDTUHID(void) {
 
   CGPoint p1, p2;
   positions(0.0, &p1, &p2);
-  if (![self twoFingerTouchAtPoint1:p1 point2:p2 direction:WND_BUTTON_TYPE_DOWN wait:YES]) return;
+  if (![self twoFingerTouchAtPoint1:p1 point2:p2 direction:WND_BUTTON_TYPE_DOWN wait:YES]) return NO;
   usleep(20 * 1000);
   for (NSUInteger i = 1; i <= steps; i++) {
     double t = (double)i / (double)steps;
     positions(t, &p1, &p2);
-    if (![self twoFingerTouchAtPoint1:p1 point2:p2 direction:6 wait:NO]) return;
+    if (![self twoFingerTouchAtPoint1:p1 point2:p2 direction:6 wait:NO]) return NO;
     usleep(perStep);
   }
   positions(1.0, &p1, &p2);
-  [self twoFingerTouchAtPoint1:p1 point2:p2 direction:WND_BUTTON_TYPE_UP wait:YES];
+  return [self twoFingerTouchAtPoint1:p1 point2:p2 direction:WND_BUTTON_TYPE_UP wait:YES];
 }
 
 - (BOOL)pinchAtX:(double)x y:(double)y scale:(double)scale duration:(double)duration error:(NSError **)error {
@@ -407,24 +410,26 @@ static BOOL WNDUsesDTUHID(void) {
   double base = MIN(_screenPointSize.width, _screenPointSize.height) / 4.0;
   double startGap = (scale >= 1.0) ? base : base * scale;
   double endGap   = (scale >= 1.0) ? base * scale : base;
-  [self twoFingerGestureDuration:duration positions:^(double t, CGPoint *p1, CGPoint *p2) {
+  BOOL sent = [self twoFingerGestureDuration:duration positions:^(double t, CGPoint *p1, CGPoint *p2) {
     double gap = startGap + (endGap - startGap) * t;
     *p1 = CGPointMake(center.x - gap / 2.0, center.y);
     *p2 = CGPointMake(center.x + gap / 2.0, center.y);
   }];
-  return YES;
+  if (!sent && error) *error = WNDMakeError(13, _lastSendError ?: @"pinch delivery failed");
+  return sent;
 }
 
 - (BOOL)rotateAtX:(double)x y:(double)y radians:(double)radians duration:(double)duration error:(NSError **)error {
   if (!_modernHID && (!_hidClient || !_mouseFn)) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
   CGPoint center = CGPointMake(x, y);
   double radius = MIN(_screenPointSize.width, _screenPointSize.height) / 5.0;
-  [self twoFingerGestureDuration:duration positions:^(double t, CGPoint *p1, CGPoint *p2) {
+  BOOL sent = [self twoFingerGestureDuration:duration positions:^(double t, CGPoint *p1, CGPoint *p2) {
     double a = radians * t;
     *p1 = CGPointMake(center.x + radius * cos(a),          center.y + radius * sin(a));
     *p2 = CGPointMake(center.x + radius * cos(a + M_PI),   center.y + radius * sin(a + M_PI));
   }];
-  return YES;
+  if (!sent && error) *error = WNDMakeError(13, _lastSendError ?: @"rotation delivery failed");
+  return sent;
 }
 
 // watchOS Digital Crown. Apple's IndigoHIDMessageForDigitalCrownEvent(double)
@@ -725,7 +730,7 @@ static BOOL WNDUsageForChar(unichar c, int *usage, BOOL *shift) {
   if (!image) return 0;
   uint8_t pixels[64 * 64] = {0};
   CGColorSpaceRef space = CGColorSpaceCreateDeviceGray();
-  CGContextRef context = CGBitmapContextCreate(pixels, 64, 64, 8, 64, space, kCGImageAlphaNone);
+  CGContextRef context = CGBitmapContextCreate(pixels, 64, 64, 8, 64, space, (CGBitmapInfo)kCGImageAlphaNone);
   CGColorSpaceRelease(space);
   if (!context) { CGImageRelease(image); return 0; }
   CGContextDrawImage(context, CGRectMake(0, 0, 64, 64), image);
