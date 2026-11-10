@@ -5,6 +5,10 @@ All notable changes to Wand are documented here. Format roughly follows
 
 ## [Unreleased]
 
+- Add opt-in `profile` output with nested exclusive phase timing and daemon CPU,
+  plus app-independent workflow scenarios with explicit text/image assertions.
+- Defer unnecessary frame sampling during the watch's mandatory settling period;
+  preserve its one-second floor, final stable reads, cancellation and deadline.
 - Scan NDJSON reply buffers as contiguous bytes, reducing large-frame parsing
   overhead without changing UTF-8 checks, frame limits, deadlines or cancellation.
   Add interleaved baseline/candidate CLI benchmarks and a 4 MiB reply case.

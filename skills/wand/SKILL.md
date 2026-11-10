@@ -73,6 +73,14 @@ Daily startup maintenance preserves active logs, locks, recordings and user scre
 
 ## Tests and optional MCP
 
+For diagnosis, `profile '["tap","40","80"]'` (or JSON on stdin with `profile -`)
+executes once and returns the original result plus phase timings. It preserves
+failure status; do not replay a failed/ambiguous input. Sum **exclusive** phase
+times only. CPU covers the daemon, not workers/OS/GPU; output bytes are not tokens.
+Keep profiling opt-in. `examples/workflows.py` runs app-independent JSON scenarios
+with explicit text/image assertions; app coordinates, labels and image regions
+belong in scenario files, never the engine. See `docs/workflow-benchmarks.md`.
+
 Watch: `examples/watch/touch-smoke.swift` with an explicit disposable watch and
 Settings root visible. iOS: `examples/native/e2e.sh` with explicit `WAND_UDID` and
 fixture installed. Both assert actual outcomes. Coverage, budgets and limits:

@@ -1,0 +1,13 @@
+{
+  "name": "Native showcase text entry (requires fixture running; qualification separate)",
+  "preflight": [{"command": ["assert", "#textInput"]}],
+  "workflows": [{
+    "name": "unicode_text",
+    "steps": [
+      {"command": ["setvalue", "#textInput", "héllo🌱"]},
+      {"command": ["assert", "#status", "label=typed:héllo🌱"]},
+      {"command": ["clear", "#textInput"]},
+      {"command": ["assert", "#status", "label=typed:"]}
+    ]
+  }]
+}

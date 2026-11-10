@@ -1,0 +1,354 @@
+{
+  "schema": 1,
+  "udid": "48B1CAAD-E31C-4E3D-BF36-2F8665006E89",
+  "binary_sha256": "4c8aa98bc8e0a670270997447d10566867eb40cab6a431e9985b60edf87d654f",
+  "scenario": {
+    "name": "40mm watch Settings exact OCR quality",
+    "references": {
+      "root": "../../docs/validation/outcome-wait-preflight-2026-11-10/settings-root.png",
+      "detail": "../../docs/validation/outcome-wait-preflight-2026-11-10/notifications.png"
+    },
+    "preflight": [
+      {
+        "command": [
+          "info"
+        ],
+        "contains": "162x197pt"
+      },
+      {
+        "command": [
+          "screenshot",
+          "{output}/{sample}-root.png"
+        ]
+      },
+      {
+        "image": "{output}/{sample}-root.png",
+        "reference": "root"
+      }
+    ],
+    "workflows": [
+      {
+        "name": "exact_ocr",
+        "steps": [
+          {
+            "command": [
+              "see"
+            ],
+            "contains": "Notifications"
+          },
+          {
+            "command": [
+              "screenshot",
+              "{output}/{sample}-root.png"
+            ]
+          },
+          {
+            "image": "{output}/{sample}-root.png",
+            "reference": "root"
+          }
+        ]
+      }
+    ],
+    "once": [],
+    "image_region": [
+      0,
+      0.25,
+      1,
+      0.75
+    ]
+  },
+  "notes": [
+    "Exclusive phases only are additive.",
+    "CPU excludes workers, OS and GPU.",
+    "Bytes are not model token counts; CLI calls are not agent turns.",
+    "Cold boot, daemon startup, fixture preparation and helper compilation excluded.",
+    "Coverage is limited to the supplied scenario and tested runtime."
+  ],
+  "summaries": {
+    "exact_ocr": {
+      "attempted": 1,
+      "passed": 0,
+      "failed": 1,
+      "wall_ms": null,
+      "verification_ms": null,
+      "cli_ms": null,
+      "daemon_ms": null,
+      "daemon_cpu_ms": null,
+      "cli_calls": null,
+      "response_bytes": null,
+      "result_bytes": null,
+      "image_bytes": null,
+      "phase_share": {}
+    },
+    "preflight": {
+      "attempted": 1,
+      "passed": 1,
+      "failed": 0,
+      "wall_ms": {
+        "n": 1,
+        "median": 106.23429098632187,
+        "p95": 106.23429098632187,
+        "maximum": 106.23429098632187
+      },
+      "verification_ms": {
+        "n": 1,
+        "median": 23.662749968934804,
+        "p95": 23.662749968934804,
+        "maximum": 23.662749968934804
+      },
+      "cli_ms": {
+        "n": 1,
+        "median": 82.3053750791587,
+        "p95": 82.3053750791587,
+        "maximum": 82.3053750791587
+      },
+      "daemon_ms": {
+        "n": 1,
+        "median": 58.00970830023289,
+        "p95": 58.00970830023289,
+        "maximum": 58.00970830023289
+      },
+      "daemon_cpu_ms": {
+        "n": 1,
+        "median": 30.87400000000004,
+        "p95": 30.87400000000004,
+        "maximum": 30.87400000000004
+      },
+      "cli_calls": {
+        "n": 1,
+        "median": 2,
+        "p95": 2,
+        "maximum": 2
+      },
+      "response_bytes": {
+        "n": 1,
+        "median": 1019,
+        "p95": 1019,
+        "maximum": 1019
+      },
+      "result_bytes": {
+        "n": 1,
+        "median": 146,
+        "p95": 146,
+        "maximum": 146
+      },
+      "image_bytes": {
+        "n": 1,
+        "median": 37242,
+        "p95": 37242,
+        "maximum": 37242
+      },
+      "phase_share": {
+        "screenshot": 0.9994124548765442,
+        "dispatch": 0.0004352732773616515,
+        "geometry": 1.795606498580372e-05,
+        "session_check": 1.1492082273395363e-05
+      }
+    }
+  },
+  "rows": [
+    {
+      "workflow": "preflight",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 106.23429098632187,
+      "verification_ms": 23.662749968934804,
+      "commands": [
+        {
+          "command": [
+            "info"
+          ],
+          "cli_ms": 13.181875052396208,
+          "response_bytes": 429,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 0.017000000000017,
+            "elapsed_ms": 0.014708319213241339,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.01087499549612403,
+                "inclusive_ms": 0.011541647836565971
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0006666523404419422,
+                "inclusive_ms": 0.0006666523404419422
+              }
+            },
+            "result_bytes": 88
+          },
+          "result": "Wand Xcode27 QA (40mm) [48B1CAAD-E31C-4E3D-BF36-2F8665006E89] 162x197pt @2.0x HID=DTUHID",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/ocr-quality/preflight-root.png"
+          ],
+          "cli_ms": 69.12350002676249,
+          "response_bytes": 590,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 30.857000000000024,
+            "elapsed_ms": 57.994999981019646,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.014375080354511738,
+                "inclusive_ms": 57.99104168545455
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.00037497375160455704,
+                "inclusive_ms": 0.00037497375160455704
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 57.97562497900799,
+                "inclusive_ms": 57.97562497900799
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0006666523404419422,
+                "inclusive_ms": 0.0006666523404419422
+              }
+            },
+            "result_bytes": 58
+          },
+          "result": "/private/tmp/wand-workflows/ocr-quality/preflight-root.png",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/ocr-quality/preflight-root.png",
+          "bytes": 37242,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "3ec5d26fddeaf86da3cd9ba0604957331f01ad0dd24ac017b14616c3dfe648d8"
+        }
+      ],
+      "cli_calls": 2,
+      "phases": {
+        "dispatch": {
+          "calls": 2,
+          "exclusive_ms": 0.025250075850635767
+        },
+        "geometry": {
+          "calls": 2,
+          "exclusive_ms": 0.0010416260920464993
+        },
+        "screenshot": {
+          "calls": 1,
+          "exclusive_ms": 57.97562497900799
+        },
+        "session_check": {
+          "calls": 1,
+          "exclusive_ms": 0.0006666523404419422
+        }
+      },
+      "cli_ms": 82.3053750791587,
+      "response_bytes": 1019,
+      "image_bytes": 37242,
+      "daemon_ms": 58.00970830023289,
+      "daemon_cpu_ms": 30.87400000000004,
+      "result_bytes": 146
+    },
+    {
+      "workflow": "exact_ocr",
+      "verified": false,
+      "failure": "expected text missing: 'Notifications'; actual: '5 text regions (OCR)\\n\"9:53\" @135,15\\n\"Settings\" @54,33\\n\"7 Notif ications\" @69,67\\n\"mart Stack\" @84,117\\n\"Control Centre\" @88,165'",
+      "wall_ms": 139.8465830134228,
+      "verification_ms": 0,
+      "commands": [
+        {
+          "command": [
+            "see"
+          ],
+          "cli_ms": 139.67220799531788,
+          "response_bytes": 861,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 7.181999999999967,
+            "elapsed_ms": 126.95729167899117,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.57974987430498,
+                "inclusive_ms": 126.9534999737516
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0004166504368185997,
+                "inclusive_ms": 0.0004166504368185997
+              },
+              "ocr_capture": {
+                "calls": 1,
+                "exclusive_ms": 5.418750050012022,
+                "inclusive_ms": 5.418750050012022
+              },
+              "ocr_fast_worker": {
+                "calls": 1,
+                "exclusive_ms": 120.76504167634994,
+                "inclusive_ms": 120.76504167634994
+              },
+              "ocr_hash": {
+                "calls": 1,
+                "exclusive_ms": 0.18891668878495693,
+                "inclusive_ms": 0.18891668878495693
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.000625033862888813,
+                "inclusive_ms": 0.000625033862888813
+              }
+            },
+            "result_bytes": 125
+          },
+          "result": "5 text regions (OCR)\n\"9:53\" @135,15\n\"Settings\" @54,33\n\"7 Notif ications\" @69,67\n\"mart Stack\" @84,117\n\"Control Centre\" @88,165",
+          "schema": 1
+        }
+      ],
+      "images": [],
+      "cli_calls": 1,
+      "phases": {
+        "dispatch": {
+          "calls": 1,
+          "exclusive_ms": 0.57974987430498
+        },
+        "geometry": {
+          "calls": 1,
+          "exclusive_ms": 0.0004166504368185997
+        },
+        "ocr_capture": {
+          "calls": 1,
+          "exclusive_ms": 5.418750050012022
+        },
+        "ocr_fast_worker": {
+          "calls": 1,
+          "exclusive_ms": 120.76504167634994
+        },
+        "ocr_hash": {
+          "calls": 1,
+          "exclusive_ms": 0.18891668878495693
+        },
+        "session_check": {
+          "calls": 1,
+          "exclusive_ms": 0.000625033862888813
+        }
+      },
+      "cli_ms": 139.67220799531788,
+      "response_bytes": 861,
+      "image_bytes": 0,
+      "daemon_ms": 126.95729167899117,
+      "daemon_cpu_ms": 7.181999999999967,
+      "result_bytes": 125
+    }
+  ]
+}

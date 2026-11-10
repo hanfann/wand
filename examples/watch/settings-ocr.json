@@ -1,0 +1,55 @@
+{
+  "name": "40mm watch Settings exact OCR quality",
+  "references": {
+    "root": "../../docs/validation/outcome-wait-preflight-2026-11-10/settings-root.png",
+    "detail": "../../docs/validation/outcome-wait-preflight-2026-11-10/notifications.png"
+  },
+  "preflight": [
+    {
+      "command": [
+        "info"
+      ],
+      "contains": "162x197pt"
+    },
+    {
+      "command": [
+        "screenshot",
+        "{output}/{sample}-root.png"
+      ]
+    },
+    {
+      "image": "{output}/{sample}-root.png",
+      "reference": "root"
+    }
+  ],
+  "workflows": [
+    {
+      "name": "exact_ocr",
+      "steps": [
+        {
+          "command": [
+            "see"
+          ],
+          "contains": "Notifications"
+        },
+        {
+          "command": [
+            "screenshot",
+            "{output}/{sample}-root.png"
+          ]
+        },
+        {
+          "image": "{output}/{sample}-root.png",
+          "reference": "root"
+        }
+      ]
+    }
+  ],
+  "once": [],
+  "image_region": [
+    0,
+    0.25,
+    1,
+    0.75
+  ]
+}

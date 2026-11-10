@@ -25,6 +25,7 @@ final class OCRService {
     }
 
     var cancelled: (() -> Bool)?
+    var profile: PhaseProfile?
     private let workerExecutable: String
     private let temporaryDirectory: String
     private let now: () -> TimeInterval
@@ -58,10 +59,12 @@ final class OCRService {
         let path = temporaryDirectory + "/ocr-" + UUID().uuidString + ".png"
         defer { try? FileManager.default.removeItem(atPath: path) }
         FileManager.default.createFile(atPath: path, contents: nil, attributes: [.posixPermissions: 0o600])
-        try capture(path)
-        let bytes = try Data(contentsOf: URL(fileURLWithPath: path))
-        let key = SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
-            + "|\(width)|\(height)"
+        try timed("ocr_capture") { try capture(path) }
+        let key = try timed("ocr_hash") {
+            let bytes = try Data(contentsOf: URL(fileURLWithPath: path))
+            return SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
+                + "|\(width)|\(height)"
+        }
         return try body(Frame(path: path, key: key, width: width, height: height))
     }
 
@@ -71,9 +74,18 @@ final class OCRService {
             cachedKey = frame.key
             cached.removeAll(keepingCapacity: true)
         }
-        if let observations = cached[accurate] { return observations }
+        if let observations = cached[accurate] { return timed("ocr_cache") { observations } }
         if accurate && automatic && now() < accurateUnavailableUntil { throw Failure.coolingDown }
 
+        let observations = try timed(accurate ? "ocr_accurate_worker" : "ocr_fast_worker") {
+            try runWorker(frame: frame, accurate: accurate)
+        }
+        if accurate { accurateUnavailableUntil = 0 }
+        cached[accurate] = observations
+        return observations
+    }
+
+    private func runWorker(frame: Frame, accurate: Bool) throws -> [[String: Any]] {
         let resultPath = temporaryDirectory + "/ocr-" + UUID().uuidString + ".json"
         defer { try? FileManager.default.removeItem(atPath: resultPath) }
         FileManager.default.createFile(atPath: resultPath, contents: nil, attributes: [.posixPermissions: 0o600])
@@ -104,9 +116,12 @@ final class OCRService {
               let observations = (try? JSONSerialization.jsonObject(with: data)) as? [[String: Any]] else {
             throw Failure.workerFailed
         }
-        if accurate { accurateUnavailableUntil = 0 }
-        cached[accurate] = observations
         return observations
+    }
+
+    private func timed<T>(_ name: String, _ body: () throws -> T) rethrows -> T {
+        if let profile { return try profile.measure(name, body) }
+        return try body()
     }
 
     private func checkCancellation() throws {

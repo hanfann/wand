@@ -15,6 +15,7 @@ examples/*/build/
 
 # Logs / runtime
 *.log
+__pycache__/
 
 # Local/CI simulator evidence (curated reports live under docs/)
 live-evidence/

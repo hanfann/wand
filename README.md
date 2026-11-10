@@ -347,6 +347,11 @@ latency distributions, context bytes, framing failures, navigation outcomes and
 memory/idle CPU. Fast OCR and accurate OCR have different quality/latency tradeoffs;
 benchmark both on the target app. UI acknowledgement alone is not an outcome assertion.
 
+`wand profile '["ui"]'` adds opt-in phase timings without changing the command's
+result or failure status. [Workflow scenarios](docs/workflow-benchmarks.md) measure
+verified tasks across apps; test-specific labels/coordinates stay outside Wand's
+engine. Report CPU and complete workflow latency separately.
+
 `boot` is headless by default; `--show` opens DeviceHub (or Simulator on older
 Xcode). `shutdown` also asks the selected Wand daemon to stop its workers. Fresh
 observations are required before reusing positional `eN` references after input.

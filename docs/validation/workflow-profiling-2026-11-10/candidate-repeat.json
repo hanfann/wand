@@ -1,0 +1,3294 @@
+{
+  "schema": 1,
+  "udid": "48B1CAAD-E31C-4E3D-BF36-2F8665006E89",
+  "binary_sha256": "4c8aa98bc8e0a670270997447d10566867eb40cab6a431e9985b60edf87d654f",
+  "scenario": {
+    "name": "40mm watch Settings",
+    "references": {
+      "root": "../../docs/validation/outcome-wait-preflight-2026-11-10/settings-root.png",
+      "detail": "../../docs/validation/outcome-wait-preflight-2026-11-10/notifications.png"
+    },
+    "preflight": [
+      {
+        "command": [
+          "info"
+        ],
+        "contains": "162x197pt"
+      },
+      {
+        "command": [
+          "screenshot",
+          "{output}/{sample}-root.png"
+        ]
+      },
+      {
+        "image": "{output}/{sample}-root.png",
+        "reference": "root"
+      }
+    ],
+    "workflows": [
+      {
+        "name": "navigation",
+        "steps": [
+          {
+            "command": [
+              "tap",
+              "81",
+              "70"
+            ]
+          },
+          {
+            "command": [
+              "screenshot",
+              "{output}/{sample}-detail.png"
+            ]
+          },
+          {
+            "command": [
+              "tap",
+              "20",
+              "28"
+            ]
+          },
+          {
+            "command": [
+              "screenshot",
+              "{output}/{sample}-root.png"
+            ]
+          },
+          {
+            "image": "{output}/{sample}-detail.png",
+            "reference": "detail"
+          },
+          {
+            "image": "{output}/{sample}-root.png",
+            "reference": "root"
+          }
+        ]
+      },
+      {
+        "name": "batch_navigation",
+        "steps": [
+          {
+            "command": [
+              "batch",
+              "--summary",
+              "[[\"tap\", \"81\", \"70\"], [\"screenshot\", \"{output}/{sample}-detail.png\"], [\"tap\", \"20\", \"28\"], [\"screenshot\", \"{output}/{sample}-root.png\"]]"
+            ]
+          },
+          {
+            "image": "{output}/{sample}-detail.png",
+            "reference": "detail"
+          },
+          {
+            "image": "{output}/{sample}-root.png",
+            "reference": "root"
+          }
+        ]
+      }
+    ],
+    "once": [
+      {
+        "name": "crown_roundtrip",
+        "steps": [
+          {
+            "command": [
+              "crown",
+              "down",
+              "3"
+            ]
+          },
+          {
+            "command": [
+              "screenshot",
+              "{output}/{sample}-down.png"
+            ]
+          },
+          {
+            "image": "{output}/{sample}-down.png",
+            "reference": "root",
+            "different": true
+          },
+          {
+            "command": [
+              "crown",
+              "up",
+              "4"
+            ]
+          },
+          {
+            "command": [
+              "screenshot",
+              "{output}/{sample}-up.png"
+            ]
+          },
+          {
+            "image": "{output}/{sample}-up.png",
+            "reference": "root"
+          }
+        ]
+      },
+      {
+        "name": "visual_inspection",
+        "steps": [
+          {
+            "command": [
+              "screenshot",
+              "{output}/{sample}-preview.png",
+              "--preview",
+              "640"
+            ]
+          },
+          {
+            "image": "{output}/{sample}-preview.png",
+            "reference": "root"
+          }
+        ]
+      },
+      {
+        "name": "failure_recovery",
+        "steps": [
+          {
+            "command": [
+              "batch",
+              "--summary",
+              "[[\"assert\", \"#WAND_WORKFLOW_MISSING\"], [\"tap\", \"81\", \"70\"]]"
+            ],
+            "ok": false,
+            "contains": "FAIL"
+          },
+          {
+            "command": [
+              "screenshot",
+              "{output}/{sample}-untouched.png"
+            ]
+          },
+          {
+            "image": "{output}/{sample}-untouched.png",
+            "reference": "root"
+          },
+          {
+            "command": [
+              "tap",
+              "81",
+              "70"
+            ]
+          },
+          {
+            "command": [
+              "screenshot",
+              "{output}/{sample}-detail.png"
+            ]
+          },
+          {
+            "command": [
+              "tap",
+              "20",
+              "28"
+            ]
+          },
+          {
+            "command": [
+              "screenshot",
+              "{output}/{sample}-root.png"
+            ]
+          },
+          {
+            "image": "{output}/{sample}-detail.png",
+            "reference": "detail"
+          },
+          {
+            "image": "{output}/{sample}-root.png",
+            "reference": "root"
+          }
+        ]
+      }
+    ],
+    "image_region": [
+      0,
+      0.25,
+      1,
+      0.75
+    ]
+  },
+  "notes": [
+    "Exclusive phases only are additive.",
+    "CPU excludes workers, OS and GPU.",
+    "Bytes are not model token counts; CLI calls are not agent turns.",
+    "Cold boot, daemon startup, fixture preparation and helper compilation excluded.",
+    "Coverage is limited to the supplied scenario and tested runtime."
+  ],
+  "summaries": {
+    "batch_navigation": {
+      "attempted": 5,
+      "passed": 5,
+      "failed": 0,
+      "wall_ms": {
+        "n": 5,
+        "median": 2405.082959041465,
+        "p95": 2499.2488750140183,
+        "maximum": 2499.2488750140183
+      },
+      "verification_ms": {
+        "n": 5,
+        "median": 55.52895797882229,
+        "p95": 57.69500002497807,
+        "maximum": 57.69500002497807
+      },
+      "cli_ms": {
+        "n": 5,
+        "median": 2347.0757090253755,
+        "p95": 2445.0392089784145,
+        "maximum": 2445.0392089784145
+      },
+      "daemon_ms": {
+        "n": 5,
+        "median": 2331.0331249958836,
+        "p95": 2429.4864166877232,
+        "maximum": 2429.4864166877232
+      },
+      "daemon_cpu_ms": {
+        "n": 5,
+        "median": 71.40099999999983,
+        "p95": 72.47300000000001,
+        "maximum": 72.47300000000001
+      },
+      "cli_calls": {
+        "n": 5,
+        "median": 1,
+        "p95": 1,
+        "maximum": 1
+      },
+      "response_bytes": {
+        "n": 5,
+        "median": 894,
+        "p95": 894,
+        "maximum": 894
+      },
+      "result_bytes": {
+        "n": 5,
+        "median": 91,
+        "p95": 91,
+        "maximum": 91
+      },
+      "image_bytes": {
+        "n": 5,
+        "median": 78745,
+        "p95": 78745,
+        "maximum": 78745
+      },
+      "phase_share": {
+        "settle": 0.9117183721656077,
+        "input": 0.05457726898991689,
+        "frame_fingerprint": 0.025687763112388955,
+        "screenshot": 0.007925856640843077,
+        "dispatch": 7.96920077773726e-05,
+        "session_check": 6.5760590410407995e-06,
+        "geometry": 1.6889702611134159e-06
+      }
+    },
+    "crown_roundtrip": {
+      "attempted": 1,
+      "passed": 1,
+      "failed": 0,
+      "wall_ms": {
+        "n": 1,
+        "median": 4258.8013330241665,
+        "p95": 4258.8013330241665,
+        "maximum": 4258.8013330241665
+      },
+      "verification_ms": {
+        "n": 1,
+        "median": 50.87799904868007,
+        "p95": 50.87799904868007,
+        "maximum": 50.87799904868007
+      },
+      "cli_ms": {
+        "n": 1,
+        "median": 4206.9722909945995,
+        "p95": 4206.9722909945995,
+        "maximum": 4206.9722909945995
+      },
+      "daemon_ms": {
+        "n": 1,
+        "median": 4135.899458313361,
+        "p95": 4135.899458313361,
+        "maximum": 4135.899458313361
+      },
+      "daemon_cpu_ms": {
+        "n": 1,
+        "median": 83.3889999999995,
+        "p95": 83.3889999999995,
+        "maximum": 83.3889999999995
+      },
+      "cli_calls": {
+        "n": 1,
+        "median": 4,
+        "p95": 4,
+        "maximum": 4
+      },
+      "response_bytes": {
+        "n": 1,
+        "median": 2644,
+        "p95": 2644,
+        "maximum": 2644
+      },
+      "result_bytes": {
+        "n": 1,
+        "median": 158,
+        "p95": 158,
+        "maximum": 158
+      },
+      "image_bytes": {
+        "n": 1,
+        "median": 96495,
+        "p95": 96495,
+        "maximum": 96495
+      },
+      "phase_share": {
+        "settle": 0.5567233374812421,
+        "dispatch": 0.210505298493154,
+        "input": 0.2062767644342367,
+        "frame_fingerprint": 0.022324073874308504,
+        "screenshot": 0.004154708906571769,
+        "session_check": 8.160388899110096e-07,
+        "geometry": 4.835744314254573e-07
+      }
+    },
+    "failure_recovery": {
+      "attempted": 1,
+      "passed": 1,
+      "failed": 0,
+      "wall_ms": {
+        "n": 1,
+        "median": 2496.5477090445347,
+        "p95": 2496.5477090445347,
+        "maximum": 2496.5477090445347
+      },
+      "verification_ms": {
+        "n": 1,
+        "median": 73.52037506643683,
+        "p95": 73.52037506643683,
+        "maximum": 73.52037506643683
+      },
+      "cli_ms": {
+        "n": 1,
+        "median": 2421.916332037654,
+        "p95": 2421.916332037654,
+        "maximum": 2421.916332037654
+      },
+      "daemon_ms": {
+        "n": 1,
+        "median": 2322.871250042226,
+        "p95": 2322.871250042226,
+        "maximum": 2322.871250042226
+      },
+      "daemon_cpu_ms": {
+        "n": 1,
+        "median": 59.10800000000105,
+        "p95": 59.10800000000105,
+        "maximum": 59.10800000000105
+      },
+      "cli_calls": {
+        "n": 1,
+        "median": 6,
+        "p95": 6,
+        "maximum": 6
+      },
+      "response_bytes": {
+        "n": 1,
+        "median": 4034,
+        "p95": 4034,
+        "maximum": 4034
+      },
+      "result_bytes": {
+        "n": 1,
+        "median": 372,
+        "p95": 372,
+        "maximum": 372
+      },
+      "image_bytes": {
+        "n": 1,
+        "median": 114996,
+        "p95": 114996,
+        "maximum": 114996
+      },
+      "phase_share": {
+        "settle": 0.9077909863557304,
+        "input": 0.05459778493661249,
+        "frame_fingerprint": 0.027007702941982903,
+        "screenshot": 0.008073323775241474,
+        "accessibility": 0.0024316349961513045,
+        "dispatch": 6.278148176614071e-05,
+        "snapshot_model": 5.488888232284448e-06,
+        "session_check": 2.439519802402213e-06,
+        "geometry": 1.7220449327794979e-06
+      }
+    },
+    "navigation": {
+      "attempted": 5,
+      "passed": 5,
+      "failed": 0,
+      "wall_ms": {
+        "n": 5,
+        "median": 2444.624624971766,
+        "p95": 2472.8949170093983,
+        "maximum": 2472.8949170093983
+      },
+      "verification_ms": {
+        "n": 5,
+        "median": 49.130333005450666,
+        "p95": 50.92062597395852,
+        "maximum": 50.92062597395852
+      },
+      "cli_ms": {
+        "n": 5,
+        "median": 2396.1680830689147,
+        "p95": 2422.792041033972,
+        "maximum": 2422.792041033972
+      },
+      "daemon_ms": {
+        "n": 5,
+        "median": 2325.6122499587946,
+        "p95": 2349.7402083012275,
+        "maximum": 2349.7402083012275
+      },
+      "daemon_cpu_ms": {
+        "n": 5,
+        "median": 60.102999999999795,
+        "p95": 61.986999999999796,
+        "maximum": 61.986999999999796
+      },
+      "cli_calls": {
+        "n": 5,
+        "median": 4,
+        "p95": 4,
+        "maximum": 4
+      },
+      "response_bytes": {
+        "n": 5,
+        "median": 2644,
+        "p95": 2650,
+        "maximum": 2650
+      },
+      "result_bytes": {
+        "n": 5,
+        "median": 160,
+        "p95": 160,
+        "maximum": 160
+      },
+      "image_bytes": {
+        "n": 5,
+        "median": 78745,
+        "p95": 78745,
+        "maximum": 78745
+      },
+      "phase_share": {
+        "settle": 0.907347203312367,
+        "input": 0.05576302668781679,
+        "frame_fingerprint": 0.029151373936801953,
+        "screenshot": 0.0076822820294463546,
+        "dispatch": 3.417738793957652e-05,
+        "session_check": 1.7144144274706439e-06,
+        "geometry": 1.1131211209918226e-06
+      }
+    },
+    "preflight": {
+      "attempted": 1,
+      "passed": 1,
+      "failed": 0,
+      "wall_ms": {
+        "n": 1,
+        "median": 56.69270799262449,
+        "p95": 56.69270799262449,
+        "maximum": 56.69270799262449
+      },
+      "verification_ms": {
+        "n": 1,
+        "median": 23.40587496291846,
+        "p95": 23.40587496291846,
+        "maximum": 23.40587496291846
+      },
+      "cli_ms": {
+        "n": 1,
+        "median": 32.94679208192974,
+        "p95": 32.94679208192974,
+        "maximum": 32.94679208192974
+      },
+      "daemon_ms": {
+        "n": 1,
+        "median": 8.658041653688997,
+        "p95": 8.658041653688997,
+        "maximum": 8.658041653688997
+      },
+      "daemon_cpu_ms": {
+        "n": 1,
+        "median": 7.552999999999699,
+        "p95": 7.552999999999699,
+        "maximum": 7.552999999999699
+      },
+      "cli_calls": {
+        "n": 1,
+        "median": 2,
+        "p95": 2,
+        "maximum": 2
+      },
+      "response_bytes": {
+        "n": 1,
+        "median": 1023,
+        "p95": 1023,
+        "maximum": 1023
+      },
+      "result_bytes": {
+        "n": 1,
+        "median": 151,
+        "p95": 151,
+        "maximum": 151
+      },
+      "image_bytes": {
+        "n": 1,
+        "median": 37306,
+        "p95": 37306,
+        "maximum": 37306
+      },
+      "phase_share": {
+        "screenshot": 0.9958035154125151,
+        "dispatch": 0.002603546631248504,
+        "geometry": 0.00014918918792454605,
+        "session_check": 8.662532947626407e-05
+      }
+    },
+    "visual_inspection": {
+      "attempted": 1,
+      "passed": 1,
+      "failed": 0,
+      "wall_ms": {
+        "n": 1,
+        "median": 42.71424998296425,
+        "p95": 42.71424998296425,
+        "maximum": 42.71424998296425
+      },
+      "verification_ms": {
+        "n": 1,
+        "median": 23.308833013288677,
+        "p95": 23.308833013288677,
+        "maximum": 23.308833013288677
+      },
+      "cli_ms": {
+        "n": 1,
+        "median": 19.214916974306107,
+        "p95": 19.214916974306107,
+        "maximum": 19.214916974306107
+      },
+      "daemon_ms": {
+        "n": 1,
+        "median": 6.154750008136034,
+        "p95": 6.154750008136034,
+        "maximum": 6.154750008136034
+      },
+      "daemon_cpu_ms": {
+        "n": 1,
+        "median": 5.7480000000005305,
+        "p95": 5.7480000000005305,
+        "maximum": 5.7480000000005305
+      },
+      "cli_calls": {
+        "n": 1,
+        "median": 1,
+        "p95": 1,
+        "maximum": 1
+      },
+      "response_bytes": {
+        "n": 1,
+        "median": 970,
+        "p95": 970,
+        "maximum": 970
+      },
+      "result_bytes": {
+        "n": 1,
+        "median": 322,
+        "p95": 322,
+        "maximum": 322
+      },
+      "image_bytes": {
+        "n": 1,
+        "median": 36930,
+        "p95": 36930,
+        "maximum": 36930
+      },
+      "phase_share": {
+        "screenshot": 0.9237242216123278,
+        "preview": 0.06337246471933405,
+        "dispatch": 0.01160350413948465,
+        "session_check": 0.0001150865631779742,
+        "geometry": 8.123868663808023e-05
+      }
+    }
+  },
+  "rows": [
+    {
+      "workflow": "preflight",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 56.69270799262449,
+      "verification_ms": 23.40587496291846,
+      "commands": [
+        {
+          "command": [
+            "info"
+          ],
+          "cli_ms": 12.18883303226903,
+          "response_bytes": 429,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 0.023999999999801958,
+            "elapsed_ms": 0.021041661966592073,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.014666642528027296,
+                "inclusive_ms": 0.015500001609325409
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0008333590812981129,
+                "inclusive_ms": 0.0008333590812981129
+              }
+            },
+            "result_bytes": 88
+          },
+          "result": "Wand Xcode27 QA (40mm) [48B1CAAD-E31C-4E3D-BF36-2F8665006E89] 162x197pt @2.0x HID=DTUHID",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/preflight-root.png"
+          ],
+          "cli_ms": 20.757959049660712,
+          "response_bytes": 594,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 7.528999999999897,
+            "elapsed_ms": 8.636999991722405,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.007874972652643919,
+                "inclusive_ms": 8.630791620817035
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.00045832712203264236,
+                "inclusive_ms": 0.00045832712203264236
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 8.621708315331489,
+                "inclusive_ms": 8.621708315331489
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0007500057108700275,
+                "inclusive_ms": 0.0007500057108700275
+              }
+            },
+            "result_bytes": 63
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/preflight-root.png",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/preflight-root.png",
+          "bytes": 37306,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "c1c760a0f80abde94361dfea4b214a2da8c96019f5ecaa45771348a73cf7e727"
+        }
+      ],
+      "cli_calls": 2,
+      "phases": {
+        "dispatch": {
+          "calls": 2,
+          "exclusive_ms": 0.022541615180671215
+        },
+        "geometry": {
+          "calls": 2,
+          "exclusive_ms": 0.0012916862033307552
+        },
+        "screenshot": {
+          "calls": 1,
+          "exclusive_ms": 8.621708315331489
+        },
+        "session_check": {
+          "calls": 1,
+          "exclusive_ms": 0.0007500057108700275
+        }
+      },
+      "cli_ms": 32.94679208192974,
+      "response_bytes": 1023,
+      "image_bytes": 37306,
+      "daemon_ms": 8.658041653688997,
+      "daemon_cpu_ms": 7.552999999999699,
+      "result_bytes": 151
+    },
+    {
+      "workflow": "navigation",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 2436.058708000928,
+      "verification_ms": 49.130333005450666,
+      "commands": [
+        {
+          "command": [
+            "tap",
+            "81",
+            "70"
+          ],
+          "cli_ms": 1111.7572920047678,
+          "response_bytes": 726,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 15.255999999999936,
+            "elapsed_ms": 1098.022749996744,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.021249987185001373,
+                "inclusive_ms": 1098.013125010766
+              },
+              "frame_fingerprint": {
+                "calls": 3,
+                "exclusive_ms": 22.595833346713334,
+                "inclusive_ms": 22.595833346713334
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0003750319592654705,
+                "inclusive_ms": 0.0003750319592654705
+              },
+              "input": {
+                "calls": 1,
+                "exclusive_ms": 65.22104167379439,
+                "inclusive_ms": 65.22104167379439
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0006666523404419422,
+                "inclusive_ms": 0.0006666523404419422
+              },
+              "settle": {
+                "calls": 1,
+                "exclusive_ms": 1010.1739583187737,
+                "inclusive_ms": 1032.769791665487
+              }
+            },
+            "result_bytes": 13
+          },
+          "result": "tapped @81,70",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/0-navigation-detail.png"
+          ],
+          "cli_ms": 25.431458023376763,
+          "response_bytes": 600,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 5.997999999999948,
+            "elapsed_ms": 6.559666653629392,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.017291633412241936,
+                "inclusive_ms": 6.548708362970501
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0009166542440652847,
+                "inclusive_ms": 0.0009166542440652847
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 6.529625039547682,
+                "inclusive_ms": 6.529625039547682
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0008750357665121555,
+                "inclusive_ms": 0.0008750357665121555
+              }
+            },
+            "result_bytes": 68
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/0-navigation-detail.png",
+          "schema": 1
+        },
+        {
+          "command": [
+            "tap",
+            "20",
+            "28"
+          ],
+          "cli_ms": 1222.9077920201235,
+          "response_bytes": 728,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 28.852999999999795,
+            "elapsed_ms": 1207.5078750494868,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.02462498378008604,
+                "inclusive_ms": 1207.4979583267123
+              },
+              "frame_fingerprint": {
+                "calls": 4,
+                "exclusive_ms": 38.32291660364717,
+                "inclusive_ms": 38.32291660364717
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0007500057108700275,
+                "inclusive_ms": 0.0007500057108700275
+              },
+              "input": {
+                "calls": 1,
+                "exclusive_ms": 65.18020835937932,
+                "inclusive_ms": 65.18020835937932
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0009166542440652847,
+                "inclusive_ms": 0.0009166542440652847
+              },
+              "settle": {
+                "calls": 1,
+                "exclusive_ms": 1103.9685417199507,
+                "inclusive_ms": 1142.291458323598
+              }
+            },
+            "result_bytes": 13
+          },
+          "result": "tapped @20,28",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/0-navigation-root.png"
+          ],
+          "cli_ms": 25.912374956533313,
+          "response_bytes": 596,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 5.836000000000396,
+            "elapsed_ms": 6.338666658848524,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.014916644431650639,
+                "inclusive_ms": 6.3277916633524
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0008750357665121555,
+                "inclusive_ms": 0.0008750357665121555
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 6.310999975539744,
+                "inclusive_ms": 6.310999975539744
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.00100000761449337,
+                "inclusive_ms": 0.00100000761449337
+              }
+            },
+            "result_bytes": 66
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/0-navigation-root.png",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/0-navigation-detail.png",
+          "bytes": 41439,
+          "width": 324,
+          "height": 394,
+          "reference": "detail",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "2fe6e643a420e75a9b8eaeaa74c738ffa08756d59672ab3b28f07292d00bceee"
+        },
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/0-navigation-root.png",
+          "bytes": 37306,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "c1c760a0f80abde94361dfea4b214a2da8c96019f5ecaa45771348a73cf7e727"
+        }
+      ],
+      "cli_calls": 4,
+      "phases": {
+        "dispatch": {
+          "calls": 4,
+          "exclusive_ms": 0.07808324880897999
+        },
+        "frame_fingerprint": {
+          "calls": 7,
+          "exclusive_ms": 60.91874995036051
+        },
+        "geometry": {
+          "calls": 4,
+          "exclusive_ms": 0.0029167276807129383
+        },
+        "input": {
+          "calls": 2,
+          "exclusive_ms": 130.4012500331737
+        },
+        "session_check": {
+          "calls": 4,
+          "exclusive_ms": 0.0034583499655127525
+        },
+        "settle": {
+          "calls": 2,
+          "exclusive_ms": 2114.1425000387244
+        },
+        "screenshot": {
+          "calls": 2,
+          "exclusive_ms": 12.840625015087426
+        }
+      },
+      "cli_ms": 2386.0089170048013,
+      "response_bytes": 2650,
+      "image_bytes": 78745,
+      "daemon_ms": 2318.4289583587088,
+      "daemon_cpu_ms": 55.943000000000076,
+      "result_bytes": 160
+    },
+    {
+      "workflow": "batch_navigation",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 2480.9455829672515,
+      "verification_ms": 53.48554195370525,
+      "commands": [
+        {
+          "command": [
+            "batch",
+            "--summary",
+            "[[\"tap\", \"81\", \"70\"], [\"screenshot\", \"/private/tmp/wand-workflows/candidate-repeat/0-batch_navigation-detail.png\"], [\"tap\", \"20\", \"28\"], [\"screenshot\", \"/private/tmp/wand-workflows/candidate-repeat/0-batch_navigation-root.png\"]]"
+          ],
+          "cli_ms": 2427.149874973111,
+          "response_bytes": 894,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 71.40099999999983,
+            "elapsed_ms": 2412.1394583489746,
+            "phases": {
+              "dispatch": {
+                "calls": 5,
+                "exclusive_ms": 0.2034582430496812,
+                "inclusive_ms": 4824.189541686792
+              },
+              "frame_fingerprint": {
+                "calls": 8,
+                "exclusive_ms": 61.55612500151619,
+                "inclusive_ms": 61.55612500151619
+              },
+              "geometry": {
+                "calls": 4,
+                "exclusive_ms": 0.0039583537727594376,
+                "inclusive_ms": 0.0039583537727594376
+              },
+              "input": {
+                "calls": 2,
+                "exclusive_ms": 130.13450003927574,
+                "inclusive_ms": 130.13450003927574
+              },
+              "screenshot": {
+                "calls": 2,
+                "exclusive_ms": 16.54500002041459,
+                "inclusive_ms": 16.54500002041459
+              },
+              "session_check": {
+                "calls": 5,
+                "exclusive_ms": 0.01750001683831215,
+                "inclusive_ms": 0.01750001683831215
+              },
+              "settle": {
+                "calls": 2,
+                "exclusive_ms": 2203.6728333332576,
+                "inclusive_ms": 2265.228958334774
+              }
+            },
+            "result_bytes": 91
+          },
+          "result": "completed 4/4\n4 OK /private/tmp/wand-workflows/candidate-repeat/0-batch_navigation-root.png",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/0-batch_navigation-detail.png",
+          "bytes": 41439,
+          "width": 324,
+          "height": 394,
+          "reference": "detail",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "2fe6e643a420e75a9b8eaeaa74c738ffa08756d59672ab3b28f07292d00bceee"
+        },
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/0-batch_navigation-root.png",
+          "bytes": 37306,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "c1c760a0f80abde94361dfea4b214a2da8c96019f5ecaa45771348a73cf7e727"
+        }
+      ],
+      "cli_calls": 1,
+      "phases": {
+        "dispatch": {
+          "calls": 5,
+          "exclusive_ms": 0.2034582430496812
+        },
+        "frame_fingerprint": {
+          "calls": 8,
+          "exclusive_ms": 61.55612500151619
+        },
+        "geometry": {
+          "calls": 4,
+          "exclusive_ms": 0.0039583537727594376
+        },
+        "input": {
+          "calls": 2,
+          "exclusive_ms": 130.13450003927574
+        },
+        "screenshot": {
+          "calls": 2,
+          "exclusive_ms": 16.54500002041459
+        },
+        "session_check": {
+          "calls": 5,
+          "exclusive_ms": 0.01750001683831215
+        },
+        "settle": {
+          "calls": 2,
+          "exclusive_ms": 2203.6728333332576
+        }
+      },
+      "cli_ms": 2427.149874973111,
+      "response_bytes": 894,
+      "image_bytes": 78745,
+      "daemon_ms": 2412.1394583489746,
+      "daemon_cpu_ms": 71.40099999999983,
+      "result_bytes": 91
+    },
+    {
+      "workflow": "batch_navigation",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 2499.2488750140183,
+      "verification_ms": 53.874250035732985,
+      "commands": [
+        {
+          "command": [
+            "batch",
+            "--summary",
+            "[[\"tap\", \"81\", \"70\"], [\"screenshot\", \"/private/tmp/wand-workflows/candidate-repeat/1-batch_navigation-detail.png\"], [\"tap\", \"20\", \"28\"], [\"screenshot\", \"/private/tmp/wand-workflows/candidate-repeat/1-batch_navigation-root.png\"]]"
+          ],
+          "cli_ms": 2445.0392089784145,
+          "response_bytes": 894,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 62.1590000000003,
+            "elapsed_ms": 2429.4864166877232,
+            "phases": {
+              "dispatch": {
+                "calls": 5,
+                "exclusive_ms": 0.18112501129508018,
+                "inclusive_ms": 4858.877666702028
+              },
+              "frame_fingerprint": {
+                "calls": 8,
+                "exclusive_ms": 68.90245841350406,
+                "inclusive_ms": 68.90245841350406
+              },
+              "geometry": {
+                "calls": 4,
+                "exclusive_ms": 0.004833273123949766,
+                "inclusive_ms": 0.004833273123949766
+              },
+              "input": {
+                "calls": 2,
+                "exclusive_ms": 129.97570837615058,
+                "inclusive_ms": 129.97570837615058
+              },
+              "screenshot": {
+                "calls": 2,
+                "exclusive_ms": 19.52075003646314,
+                "inclusive_ms": 19.52075003646314
+              },
+              "session_check": {
+                "calls": 5,
+                "exclusive_ms": 0.015666591934859753,
+                "inclusive_ms": 0.015666591934859753
+              },
+              "settle": {
+                "calls": 2,
+                "exclusive_ms": 2210.879458289128,
+                "inclusive_ms": 2279.781916702632
+              }
+            },
+            "result_bytes": 91
+          },
+          "result": "completed 4/4\n4 OK /private/tmp/wand-workflows/candidate-repeat/1-batch_navigation-root.png",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/1-batch_navigation-detail.png",
+          "bytes": 41439,
+          "width": 324,
+          "height": 394,
+          "reference": "detail",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "2fe6e643a420e75a9b8eaeaa74c738ffa08756d59672ab3b28f07292d00bceee"
+        },
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/1-batch_navigation-root.png",
+          "bytes": 37306,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "c1c760a0f80abde94361dfea4b214a2da8c96019f5ecaa45771348a73cf7e727"
+        }
+      ],
+      "cli_calls": 1,
+      "phases": {
+        "dispatch": {
+          "calls": 5,
+          "exclusive_ms": 0.18112501129508018
+        },
+        "frame_fingerprint": {
+          "calls": 8,
+          "exclusive_ms": 68.90245841350406
+        },
+        "geometry": {
+          "calls": 4,
+          "exclusive_ms": 0.004833273123949766
+        },
+        "input": {
+          "calls": 2,
+          "exclusive_ms": 129.97570837615058
+        },
+        "screenshot": {
+          "calls": 2,
+          "exclusive_ms": 19.52075003646314
+        },
+        "session_check": {
+          "calls": 5,
+          "exclusive_ms": 0.015666591934859753
+        },
+        "settle": {
+          "calls": 2,
+          "exclusive_ms": 2210.879458289128
+        }
+      },
+      "cli_ms": 2445.0392089784145,
+      "response_bytes": 894,
+      "image_bytes": 78745,
+      "daemon_ms": 2429.4864166877232,
+      "daemon_cpu_ms": 62.1590000000003,
+      "result_bytes": 91
+    },
+    {
+      "workflow": "navigation",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 2472.8949170093983,
+      "verification_ms": 49.209500022698194,
+      "commands": [
+        {
+          "command": [
+            "tap",
+            "81",
+            "70"
+          ],
+          "cli_ms": 1111.6492500295863,
+          "response_bytes": 725,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 19.46199999999987,
+            "elapsed_ms": 1095.240750000812,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.01733331009745598,
+                "inclusive_ms": 1095.230916631408
+              },
+              "frame_fingerprint": {
+                "calls": 3,
+                "exclusive_ms": 22.83204160630703,
+                "inclusive_ms": 22.83204160630703
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.000500003807246685,
+                "inclusive_ms": 0.000500003807246685
+              },
+              "input": {
+                "calls": 1,
+                "exclusive_ms": 62.75095831369981,
+                "inclusive_ms": 62.75095831369981
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0006666523404419422,
+                "inclusive_ms": 0.0006666523404419422
+              },
+              "settle": {
+                "calls": 1,
+                "exclusive_ms": 1009.629416745156,
+                "inclusive_ms": 1032.461458351463
+              }
+            },
+            "result_bytes": 13
+          },
+          "result": "tapped @81,70",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/1-navigation-detail.png"
+          ],
+          "cli_ms": 32.76479203486815,
+          "response_bytes": 599,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 6.087999999999649,
+            "elapsed_ms": 12.40025000879541,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.034791650250554085,
+                "inclusive_ms": 12.382624961901456
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0009583309292793274,
+                "inclusive_ms": 0.0009583309292793274
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 12.345958326477557,
+                "inclusive_ms": 12.345958326477557
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0009166542440652847,
+                "inclusive_ms": 0.0009166542440652847
+              }
+            },
+            "result_bytes": 68
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/1-navigation-detail.png",
+          "schema": 1
+        },
+        {
+          "command": [
+            "tap",
+            "20",
+            "28"
+          ],
+          "cli_ms": 1251.5030829817988,
+          "response_bytes": 726,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 29.24799999999994,
+            "elapsed_ms": 1235.225583310239,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.02070836490020156,
+                "inclusive_ms": 1235.2152916719206
+              },
+              "frame_fingerprint": {
+                "calls": 4,
+                "exclusive_ms": 63.47991665825248,
+                "inclusive_ms": 63.47991665825248
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.000500003807246685,
+                "inclusive_ms": 0.000500003807246685
+              },
+              "input": {
+                "calls": 1,
+                "exclusive_ms": 65.19733334425837,
+                "inclusive_ms": 65.19733334425837
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0011666561476886272,
+                "inclusive_ms": 0.0011666561476886272
+              },
+              "settle": {
+                "calls": 1,
+                "exclusive_ms": 1106.5156666445546,
+                "inclusive_ms": 1169.995583302807
+              }
+            },
+            "result_bytes": 13
+          },
+          "result": "tapped @20,28",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/1-navigation-root.png"
+          ],
+          "cli_ms": 26.87491598771885,
+          "response_bytes": 594,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 6.3029999999999475,
+            "elapsed_ms": 6.873624981380999,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.016458332538604736,
+                "inclusive_ms": 6.8616250064224005
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.001083302777260542,
+                "inclusive_ms": 0.001083302777260542
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 6.842500006314367,
+                "inclusive_ms": 6.842500006314367
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0015833647921681404,
+                "inclusive_ms": 0.0015833647921681404
+              }
+            },
+            "result_bytes": 66
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/1-navigation-root.png",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/1-navigation-detail.png",
+          "bytes": 41439,
+          "width": 324,
+          "height": 394,
+          "reference": "detail",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "2fe6e643a420e75a9b8eaeaa74c738ffa08756d59672ab3b28f07292d00bceee"
+        },
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/1-navigation-root.png",
+          "bytes": 37306,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "c1c760a0f80abde94361dfea4b214a2da8c96019f5ecaa45771348a73cf7e727"
+        }
+      ],
+      "cli_calls": 4,
+      "phases": {
+        "dispatch": {
+          "calls": 4,
+          "exclusive_ms": 0.08929165778681636
+        },
+        "frame_fingerprint": {
+          "calls": 7,
+          "exclusive_ms": 86.31195826455951
+        },
+        "geometry": {
+          "calls": 4,
+          "exclusive_ms": 0.0030416413210332394
+        },
+        "input": {
+          "calls": 2,
+          "exclusive_ms": 127.94829165795818
+        },
+        "session_check": {
+          "calls": 4,
+          "exclusive_ms": 0.004333327524363995
+        },
+        "settle": {
+          "calls": 2,
+          "exclusive_ms": 2116.1450833897106
+        },
+        "screenshot": {
+          "calls": 2,
+          "exclusive_ms": 19.188458332791924
+        }
+      },
+      "cli_ms": 2422.792041033972,
+      "response_bytes": 2644,
+      "image_bytes": 78745,
+      "daemon_ms": 2349.7402083012275,
+      "daemon_cpu_ms": 61.1009999999994,
+      "result_bytes": 160
+    },
+    {
+      "workflow": "navigation",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 2443.7390830134973,
+      "verification_ms": 50.92062597395852,
+      "commands": [
+        {
+          "command": [
+            "tap",
+            "81",
+            "70"
+          ],
+          "cli_ms": 1119.2896660068072,
+          "response_bytes": 727,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 21.356000000000375,
+            "elapsed_ms": 1105.4672499885783,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.018166610971093178,
+                "inclusive_ms": 1105.458791658748
+              },
+              "frame_fingerprint": {
+                "calls": 3,
+                "exclusive_ms": 31.79045836441219,
+                "inclusive_ms": 31.79045836441219
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.00045832712203264236,
+                "inclusive_ms": 0.00045832712203264236
+              },
+              "input": {
+                "calls": 1,
+                "exclusive_ms": 65.12949999887496,
+                "inclusive_ms": 65.12949999887496
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0005833571776747704,
+                "inclusive_ms": 0.0005833571776747704
+              },
+              "settle": {
+                "calls": 1,
+                "exclusive_ms": 1008.51962500019,
+                "inclusive_ms": 1040.3100833646022
+              }
+            },
+            "result_bytes": 13
+          },
+          "result": "tapped @81,70",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/2-navigation-detail.png"
+          ],
+          "cli_ms": 27.69416698720306,
+          "response_bytes": 596,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 6.148999999999738,
+            "elapsed_ms": 6.468708335887641,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.01404172508046031,
+                "inclusive_ms": 6.45808334229514
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0003332970663905144,
+                "inclusive_ms": 0.0003332970663905144
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 6.442999991122633,
+                "inclusive_ms": 6.442999991122633
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0007083290256559849,
+                "inclusive_ms": 0.0007083290256559849
+              }
+            },
+            "result_bytes": 68
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/2-navigation-detail.png",
+          "schema": 1
+        },
+        {
+          "command": [
+            "tap",
+            "20",
+            "28"
+          ],
+          "cli_ms": 1215.5728340148926,
+          "response_bytes": 724,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 28.21399999999974,
+            "elapsed_ms": 1197.7484166854993,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.022166583221405745,
+                "inclusive_ms": 1197.738750022836
+              },
+              "frame_fingerprint": {
+                "calls": 4,
+                "exclusive_ms": 33.99333340348676,
+                "inclusive_ms": 33.99333340348676
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0005416804924607277,
+                "inclusive_ms": 0.0005416804924607277
+              },
+              "input": {
+                "calls": 1,
+                "exclusive_ms": 65.14491670532152,
+                "inclusive_ms": 65.14491670532152
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.001125037670135498,
+                "inclusive_ms": 0.001125037670135498
+              },
+              "settle": {
+                "calls": 1,
+                "exclusive_ms": 1098.5766666126437,
+                "inclusive_ms": 1132.5700000161305
+              }
+            },
+            "result_bytes": 13
+          },
+          "result": "tapped @20,28",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/2-navigation-root.png"
+          ],
+          "cli_ms": 29.250500025227666,
+          "response_bytes": 598,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 6.26799999999994,
+            "elapsed_ms": 8.434666669927537,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.014291610568761826,
+                "inclusive_ms": 8.42149998061359
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.00033335527405142784,
+                "inclusive_ms": 0.00033335527405142784
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 8.406000037211925,
+                "inclusive_ms": 8.406000037211925
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0008749775588512421,
+                "inclusive_ms": 0.0008749775588512421
+              }
+            },
+            "result_bytes": 66
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/2-navigation-root.png",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/2-navigation-detail.png",
+          "bytes": 41439,
+          "width": 324,
+          "height": 394,
+          "reference": "detail",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "2fe6e643a420e75a9b8eaeaa74c738ffa08756d59672ab3b28f07292d00bceee"
+        },
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/2-navigation-root.png",
+          "bytes": 37306,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "c1c760a0f80abde94361dfea4b214a2da8c96019f5ecaa45771348a73cf7e727"
+        }
+      ],
+      "cli_calls": 4,
+      "phases": {
+        "dispatch": {
+          "calls": 4,
+          "exclusive_ms": 0.06866652984172106
+        },
+        "frame_fingerprint": {
+          "calls": 7,
+          "exclusive_ms": 65.78379176789895
+        },
+        "geometry": {
+          "calls": 4,
+          "exclusive_ms": 0.0016666599549353123
+        },
+        "input": {
+          "calls": 2,
+          "exclusive_ms": 130.27441670419648
+        },
+        "session_check": {
+          "calls": 4,
+          "exclusive_ms": 0.0032917014323174953
+        },
+        "settle": {
+          "calls": 2,
+          "exclusive_ms": 2107.0962916128337
+        },
+        "screenshot": {
+          "calls": 2,
+          "exclusive_ms": 14.849000028334558
+        }
+      },
+      "cli_ms": 2391.8071670341305,
+      "response_bytes": 2645,
+      "image_bytes": 78745,
+      "daemon_ms": 2318.1190416798927,
+      "daemon_cpu_ms": 61.986999999999796,
+      "result_bytes": 160
+    },
+    {
+      "workflow": "batch_navigation",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 2385.356332990341,
+      "verification_ms": 55.52895797882229,
+      "commands": [
+        {
+          "command": [
+            "batch",
+            "--summary",
+            "[[\"tap\", \"81\", \"70\"], [\"screenshot\", \"/private/tmp/wand-workflows/candidate-repeat/2-batch_navigation-detail.png\"], [\"tap\", \"20\", \"28\"], [\"screenshot\", \"/private/tmp/wand-workflows/candidate-repeat/2-batch_navigation-root.png\"]]"
+          ],
+          "cli_ms": 2329.5567500172183,
+          "response_bytes": 892,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 66.11600000000007,
+            "elapsed_ms": 2314.471375022549,
+            "phases": {
+              "dispatch": {
+                "calls": 5,
+                "exclusive_ms": 0.17483328701928258,
+                "inclusive_ms": 4628.866416693199
+              },
+              "frame_fingerprint": {
+                "calls": 7,
+                "exclusive_ms": 49.95079163927585,
+                "inclusive_ms": 49.95079163927585
+              },
+              "geometry": {
+                "calls": 4,
+                "exclusive_ms": 0.0039583537727594376,
+                "inclusive_ms": 0.0039583537727594376
+              },
+              "input": {
+                "calls": 2,
+                "exclusive_ms": 129.63320838753134,
+                "inclusive_ms": 129.63320838753134
+              },
+              "screenshot": {
+                "calls": 2,
+                "exclusive_ms": 16.37362502515316,
+                "inclusive_ms": 16.37362502515316
+              },
+              "session_check": {
+                "calls": 5,
+                "exclusive_ms": 0.014374963939189911,
+                "inclusive_ms": 0.014374963939189911
+              },
+              "settle": {
+                "calls": 2,
+                "exclusive_ms": 2118.31495835213,
+                "inclusive_ms": 2168.2657499914058
+              }
+            },
+            "result_bytes": 91
+          },
+          "result": "completed 4/4\n4 OK /private/tmp/wand-workflows/candidate-repeat/2-batch_navigation-root.png",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/2-batch_navigation-detail.png",
+          "bytes": 41439,
+          "width": 324,
+          "height": 394,
+          "reference": "detail",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "2fe6e643a420e75a9b8eaeaa74c738ffa08756d59672ab3b28f07292d00bceee"
+        },
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/2-batch_navigation-root.png",
+          "bytes": 37306,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "c1c760a0f80abde94361dfea4b214a2da8c96019f5ecaa45771348a73cf7e727"
+        }
+      ],
+      "cli_calls": 1,
+      "phases": {
+        "dispatch": {
+          "calls": 5,
+          "exclusive_ms": 0.17483328701928258
+        },
+        "frame_fingerprint": {
+          "calls": 7,
+          "exclusive_ms": 49.95079163927585
+        },
+        "geometry": {
+          "calls": 4,
+          "exclusive_ms": 0.0039583537727594376
+        },
+        "input": {
+          "calls": 2,
+          "exclusive_ms": 129.63320838753134
+        },
+        "screenshot": {
+          "calls": 2,
+          "exclusive_ms": 16.37362502515316
+        },
+        "session_check": {
+          "calls": 5,
+          "exclusive_ms": 0.014374963939189911
+        },
+        "settle": {
+          "calls": 2,
+          "exclusive_ms": 2118.31495835213
+        }
+      },
+      "cli_ms": 2329.5567500172183,
+      "response_bytes": 892,
+      "image_bytes": 78745,
+      "daemon_ms": 2314.471375022549,
+      "daemon_cpu_ms": 66.11600000000007,
+      "result_bytes": 91
+    },
+    {
+      "workflow": "batch_navigation",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 2405.082959041465,
+      "verification_ms": 57.69500002497807,
+      "commands": [
+        {
+          "command": [
+            "batch",
+            "--summary",
+            "[[\"tap\", \"81\", \"70\"], [\"screenshot\", \"/private/tmp/wand-workflows/candidate-repeat/3-batch_navigation-detail.png\"], [\"tap\", \"20\", \"28\"], [\"screenshot\", \"/private/tmp/wand-workflows/candidate-repeat/3-batch_navigation-root.png\"]]"
+          ],
+          "cli_ms": 2347.0757090253755,
+          "response_bytes": 894,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 71.67799999999991,
+            "elapsed_ms": 2331.0331249958836,
+            "phases": {
+              "dispatch": {
+                "calls": 5,
+                "exclusive_ms": 0.19254168728366494,
+                "inclusive_ms": 4661.963750026189
+              },
+              "frame_fingerprint": {
+                "calls": 7,
+                "exclusive_ms": 61.04579160455614,
+                "inclusive_ms": 61.04579160455614
+              },
+              "geometry": {
+                "calls": 4,
+                "exclusive_ms": 0.0036249984987080097,
+                "inclusive_ms": 0.0036249984987080097
+              },
+              "input": {
+                "calls": 2,
+                "exclusive_ms": 124.79175004409626,
+                "inclusive_ms": 124.79175004409626
+              },
+              "screenshot": {
+                "calls": 2,
+                "exclusive_ms": 20.975374907720834,
+                "inclusive_ms": 20.975374907720834
+              },
+              "session_check": {
+                "calls": 5,
+                "exclusive_ms": 0.01558329677209258,
+                "inclusive_ms": 0.01558329677209258
+              },
+              "settle": {
+                "calls": 2,
+                "exclusive_ms": 2124.001083429903,
+                "inclusive_ms": 2185.046875034459
+              }
+            },
+            "result_bytes": 91
+          },
+          "result": "completed 4/4\n4 OK /private/tmp/wand-workflows/candidate-repeat/3-batch_navigation-root.png",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/3-batch_navigation-detail.png",
+          "bytes": 41439,
+          "width": 324,
+          "height": 394,
+          "reference": "detail",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "2fe6e643a420e75a9b8eaeaa74c738ffa08756d59672ab3b28f07292d00bceee"
+        },
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/3-batch_navigation-root.png",
+          "bytes": 37306,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "c1c760a0f80abde94361dfea4b214a2da8c96019f5ecaa45771348a73cf7e727"
+        }
+      ],
+      "cli_calls": 1,
+      "phases": {
+        "dispatch": {
+          "calls": 5,
+          "exclusive_ms": 0.19254168728366494
+        },
+        "frame_fingerprint": {
+          "calls": 7,
+          "exclusive_ms": 61.04579160455614
+        },
+        "geometry": {
+          "calls": 4,
+          "exclusive_ms": 0.0036249984987080097
+        },
+        "input": {
+          "calls": 2,
+          "exclusive_ms": 124.79175004409626
+        },
+        "screenshot": {
+          "calls": 2,
+          "exclusive_ms": 20.975374907720834
+        },
+        "session_check": {
+          "calls": 5,
+          "exclusive_ms": 0.01558329677209258
+        },
+        "settle": {
+          "calls": 2,
+          "exclusive_ms": 2124.001083429903
+        }
+      },
+      "cli_ms": 2347.0757090253755,
+      "response_bytes": 894,
+      "image_bytes": 78745,
+      "daemon_ms": 2331.0331249958836,
+      "daemon_cpu_ms": 71.67799999999991,
+      "result_bytes": 91
+    },
+    {
+      "workflow": "navigation",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 2444.624624971766,
+      "verification_ms": 47.596874996088445,
+      "commands": [
+        {
+          "command": [
+            "tap",
+            "81",
+            "70"
+          ],
+          "cli_ms": 1115.5002080486156,
+          "response_bytes": 723,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 14.409000000000116,
+            "elapsed_ms": 1099.8435833025724,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.037083402276039124,
+                "inclusive_ms": 1099.8339999932796
+              },
+              "frame_fingerprint": {
+                "calls": 3,
+                "exclusive_ms": 23.02924997638911,
+                "inclusive_ms": 23.02924997638911
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0006249756552278996,
+                "inclusive_ms": 0.0006249756552278996
+              },
+              "input": {
+                "calls": 1,
+                "exclusive_ms": 65.11520833009854,
+                "inclusive_ms": 65.11520833009854
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.001249951310455799,
+                "inclusive_ms": 0.001249951310455799
+              },
+              "settle": {
+                "calls": 1,
+                "exclusive_ms": 1011.6505833575502,
+                "inclusive_ms": 1034.6798333339393
+              }
+            },
+            "result_bytes": 13
+          },
+          "result": "tapped @81,70",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/3-navigation-detail.png"
+          ],
+          "cli_ms": 39.66116701485589,
+          "response_bytes": 599,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 5.727999999999955,
+            "elapsed_ms": 23.215708322823048,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.01183338463306427,
+                "inclusive_ms": 23.205625009723008
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0005416222847998142,
+                "inclusive_ms": 0.0005416222847998142
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 23.192499997094274,
+                "inclusive_ms": 23.192499997094274
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0007500057108700275,
+                "inclusive_ms": 0.0007500057108700275
+              }
+            },
+            "result_bytes": 68
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/3-navigation-detail.png",
+          "schema": 1
+        },
+        {
+          "command": [
+            "tap",
+            "20",
+            "28"
+          ],
+          "cli_ms": 1215.2798749739304,
+          "response_bytes": 728,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 28.283000000000058,
+            "elapsed_ms": 1199.424791673664,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.01991668250411749,
+                "inclusive_ms": 1199.4155833381228
+              },
+              "frame_fingerprint": {
+                "calls": 4,
+                "exclusive_ms": 29.034541628789157,
+                "inclusive_ms": 29.034541628789157
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0005416804924607277,
+                "inclusive_ms": 0.0005416804924607277
+              },
+              "input": {
+                "calls": 1,
+                "exclusive_ms": 65.09879167424515,
+                "inclusive_ms": 65.09879167424515
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0005832989700138569,
+                "inclusive_ms": 0.0005832989700138569
+              },
+              "settle": {
+                "calls": 1,
+                "exclusive_ms": 1105.261208373122,
+                "inclusive_ms": 1134.295750001911
+              }
+            },
+            "result_bytes": 13
+          },
+          "result": "tapped @20,28",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/3-navigation-root.png"
+          ],
+          "cli_ms": 25.726833031512797,
+          "response_bytes": 592,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 6.480000000000263,
+            "elapsed_ms": 7.083624950610101,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.014666642528027296,
+                "inclusive_ms": 7.069750048685819
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0009167124517261982,
+                "inclusive_ms": 0.0009167124517261982
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 7.053125009406358,
+                "inclusive_ms": 7.053125009406358
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0010416842997074127,
+                "inclusive_ms": 0.0010416842997074127
+              }
+            },
+            "result_bytes": 66
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/3-navigation-root.png",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/3-navigation-detail.png",
+          "bytes": 41439,
+          "width": 324,
+          "height": 394,
+          "reference": "detail",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "2fe6e643a420e75a9b8eaeaa74c738ffa08756d59672ab3b28f07292d00bceee"
+        },
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/3-navigation-root.png",
+          "bytes": 36930,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "ee36556e06288fbc76dffe646537b7d392b7d25940ca137a85ee5405de854fa0"
+        }
+      ],
+      "cli_calls": 4,
+      "phases": {
+        "dispatch": {
+          "calls": 4,
+          "exclusive_ms": 0.08350011194124818
+        },
+        "frame_fingerprint": {
+          "calls": 7,
+          "exclusive_ms": 52.06379160517827
+        },
+        "geometry": {
+          "calls": 4,
+          "exclusive_ms": 0.0026249908842146397
+        },
+        "input": {
+          "calls": 2,
+          "exclusive_ms": 130.2140000043437
+        },
+        "session_check": {
+          "calls": 4,
+          "exclusive_ms": 0.0036249402910470963
+        },
+        "settle": {
+          "calls": 2,
+          "exclusive_ms": 2116.911791730672
+        },
+        "screenshot": {
+          "calls": 2,
+          "exclusive_ms": 30.24562500650063
+        }
+      },
+      "cli_ms": 2396.1680830689147,
+      "response_bytes": 2642,
+      "image_bytes": 78369,
+      "daemon_ms": 2329.5677082496695,
+      "daemon_cpu_ms": 54.90000000000039,
+      "result_bytes": 160
+    },
+    {
+      "workflow": "navigation",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 2448.701000015717,
+      "verification_ms": 48.549208033364266,
+      "commands": [
+        {
+          "command": [
+            "tap",
+            "81",
+            "70"
+          ],
+          "cli_ms": 1124.7094999998808,
+          "response_bytes": 727,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 21.03199999999994,
+            "elapsed_ms": 1109.1511666309088,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.024833425413817167,
+                "inclusive_ms": 1109.140416723676
+              },
+              "frame_fingerprint": {
+                "calls": 3,
+                "exclusive_ms": 38.443250057753175,
+                "inclusive_ms": 38.443250057753175
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.00045832712203264236,
+                "inclusive_ms": 0.00045832712203264236
+              },
+              "input": {
+                "calls": 1,
+                "exclusive_ms": 65.15904166735709,
+                "inclusive_ms": 65.15904166735709
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0006249756552278996,
+                "inclusive_ms": 0.0006249756552278996
+              },
+              "settle": {
+                "calls": 1,
+                "exclusive_ms": 1005.5122082703747,
+                "inclusive_ms": 1043.9554583281279
+              }
+            },
+            "result_bytes": 13
+          },
+          "result": "tapped @81,70",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/4-navigation-detail.png"
+          ],
+          "cli_ms": 27.056500024627894,
+          "response_bytes": 592,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 5.70999999999966,
+            "elapsed_ms": 6.081500032451004,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.017125101294368505,
+                "inclusive_ms": 6.06741668889299
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0008333008736371994,
+                "inclusive_ms": 0.0008333008736371994
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 6.046874972525984,
+                "inclusive_ms": 6.046874972525984
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.002583314199000597,
+                "inclusive_ms": 0.002583314199000597
+              }
+            },
+            "result_bytes": 68
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/4-navigation-detail.png",
+          "schema": 1
+        },
+        {
+          "command": [
+            "tap",
+            "20",
+            "28"
+          ],
+          "cli_ms": 1221.2005000328645,
+          "response_bytes": 725,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 27.60100000000021,
+            "elapsed_ms": 1204.0886666509323,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.02204161137342453,
+                "inclusive_ms": 1204.0790416649543
+              },
+              "frame_fingerprint": {
+                "calls": 4,
+                "exclusive_ms": 35.843250050675124,
+                "inclusive_ms": 35.843250050675124
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0005416804924607277,
+                "inclusive_ms": 0.0005416804924607277
+              },
+              "input": {
+                "calls": 1,
+                "exclusive_ms": 65.16649998957291,
+                "inclusive_ms": 65.16649998957291
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.00100000761449337,
+                "inclusive_ms": 0.00100000761449337
+              },
+              "settle": {
+                "calls": 1,
+                "exclusive_ms": 1103.0457083252259,
+                "inclusive_ms": 1138.888958375901
+              }
+            },
+            "result_bytes": 13
+          },
+          "result": "tapped @20,28",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/4-navigation-root.png"
+          ],
+          "cli_ms": 26.119000045582652,
+          "response_bytes": 596,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 5.759999999999987,
+            "elapsed_ms": 6.290916644502431,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.014333287253975868,
+                "inclusive_ms": 6.278708344325423
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0008750357665121555,
+                "inclusive_ms": 0.0008750357665121555
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 6.262458337005228,
+                "inclusive_ms": 6.262458337005228
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0010416842997074127,
+                "inclusive_ms": 0.0010416842997074127
+              }
+            },
+            "result_bytes": 66
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/4-navigation-root.png",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/4-navigation-detail.png",
+          "bytes": 41136,
+          "width": 324,
+          "height": 394,
+          "reference": "detail",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "4fe769cc726218c525eb7aecb618297ce74058a77aa803e0186714f7ccf04b2f"
+        },
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/4-navigation-root.png",
+          "bytes": 36930,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "ee36556e06288fbc76dffe646537b7d392b7d25940ca137a85ee5405de854fa0"
+        }
+      ],
+      "cli_calls": 4,
+      "phases": {
+        "dispatch": {
+          "calls": 4,
+          "exclusive_ms": 0.07833342533558607
+        },
+        "frame_fingerprint": {
+          "calls": 7,
+          "exclusive_ms": 74.2865001084283
+        },
+        "geometry": {
+          "calls": 4,
+          "exclusive_ms": 0.002708344254642725
+        },
+        "input": {
+          "calls": 2,
+          "exclusive_ms": 130.32554165693
+        },
+        "session_check": {
+          "calls": 4,
+          "exclusive_ms": 0.005249981768429279
+        },
+        "settle": {
+          "calls": 2,
+          "exclusive_ms": 2108.5579165956005
+        },
+        "screenshot": {
+          "calls": 2,
+          "exclusive_ms": 12.309333309531212
+        }
+      },
+      "cli_ms": 2399.085500102956,
+      "response_bytes": 2640,
+      "image_bytes": 78066,
+      "daemon_ms": 2325.6122499587946,
+      "daemon_cpu_ms": 60.102999999999795,
+      "result_bytes": 160
+    },
+    {
+      "workflow": "batch_navigation",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 2401.6274160239846,
+      "verification_ms": 56.43233301816508,
+      "commands": [
+        {
+          "command": [
+            "batch",
+            "--summary",
+            "[[\"tap\", \"81\", \"70\"], [\"screenshot\", \"/private/tmp/wand-workflows/candidate-repeat/4-batch_navigation-detail.png\"], [\"tap\", \"20\", \"28\"], [\"screenshot\", \"/private/tmp/wand-workflows/candidate-repeat/4-batch_navigation-root.png\"]]"
+          ],
+          "cli_ms": 2344.869083026424,
+          "response_bytes": 893,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 72.47300000000001,
+            "elapsed_ms": 2329.715333355125,
+            "phases": {
+              "dispatch": {
+                "calls": 5,
+                "exclusive_ms": 0.18974993145093322,
+                "inclusive_ms": 4659.338916651905
+              },
+              "frame_fingerprint": {
+                "calls": 7,
+                "exclusive_ms": 62.09316663444042,
+                "inclusive_ms": 62.09316663444042
+              },
+              "geometry": {
+                "calls": 4,
+                "exclusive_ms": 0.003583321813493967,
+                "inclusive_ms": 0.003583321813493967
+              },
+              "input": {
+                "calls": 2,
+                "exclusive_ms": 130.39599999319762,
+                "inclusive_ms": 130.39599999319762
+              },
+              "screenshot": {
+                "calls": 2,
+                "exclusive_ms": 20.243875042069703,
+                "inclusive_ms": 20.243875042069703
+              },
+              "session_check": {
+                "calls": 5,
+                "exclusive_ms": 0.014583405572921038,
+                "inclusive_ms": 0.014583405572921038
+              },
+              "settle": {
+                "calls": 2,
+                "exclusive_ms": 2116.766999999527,
+                "inclusive_ms": 2178.8601666339673
+              }
+            },
+            "result_bytes": 91
+          },
+          "result": "completed 4/4\n4 OK /private/tmp/wand-workflows/candidate-repeat/4-batch_navigation-root.png",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/4-batch_navigation-detail.png",
+          "bytes": 41136,
+          "width": 324,
+          "height": 394,
+          "reference": "detail",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "4fe769cc726218c525eb7aecb618297ce74058a77aa803e0186714f7ccf04b2f"
+        },
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/4-batch_navigation-root.png",
+          "bytes": 36930,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "ee36556e06288fbc76dffe646537b7d392b7d25940ca137a85ee5405de854fa0"
+        }
+      ],
+      "cli_calls": 1,
+      "phases": {
+        "dispatch": {
+          "calls": 5,
+          "exclusive_ms": 0.18974993145093322
+        },
+        "frame_fingerprint": {
+          "calls": 7,
+          "exclusive_ms": 62.09316663444042
+        },
+        "geometry": {
+          "calls": 4,
+          "exclusive_ms": 0.003583321813493967
+        },
+        "input": {
+          "calls": 2,
+          "exclusive_ms": 130.39599999319762
+        },
+        "screenshot": {
+          "calls": 2,
+          "exclusive_ms": 20.243875042069703
+        },
+        "session_check": {
+          "calls": 5,
+          "exclusive_ms": 0.014583405572921038
+        },
+        "settle": {
+          "calls": 2,
+          "exclusive_ms": 2116.766999999527
+        }
+      },
+      "cli_ms": 2344.869083026424,
+      "response_bytes": 893,
+      "image_bytes": 78066,
+      "daemon_ms": 2329.715333355125,
+      "daemon_cpu_ms": 72.47300000000001,
+      "result_bytes": 91
+    },
+    {
+      "workflow": "crown_roundtrip",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 4258.8013330241665,
+      "verification_ms": 50.87799904868007,
+      "commands": [
+        {
+          "command": [
+            "crown",
+            "down",
+            "3"
+          ],
+          "cli_ms": 2112.009082979057,
+          "response_bytes": 722,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 44.310999999999545,
+            "elapsed_ms": 2096.2689999723807,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 372.8103750036098,
+                "inclusive_ms": 2096.258958335966
+              },
+              "frame_fingerprint": {
+                "calls": 6,
+                "exclusive_ms": 70.3839166671969,
+                "inclusive_ms": 70.3839166671969
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0001666485331952572,
+                "inclusive_ms": 0.0001666485331952572
+              },
+              "input": {
+                "calls": 3,
+                "exclusive_ms": 362.7165000070818,
+                "inclusive_ms": 362.7165000070818
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0008333590812981129,
+                "inclusive_ms": 0.0008333590812981129
+              },
+              "settle": {
+                "calls": 1,
+                "exclusive_ms": 1290.347166650463,
+                "inclusive_ms": 1360.7310833176598
+              }
+            },
+            "result_bytes": 12
+          },
+          "result": "crown down 3",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/crown_roundtrip-down.png"
+          ],
+          "cli_ms": 26.297250005882233,
+          "response_bytes": 601,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 6.590999999999347,
+            "elapsed_ms": 7.201250002253801,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.01712498487904668,
+                "inclusive_ms": 7.186250004451722
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0007500057108700275,
+                "inclusive_ms": 0.0007500057108700275
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 7.167541654780507,
+                "inclusive_ms": 7.167541654780507
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0008333590812981129,
+                "inclusive_ms": 0.0008333590812981129
+              }
+            },
+            "result_bytes": 69
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/crown_roundtrip-down.png",
+          "schema": 1
+        },
+        {
+          "command": [
+            "crown",
+            "up",
+            "4"
+          ],
+          "cli_ms": 2036.3127079908736,
+          "response_bytes": 724,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 26.31100000000064,
+            "elapsed_ms": 2022.3474166705273,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 497.7625417523086,
+                "inclusive_ms": 2022.3382083349861
+              },
+              "frame_fingerprint": {
+                "calls": 3,
+                "exclusive_ms": 21.946208376903087,
+                "inclusive_ms": 21.946208376903087
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.000500003807246685,
+                "inclusive_ms": 0.000500003807246685
+              },
+              "input": {
+                "calls": 4,
+                "exclusive_ms": 490.4234582791105,
+                "inclusive_ms": 490.4234582791105
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0009166542440652847,
+                "inclusive_ms": 0.0009166542440652847
+              },
+              "settle": {
+                "calls": 1,
+                "exclusive_ms": 1012.2045832686126,
+                "inclusive_ms": 1034.1507916455157
+              }
+            },
+            "result_bytes": 10
+          },
+          "result": "crown up 4",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/crown_roundtrip-up.png"
+          ],
+          "cli_ms": 32.35325001878664,
+          "response_bytes": 597,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 6.175999999999959,
+            "elapsed_ms": 10.081791668199003,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.038708269130438566,
+                "inclusive_ms": 10.055999970063567
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0005833571776747704,
+                "inclusive_ms": 0.0005833571776747704
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 10.01591666135937,
+                "inclusive_ms": 10.01591666135937
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0007916823960840702,
+                "inclusive_ms": 0.0007916823960840702
+              }
+            },
+            "result_bytes": 67
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/crown_roundtrip-up.png",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/crown_roundtrip-down.png",
+          "bytes": 59565,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.07870308273817904,
+          "different": true,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "c81a34c7016797ea446003e51cc6fb6c67b1ce66ff405856eaab0a0fcf57af4b"
+        },
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/crown_roundtrip-up.png",
+          "bytes": 36930,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "ee36556e06288fbc76dffe646537b7d392b7d25940ca137a85ee5405de854fa0"
+        }
+      ],
+      "cli_calls": 4,
+      "phases": {
+        "dispatch": {
+          "calls": 4,
+          "exclusive_ms": 870.6287500099279
+        },
+        "frame_fingerprint": {
+          "calls": 9,
+          "exclusive_ms": 92.33012504409999
+        },
+        "geometry": {
+          "calls": 4,
+          "exclusive_ms": 0.00200001522898674
+        },
+        "input": {
+          "calls": 7,
+          "exclusive_ms": 853.1399582861923
+        },
+        "session_check": {
+          "calls": 4,
+          "exclusive_ms": 0.0033750548027455807
+        },
+        "settle": {
+          "calls": 2,
+          "exclusive_ms": 2302.5517499190755
+        },
+        "screenshot": {
+          "calls": 2,
+          "exclusive_ms": 17.183458316139877
+        }
+      },
+      "cli_ms": 4206.9722909945995,
+      "response_bytes": 2644,
+      "image_bytes": 96495,
+      "daemon_ms": 4135.899458313361,
+      "daemon_cpu_ms": 83.3889999999995,
+      "result_bytes": 158
+    },
+    {
+      "workflow": "visual_inspection",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 42.71424998296425,
+      "verification_ms": 23.308833013288677,
+      "commands": [
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/visual_inspection-preview.png",
+            "--preview",
+            "640"
+          ],
+          "cli_ms": 19.214916974306107,
+          "response_bytes": 970,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 5.7480000000005305,
+            "elapsed_ms": 6.154750008136034,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.07141666719689965,
+                "inclusive_ms": 6.147958338260651
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.000500003807246685,
+                "inclusive_ms": 0.000500003807246685
+              },
+              "preview": {
+                "calls": 1,
+                "exclusive_ms": 0.3900416777469218,
+                "inclusive_ms": 0.3900416777469218
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 5.6852916604839265,
+                "inclusive_ms": 5.6852916604839265
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0007083290256559849,
+                "inclusive_ms": 0.0007083290256559849
+              }
+            },
+            "result_bytes": 322
+          },
+          "result": "{\"cropPixels\":[0,0,324,394],\"full\":\"/private/tmp/wand-workflows/candidate-repeat/visual_inspection-preview.png\",\"fullPixels\":[324,394],\"preview\":\"/private/tmp/wand-workflows/candidate-repeat/visual_inspection-preview.png\",\"previewPixels\":[324,394],\"previewPixelToPoint\":{\"xOffset\":0,\"xScale\":0.5,\"yOffset\":0,\"yScale\":0.5}}",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/visual_inspection-preview.png",
+          "bytes": 36930,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "ee36556e06288fbc76dffe646537b7d392b7d25940ca137a85ee5405de854fa0"
+        }
+      ],
+      "cli_calls": 1,
+      "phases": {
+        "dispatch": {
+          "calls": 1,
+          "exclusive_ms": 0.07141666719689965
+        },
+        "geometry": {
+          "calls": 1,
+          "exclusive_ms": 0.000500003807246685
+        },
+        "preview": {
+          "calls": 1,
+          "exclusive_ms": 0.3900416777469218
+        },
+        "screenshot": {
+          "calls": 1,
+          "exclusive_ms": 5.6852916604839265
+        },
+        "session_check": {
+          "calls": 1,
+          "exclusive_ms": 0.0007083290256559849
+        }
+      },
+      "cli_ms": 19.214916974306107,
+      "response_bytes": 970,
+      "image_bytes": 36930,
+      "daemon_ms": 6.154750008136034,
+      "daemon_cpu_ms": 5.7480000000005305,
+      "result_bytes": 322
+    },
+    {
+      "workflow": "failure_recovery",
+      "verified": true,
+      "failure": null,
+      "wall_ms": 2496.5477090445347,
+      "verification_ms": 73.52037506643683,
+      "commands": [
+        {
+          "command": [
+            "batch",
+            "--summary",
+            "[[\"assert\", \"#WAND_WORKFLOW_MISSING\"], [\"tap\", \"81\", \"70\"]]"
+          ],
+          "cli_ms": 20.79000003868714,
+          "response_bytes": 766,
+          "ok": false,
+          "profile": {
+            "daemon_cpu_ms": 0.16800000000039006,
+            "elapsed_ms": 5.723041656892747,
+            "phases": {
+              "accessibility": {
+                "calls": 1,
+                "exclusive_ms": 5.6483750231564045,
+                "inclusive_ms": 5.6483750231564045
+              },
+              "dispatch": {
+                "calls": 2,
+                "exclusive_ms": 0.05375006003305316,
+                "inclusive_ms": 11.41516660572961
+              },
+              "geometry": {
+                "calls": 2,
+                "exclusive_ms": 0.0009999494068324566,
+                "inclusive_ms": 0.0009999494068324566
+              },
+              "session_check": {
+                "calls": 2,
+                "exclusive_ms": 0.001374981366097927,
+                "inclusive_ms": 0.001374981366097927
+              },
+              "snapshot_model": {
+                "calls": 1,
+                "exclusive_ms": 0.012749980669468641,
+                "inclusive_ms": 0.012749980669468641
+              }
+            },
+            "result_bytes": 129
+          },
+          "result": "completed 0/2\n1 FAIL FAIL not found #WAND_WORKFLOW_MISSING\nstopped; remaining commands did not run. Inspect state before retrying",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/failure_recovery-untouched.png"
+          ],
+          "cli_ms": 19.83858400490135,
+          "response_bytes": 607,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 5.656000000000105,
+            "elapsed_ms": 6.05208333581686,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.015333294868469238,
+                "inclusive_ms": 6.042416673153639
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.000625033862888813,
+                "inclusive_ms": 0.000625033862888813
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 6.025750015396625,
+                "inclusive_ms": 6.025750015396625
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0007083290256559849,
+                "inclusive_ms": 0.0007083290256559849
+              }
+            },
+            "result_bytes": 75
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/failure_recovery-untouched.png",
+          "schema": 1
+        },
+        {
+          "command": [
+            "tap",
+            "81",
+            "70"
+          ],
+          "cli_ms": 1117.7795410039835,
+          "response_bytes": 729,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 16.788999999999277,
+            "elapsed_ms": 1101.6984166926704,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.021041720174252987,
+                "inclusive_ms": 1101.6889166785404
+              },
+              "frame_fingerprint": {
+                "calls": 3,
+                "exclusive_ms": 34.32829165831208,
+                "inclusive_ms": 34.32829165831208
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0002916785888373852,
+                "inclusive_ms": 0.0002916785888373852
+              },
+              "input": {
+                "calls": 1,
+                "exclusive_ms": 61.59649998880923,
+                "inclusive_ms": 61.59649998880923
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0006666523404419422,
+                "inclusive_ms": 0.0006666523404419422
+              },
+              "settle": {
+                "calls": 1,
+                "exclusive_ms": 1005.7421249803156,
+                "inclusive_ms": 1040.0704166386276
+              }
+            },
+            "result_bytes": 13
+          },
+          "result": "tapped @81,70",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/failure_recovery-detail.png"
+          ],
+          "cli_ms": 22.787916008383036,
+          "response_bytes": 604,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 5.2720000000006095,
+            "elapsed_ms": 6.807166675571352,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.02133334055542946,
+                "inclusive_ms": 6.793875014409423
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0005416804924607277,
+                "inclusive_ms": 0.0005416804924607277
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 6.771166634280235,
+                "inclusive_ms": 6.771166634280235
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0008333590812981129,
+                "inclusive_ms": 0.0008333590812981129
+              }
+            },
+            "result_bytes": 72
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/failure_recovery-detail.png",
+          "schema": 1
+        },
+        {
+          "command": [
+            "tap",
+            "20",
+            "28"
+          ],
+          "cli_ms": 1213.164750020951,
+          "response_bytes": 728,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 25.707999999999842,
+            "elapsed_ms": 1196.6026250156574,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.01820828765630722,
+                "inclusive_ms": 1196.5934166219085
+              },
+              "frame_fingerprint": {
+                "calls": 4,
+                "exclusive_ms": 28.40712503530085,
+                "inclusive_ms": 28.40712503530085
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0006667105481028557,
+                "inclusive_ms": 0.0006667105481028557
+              },
+              "input": {
+                "calls": 1,
+                "exclusive_ms": 65.22712495643646,
+                "inclusive_ms": 65.22712495643646
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0008333590812981129,
+                "inclusive_ms": 0.0008333590812981129
+              },
+              "settle": {
+                "calls": 1,
+                "exclusive_ms": 1102.9394582728855,
+                "inclusive_ms": 1131.3465833081864
+              }
+            },
+            "result_bytes": 13
+          },
+          "result": "tapped @20,28",
+          "schema": 1
+        },
+        {
+          "command": [
+            "screenshot",
+            "/private/tmp/wand-workflows/candidate-repeat/failure_recovery-root.png"
+          ],
+          "cli_ms": 27.55554096074775,
+          "response_bytes": 600,
+          "ok": true,
+          "profile": {
+            "daemon_cpu_ms": 5.515000000000825,
+            "elapsed_ms": 5.987916665617377,
+            "phases": {
+              "dispatch": {
+                "calls": 1,
+                "exclusive_ms": 0.016166595742106438,
+                "inclusive_ms": 5.974666681140661
+              },
+              "geometry": {
+                "calls": 1,
+                "exclusive_ms": 0.0008750357665121555,
+                "inclusive_ms": 0.0008750357665121555
+              },
+              "screenshot": {
+                "calls": 1,
+                "exclusive_ms": 5.956375040113926,
+                "inclusive_ms": 5.956375040113926
+              },
+              "session_check": {
+                "calls": 1,
+                "exclusive_ms": 0.0012500095181167126,
+                "inclusive_ms": 0.0012500095181167126
+              }
+            },
+            "result_bytes": 70
+          },
+          "result": "/private/tmp/wand-workflows/candidate-repeat/failure_recovery-root.png",
+          "schema": 1
+        }
+      ],
+      "images": [
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/failure_recovery-untouched.png",
+          "bytes": 36930,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "ee36556e06288fbc76dffe646537b7d392b7d25940ca137a85ee5405de854fa0"
+        },
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/failure_recovery-detail.png",
+          "bytes": 41136,
+          "width": 324,
+          "height": 394,
+          "reference": "detail",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "4fe769cc726218c525eb7aecb618297ce74058a77aa803e0186714f7ccf04b2f"
+        },
+        {
+          "path": "/private/tmp/wand-workflows/candidate-repeat/failure_recovery-root.png",
+          "bytes": 36930,
+          "width": 324,
+          "height": 394,
+          "reference": "root",
+          "distance": 0.0,
+          "different": false,
+          "threshold": 0.025,
+          "verified": true,
+          "sha256": "ee36556e06288fbc76dffe646537b7d392b7d25940ca137a85ee5405de854fa0"
+        }
+      ],
+      "cli_calls": 6,
+      "phases": {
+        "accessibility": {
+          "calls": 1,
+          "exclusive_ms": 5.6483750231564045
+        },
+        "dispatch": {
+          "calls": 7,
+          "exclusive_ms": 0.1458332990296185
+        },
+        "geometry": {
+          "calls": 7,
+          "exclusive_ms": 0.004000088665634394
+        },
+        "session_check": {
+          "calls": 7,
+          "exclusive_ms": 0.0056666904129087925
+        },
+        "snapshot_model": {
+          "calls": 1,
+          "exclusive_ms": 0.012749980669468641
+        },
+        "screenshot": {
+          "calls": 3,
+          "exclusive_ms": 18.753291689790785
+        },
+        "frame_fingerprint": {
+          "calls": 7,
+          "exclusive_ms": 62.73541669361293
+        },
+        "input": {
+          "calls": 2,
+          "exclusive_ms": 126.82362494524568
+        },
+        "settle": {
+          "calls": 2,
+          "exclusive_ms": 2108.681583253201
+        }
+      },
+      "cli_ms": 2421.916332037654,
+      "response_bytes": 4034,
+      "image_bytes": 114996,
+      "daemon_ms": 2322.871250042226,
+      "daemon_cpu_ms": 59.10800000000105,
+      "result_bytes": 372
+    }
+  ]
+}

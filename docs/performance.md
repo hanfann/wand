@@ -37,6 +37,8 @@ Established before the deep-audit candidate was measured:
 | CI change filtering | docs-only skip; source/tests/workflows/fixtures/unknown changes and unavailable diffs require macOS; docs runs cannot cancel code qualification |
 | Resource use | daemon plus worker RSS growth below 20 MB over 1,000 warm reads; idle CPU under 1% over 5 s |
 | Cleanup | no task-owned helper/worker/recording process or scratch files after stop; no extra running sims |
+| Opt-in profiling | original status/result preserved, input executes once, exclusive phases do not double-count; warm read p95 overhead under 5 ms |
+| Deferred frame sampling | at least 20% lower daemon CPU per verified watch navigation; unchanged minimum wait, three equal samples, cancellation/deadline behavior; zero incorrect transitions in 100 observed actions |
 
 For performance-only changes, require at least 20% or 5 ms improvement in the
 affected path. Reject a change if a related p95 regresses by both over 20% and
@@ -66,6 +68,11 @@ variance. Live results must be reported separately. Batch ping speedups measure
 process/socket overhead, not animation speed. Catalog bytes are a reproducible
 context-size proxy, not exact model token counts. OCR speed and OCR recognition
 quality are separate: a fast wrong answer does not pass an accuracy gate.
+
+For app-independent, outcome-checked workflow scenarios and phase attribution,
+see [workflow benchmarks](workflow-benchmarks.md). Report whole-workflow latency,
+daemon CPU, verification time, command/response/image volume and failed outcomes.
+Do not extrapolate isolated transport gains to complete agent tasks.
 
 The full watch suite deliberately fails if native Crown does not move content.
 For diagnosing independent touch/batch behavior after recording that failure,

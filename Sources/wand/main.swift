@@ -32,6 +32,7 @@ wand — autonomous Apple-simulator (iOS · iPadOS · watchOS) E2E driver for AI
     wand crown <delta> [steps]     raw crown turn (sign = direction)
 
   Sequences:
+    wand profile '["ui"]'          result plus per-request phase timings (JSON); accepts batch
     wand batch '[["tap","40","80"],["ui","diff"]]'
     wand batch -                   read the same JSON from stdin; stop at first failure
     wand batch --summary <JSON|->  completed count and final result, or failed step
@@ -163,6 +164,13 @@ case "mcp":
 
 case "setup":
     runSetup()
+
+case "profile":
+    guard argv.count == 2 else { err("profile expects a JSON command array or - for stdin"); exit(1) }
+    let json = argv[1] == "-" ? String(decoding: FileHandle.standardInput.readDataToEndOfFile(), as: UTF8.self) : argv[1]
+    do { _ = try ProfileRequest(json: json) }
+    catch { err(error.localizedDescription); exit(1) }
+    route(requireUDID(explicitUDID), ["profile", json])
 
 case "batch":
     var arguments = Array(argv.dropFirst())

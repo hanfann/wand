@@ -25,6 +25,9 @@ public enum CommandValidation {
                         "HID typing supports US ASCII; use setvalue for Unicode")
         }
         switch command {
+        case "profile":
+            try require(a.count == 1, "expected one JSON command array")
+            _ = try ProfileRequest(json: a[0])
         case "batch": _ = try CommandBatch(arguments: a)
         case "screenshot": _ = try ScreenshotOptions(arguments: a)
         case "tap":

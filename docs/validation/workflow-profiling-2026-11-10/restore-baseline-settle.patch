@@ -1,0 +1,22 @@
+--- a/Sources/wand/Daemon.swift
++++ b/Sources/wand/Daemon.swift
+@@ -169,6 +169,13 @@
+-    private func settleUnprofiled(maxMs: Int) {
+-        _ = FrameSettler.run(minimum: sim.isWatch ? 1.0 : 0.18, maximum: Double(maxMs) / 1000,
+-                         now: { ProcessInfo.processInfo.systemUptime },
+-                         pause: { usleep(UInt32($0 * 1_000_000)) },
+-                         cancelled: clientDisconnected,
+-                         fingerprint: { timed("frame_fingerprint") { sim.screenFingerprint() } })
++    private func settleUnprofiled(maxMs: Int = 1500) {
++        let start = ProcessInfo.processInfo.systemUptime
++        let deadline = start + Double(maxMs) / 1000
++        let minimum = sim.isWatch ? 1.0 : 0.18
++        var previous: UInt64 = 0, stableReads = 0
++        while ProcessInfo.processInfo.systemUptime < deadline && !clientDisconnected() {
++            let signature = timed("frame_fingerprint") { sim.screenFingerprint() }
++            guard signature != 0 else { return }
++            stableReads = signature == previous ? stableReads + 1 : 0
++            if stableReads >= 2 && ProcessInfo.processInfo.systemUptime - start >= minimum { return }
++            previous = signature
++            usleep(90_000)
++        }

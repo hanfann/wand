@@ -26,6 +26,7 @@ final class Daemon {
     let startupError: String?
     let ocr = OCRService()
     let accessibility: AccessibilityService
+    var activeProfile: PhaseProfile?
     private var activeClient: Int32 = -1
 
     // Commands that inject HID events; their replies are checked for send errors.
@@ -135,11 +136,11 @@ final class Daemon {
     // --- snapshot helpers ---
 
     func snapshot(timeout: TimeInterval = 5) throws -> Snapshot {
-        let tree = try accessibility.tree(timeout: timeout)
-        try sim.refreshDisplayGeometry()
-        let snap = Snapshot(elements: tree,
+        let tree = try timed("accessibility") { try accessibility.tree(timeout: timeout) }
+        try timed("geometry") { try sim.refreshDisplayGeometry() }
+        let snap = timed("snapshot_model") { Snapshot(elements: tree,
                             screenW: Double(sim.screenPointSize.width),
-                            screenH: Double(sim.screenPointSize.height))
+                            screenH: Double(sim.screenPointSize.height)) }
         guard !snap.all.isEmpty else {
             throw NSError(domain: "wand.ax", code: 1, userInfo: [NSLocalizedDescriptionKey:
                 "accessibility returned no usable root; retry observation after the app is ready"])
@@ -162,18 +163,15 @@ final class Daemon {
     // Slow private AX reads during animation must not turn successful input into
     // a cycle of worker kills and false "not found" errors.
     func settle(maxMs: Int = 1500) {
-        let start = ProcessInfo.processInfo.systemUptime
-        let deadline = start + Double(maxMs) / 1000
-        let minimum = sim.isWatch ? 1.0 : 0.18
-        var previous: UInt64 = 0, stableReads = 0
-        while ProcessInfo.processInfo.systemUptime < deadline && !clientDisconnected() {
-            let signature = sim.screenFingerprint()
-            guard signature != 0 else { return }
-            stableReads = signature == previous ? stableReads + 1 : 0
-            if stableReads >= 2 && ProcessInfo.processInfo.systemUptime - start >= minimum { return }
-            previous = signature
-            usleep(90_000)
-        }
+        timed("settle") { settleUnprofiled(maxMs: maxMs) }
+    }
+
+    private func settleUnprofiled(maxMs: Int) {
+        _ = FrameSettler.run(minimum: sim.isWatch ? 1.0 : 0.18, maximum: Double(maxMs) / 1000,
+                         now: { ProcessInfo.processInfo.systemUptime },
+                         pause: { usleep(UInt32($0 * 1_000_000)) },
+                         cancelled: clientDisconnected,
+                         fingerprint: { timed("frame_fingerprint") { sim.screenFingerprint() } })
     }
 
     // Resolve a selector to its element center (for gesture targeting by id/label).
@@ -190,7 +188,7 @@ final class Daemon {
         }
         // AX sets and focuses the field itself. A preliminary tap can raise a
         // keyboard that hides the target before AX can resolve it.
-        try accessibility.setValue(value, identifier: element.id, label: element.label)
+        try timed("accessibility_input") { try accessibility.setValue(value, identifier: element.id, label: element.label) }
         settle()
     }
 
@@ -231,7 +229,7 @@ final class Daemon {
     // Single commands and batch steps share validation, dispatch and HID-error
     // handling. A batch stays in memory; only the socket boundary encodes JSON.
     func execute(_ argv: [String]) -> Reply {
-        let reply = dispatch(argv)
+        let reply = timed("dispatch") { dispatch(argv) }
         if reply.ok, let command = argv.first, Self.inputCommands.contains(command),
            let error = sim.lastSendError() {
             return Reply(ok: false, text: "input may not have landed (HID send error): \(error)")
@@ -265,12 +263,12 @@ final class Daemon {
             // Resilience: if the bound simulator was shut down or rebooted, exit
             // cleanly and signal the client (via the sentinel) to respawn a fresh
             // daemon and retry — transparently self-healing across sim reboots.
-            if cmd != "ping", cmd != "info", cmd != "stop", isSessionStale() {
+            if cmd != "ping", cmd != "info", cmd != "stop", timed("session_check", { isSessionStale() }) {
                 return Reply(ok: false, text: Client.staleSentinel, exitAfterReply: true)
             }
             if Self.inputCommands.contains(cmd) || ["info", "ui", "find", "wait", "assert", "see", "screenshot"].contains(cmd) {
                 let previousOrientation = sim.displayOrientation, previousSize = sim.screenPointSize
-                try sim.refreshDisplayGeometry()
+                try timed("geometry") { try sim.refreshDisplayGeometry() }
                 if previousOrientation != sim.displayOrientation || previousSize != sim.screenPointSize { referencesValid = false }
             }
             if let batch {
@@ -278,6 +276,8 @@ final class Daemon {
             }
 
             switch cmd {
+            case "profile":
+                return try executeProfile(a[0])
             case "ping":
                 return Reply(ok: true, text: "pong \(sim.name)")
 
@@ -310,9 +310,9 @@ final class Daemon {
                     // Decide direction: known-above -> scroll up, else scroll down.
                     let above = snap.resolve(sel).map { $0.y < 0 } ?? false
                     if above {
-                        try sim.swipe(x1: w / 2, y1: h * 0.28, x2: w / 2, y2: h * 0.72, duration: 0.25)
+                        try timed("input") { try sim.swipe(x1: w / 2, y1: h * 0.28, x2: w / 2, y2: h * 0.72, duration: 0.25) }
                     } else {
-                        try sim.swipe(x1: w / 2, y1: h * 0.72, x2: w / 2, y2: h * 0.28, duration: 0.25)
+                        try timed("input") { try sim.swipe(x1: w / 2, y1: h * 0.72, x2: w / 2, y2: h * 0.28, duration: 0.25) }
                     }
                     usleep(280 * 1000)
                 }
@@ -333,12 +333,12 @@ final class Daemon {
             case "tap":
                 guard !a.isEmpty else { return Reply(ok: false, text: "tap needs a selector or x y point") }
                 if a.count >= 2, Double(a[0]) != nil, Double(a[1]) != nil {
-                    try sim.tap(x: num(0), y: num(1)); settle()
+                    try timed("input") { try sim.tap(x: num(0), y: num(1)) }; settle()
                     return Reply(ok: true, text: "tapped @\(Int(num(0))),\(Int(num(1)))")
                 }
                 let sel = a.joined(separator: " ")
                 if let el = try currentForResolve(sel).resolveForInput(sel) {
-                    try sim.tap(x: Double(el.cx), y: Double(el.cy)); settle()
+                    try timed("input") { try sim.tap(x: Double(el.cx), y: Double(el.cy)) }; settle()
                     return Reply(ok: true, text: "tapped \(el.ref) \(el.shortRole) \(el.label ?? el.id ?? "")")
                 }
                 if sel.hasPrefix("#") || (sel.hasPrefix("e") && Int(sel.dropFirst()) != nil) {
@@ -346,7 +346,7 @@ final class Daemon {
                 }
                 // Fallback: bounded OCR of visible labels only.
                 if let (x, y, text) = try ocrCenter(matching: Daemon.clean(sel)) {
-                    try sim.tap(x: x, y: y); settle()
+                    try timed("input") { try sim.tap(x: x, y: y) }; settle()
                     return Reply(ok: true, text: "tapped (ocr) \"\(text)\" @\(Int(x)),\(Int(y))")
                 }
                 return Reply(ok: false, text: "not found: \(sel)")
@@ -356,35 +356,35 @@ final class Daemon {
                 guard let (x, y, text) = try ocrCenter(matching: q) else {
                     return Reply(ok: false, text: "no visible text matching: \(q)")
                 }
-                try sim.tap(x: x, y: y); settle()
+                try timed("input") { try sim.tap(x: x, y: y) }; settle()
                 return Reply(ok: true, text: "tapped (ocr) \"\(text)\" @\(Int(x)),\(Int(y))")
 
             case "type" where !a.isEmpty:
-                try sim.type(a.joined(separator: " ")); settle()
+                try timed("input") { try sim.type(a.joined(separator: " ")) }; settle()
                 return Reply(ok: true, text: "typed")
 
             case "typein" where a.count >= 2:
                 guard let el = try currentForResolve(a[0]).resolveForInput(a[0]) else {
                     return Reply(ok: false, text: "not found: \(a[0])")
                 }
-                try sim.tap(x: Double(el.cx), y: Double(el.cy)); usleep(200 * 1000)
-                try sim.type(a[1...].joined(separator: " ")); settle()
+                try timed("input") { try sim.tap(x: Double(el.cx), y: Double(el.cy)) }; usleep(200 * 1000)
+                try timed("input") { try sim.type(a[1...].joined(separator: " ")) }; settle()
                 return Reply(ok: true, text: "typed into \(el.ref)")
 
             case "key" where !a.isEmpty:
-                try sim.pressKey(usage: Int32(Double(a[0]) ?? 0)); settle()
+                try timed("input") { try sim.pressKey(usage: Int32(Double(a[0]) ?? 0)) }; settle()
                 return Reply(ok: true, text: "key \(a[0])")
 
             case "swipe" where a.count >= 4:
-                try sim.swipe(x1: num(0), y1: num(1), x2: num(2), y2: num(3), duration: 0.3); settle()
+                try timed("input") { try sim.swipe(x1: num(0), y1: num(1), x2: num(2), y2: num(3), duration: 0.3) }; settle()
                 return Reply(ok: true, text: "swiped")
 
             case "drag", "dragdrop":
                 let hold = (cmd == "dragdrop") ? 0.7 : 0.0
                 if a.count >= 4, Double(a[0]) != nil {
-                    try sim.drag(x1: num(0), y1: num(1), x2: num(2), y2: num(3), hold: hold, move: 0.5)
+                    try timed("input") { try sim.drag(x1: num(0), y1: num(1), x2: num(2), y2: num(3), hold: hold, move: 0.5) }
                 } else if a.count >= 2, let from = try center(a[0]), let to = try center(a[1]) {
-                    try sim.drag(x1: from.0, y1: from.1, x2: to.0, y2: to.1, hold: hold, move: 0.5)
+                    try timed("input") { try sim.drag(x1: from.0, y1: from.1, x2: to.0, y2: to.1, hold: hold, move: 0.5) }
                 } else {
                     return Reply(ok: false, text: "drag needs <x1 y1 x2 y2> or <fromSel toSel>")
                 }
@@ -393,27 +393,27 @@ final class Daemon {
 
             case "longpress" where !a.isEmpty:
                 if a.count >= 2, Double(a[0]) != nil {
-                    try sim.longPress(x: num(0), y: num(1), duration: a.count >= 3 ? num(2) : 1.0)
+                    try timed("input") { try sim.longPress(x: num(0), y: num(1), duration: a.count >= 3 ? num(2) : 1.0) }
                 } else if let p = try center(a[0]) {
-                    try sim.longPress(x: p.0, y: p.1, duration: a.count >= 2 ? num(1) : 1.0)
+                    try timed("input") { try sim.longPress(x: p.0, y: p.1, duration: a.count >= 2 ? num(1) : 1.0) }
                 } else { return Reply(ok: false, text: "not found: \(a[0])") }
                 settle()
                 return Reply(ok: true, text: "long-pressed")
 
             case "pinch" where a.count >= 2:
                 if a.count >= 3, Double(a[0]) != nil {
-                    try sim.pinch(x: num(0), y: num(1), scale: num(2), duration: 0.5)
+                    try timed("input") { try sim.pinch(x: num(0), y: num(1), scale: num(2), duration: 0.5) }
                 } else if let p = try center(a[0]) {
-                    try sim.pinch(x: p.0, y: p.1, scale: Double(a[1]) ?? 2.0, duration: 0.5)
+                    try timed("input") { try sim.pinch(x: p.0, y: p.1, scale: Double(a[1]) ?? 2.0, duration: 0.5) }
                 } else { return Reply(ok: false, text: "not found: \(a[0])") }
                 settle()
                 return Reply(ok: true, text: "pinched")
 
             case "rotate" where a.count >= 2:
                 if a.count >= 3, Double(a[0]) != nil {
-                    try sim.rotate(x: num(0), y: num(1), radians: num(2), duration: 0.5)
+                    try timed("input") { try sim.rotate(x: num(0), y: num(1), radians: num(2), duration: 0.5) }
                 } else if let p = try center(a[0]) {
-                    try sim.rotate(x: p.0, y: p.1, radians: Double(a[1]) ?? 0, duration: 0.5)
+                    try timed("input") { try sim.rotate(x: p.0, y: p.1, radians: Double(a[1]) ?? 0, duration: 0.5) }
                 } else { return Reply(ok: false, text: "not found: \(a[0])") }
                 settle()
                 return Reply(ok: true, text: "rotated")
@@ -431,7 +431,7 @@ final class Daemon {
                     let delta = (dir == "down") ? detent : -detent   // down = toward end of content
                     for _ in 0..<clicks {
                         try checkCancellation()
-                        try sim.turnCrown(by: delta, steps: 8, duration: 0.10)
+                        try timed("input") { try sim.turnCrown(by: delta, steps: 8, duration: 0.10) }
                         usleep(120 * 1000)                  // let each detent settle (kills momentum)
                     }
                     settle(maxMs: 3000)
@@ -439,7 +439,7 @@ final class Daemon {
                 }
                 let delta = Double(a[0]) ?? 0
                 let steps = a.count >= 2 ? UInt(Double(a[1]) ?? 24) : 24
-                try sim.turnCrown(by: delta, steps: steps, duration: 0.25)
+                try timed("input") { try sim.turnCrown(by: delta, steps: steps, duration: 0.25) }
                 settle(maxMs: 3000)
                 return Reply(ok: true, text: "crowned \(delta)")
 
@@ -458,9 +458,9 @@ final class Daemon {
                         try checkCancellation()
                     // down = reveal content below = finger drags upward
                     if sdir == "down" {
-                        try sim.swipe(x1: w / 2, y1: h * 0.72, x2: w / 2, y2: h * 0.30, duration: 0.25)
+                        try timed("input") { try sim.swipe(x1: w / 2, y1: h * 0.72, x2: w / 2, y2: h * 0.30, duration: 0.25) }
                     } else {
-                        try sim.swipe(x1: w / 2, y1: h * 0.30, x2: w / 2, y2: h * 0.72, duration: 0.25)
+                        try timed("input") { try sim.swipe(x1: w / 2, y1: h * 0.30, x2: w / 2, y2: h * 0.72, duration: 0.25) }
                     }
                     usleep(150 * 1000)
                 }
@@ -470,9 +470,9 @@ final class Daemon {
             case "screenshot":
                 let options = try ScreenshotOptions(arguments: a)
                 let path = options.path ?? "\(Net.socketDir())/last.png"
-                try sim.screenshot(toPath: path)
+                try timed("screenshot") { try sim.screenshot(toPath: path) }
                 if options.maxEdge != nil {
-                    let preview = try ScreenshotPreview.make(path: path, pointSize: sim.screenPointSize, options: options)
+                    let preview = try timed("preview") { try ScreenshotPreview.make(path: path, pointSize: sim.screenPointSize, options: options) }
                     return Reply(ok: true, text: try preview.description())
                 }
                 return Reply(ok: true, text: path)
@@ -538,11 +538,11 @@ final class Daemon {
                 return Reply(ok: false, text: "timeout waiting for \(sel)" + detail)
 
             case "install" where !a.isEmpty:
-                let (c, o) = Simctl.run(["install", sim.udid, a[0]])
+                let (c, o) = timed("simctl") { Simctl.run(["install", sim.udid, a[0]]) }
                 return Reply(ok: c == 0, text: c == 0 ? "installed \(a[0])" : o)
 
             case "launch" where !a.isEmpty:
-                let (c, o) = Simctl.run(["launch", sim.udid] + a)
+                let (c, o) = timed("simctl") { Simctl.run(["launch", sim.udid] + a) }
                 if c == 0 { lastBundle = a[0] }
                 return Reply(ok: c == 0, text: o.trimmingCharacters(in: .whitespacesAndNewlines))
 
@@ -568,7 +568,7 @@ final class Daemon {
                 return Reply(ok: true, text: "\(path!)\n\n\(body)")
 
             case "terminate" where !a.isEmpty:
-                let (c, o) = Simctl.run(["terminate", sim.udid, a[0]])
+                let (c, o) = timed("simctl") { Simctl.run(["terminate", sim.udid, a[0]]) }
                 return Reply(ok: c == 0, text: c == 0 ? "terminated \(a[0])" : o)
 
             case "apps":

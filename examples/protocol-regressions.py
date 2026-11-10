@@ -147,3 +147,27 @@ assert [response['result']['isError'] for response in responses] == [False, Fals
 assert received == [['screenshot', '/tmp/a b.png', '--preview', '640', '--crop', '10', '20', '300', '400'],
                     ['screenshot', '--preview', '640']], received
 print('PASS: preview options preserve path/crop; invalid MCP preview arguments send no input')
+
+profile_json = json.dumps(['tap', '10', '20'])
+def profile_cli(udid):
+    results = []
+    for source in [profile_json, '-']:
+        results.append(subprocess.run([wand, '--udid', udid, 'profile', source],
+            input=profile_json if source == '-' else None, capture_output=True, text=True, timeout=4))
+    for invalid in ['["stop"]', '["profile","[]"]', '["tap","NaN","20"]',
+                    json.dumps(['batch', '[["tap","10","20"],["key","NaN"]]'])]:
+        result = subprocess.run([wand, '--udid', udid, 'profile', invalid],
+                                capture_output=True, timeout=4)
+        assert result.returncode != 0
+    return results
+profile_result = '{"schema":1,"ok":true,"result":"tapped","profile":{}}'
+results, received = exchange(profile_cli, lambda conn, _: conn.sendall(
+    json.dumps(dict(ok=True, text=profile_result)).encode() + b'\n'))
+assert all(result.stdout == profile_result + '\n' and result.returncode == 0 for result in results)
+assert received == [['profile', profile_json], ['profile', profile_json]], received
+def profile_once(udid):
+    return subprocess.run([wand, '--udid', udid, 'profile', profile_json],
+                          capture_output=True, text=True, timeout=4)
+result, received = exchange(profile_once, lambda conn, _: None)
+assert result.returncode != 0 and 'may have run' in result.stderr and len(received) == 1
+print('PASS: profile accepts argv/stdin, preflights all input and never replays a lost reply')
