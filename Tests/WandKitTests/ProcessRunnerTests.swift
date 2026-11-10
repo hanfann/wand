@@ -25,6 +25,31 @@ final class ProcessRunnerTests: XCTestCase {
         XCTAssertLessThan(result.output.utf8.count, 350)
     }
 
+    func testRepeatedOverflowRetainsExactUnicodeTailAndExitStatus() {
+        let script = "import os; data=('prefix-盆栽🌱\\n'*10000).encode(); os.write(1,data); os.write(1,b'END\\n'); raise SystemExit(7)"
+        let result = ProcessRunner.run("/usr/bin/python3", ["-c", script], timeout: 3, outputLimit: 1003)
+        let expected = Data((String(repeating: "prefix-盆栽🌱\n", count: 10000) + "END\n").utf8).suffix(1003)
+        XCTAssertEqual(result.status, 7)
+        XCTAssertEqual(result.output, "[output truncated to last 1003 bytes]\n" + String(decoding: expected, as: UTF8.self))
+    }
+
+    func testZeroLimitStillDrainsAndReportsTruncation() {
+        let result = ProcessRunner.run("/usr/bin/awk", ["BEGIN { for(i=0;i<20000;i++) print \"output\"; exit 9 }"], timeout: 3, outputLimit: 0)
+        XCTAssertEqual(result.status, 9)
+        XCTAssertEqual(result.output, "[output truncated to last 0 bytes]\n")
+    }
+
+    func testContinuouslyOverflowingChildStillHonorsDeadline() {
+        let start = ProcessInfo.processInfo.systemUptime
+        let result = ProcessRunner.run("/usr/bin/yes", ["output"], timeout: 0.05, outputLimit: 257)
+        XCTAssertTrue(result.timedOut)
+        XCTAssertEqual(result.status, 124)
+        XCTAssertLessThan(ProcessInfo.processInfo.systemUptime - start, 1.5)
+        XCTAssertTrue(result.output.hasPrefix("[output truncated to last 257 bytes]\n"))
+        XCTAssertTrue(result.output.contains("operation may have applied"))
+        XCTAssertLessThan(result.output.utf8.count, 512)
+    }
+
     func testMissingExecutableFailsWithoutWaiting() {
         XCTAssertEqual(ProcessRunner.run("/nonexistent/wand-test", []).status, -1)
     }

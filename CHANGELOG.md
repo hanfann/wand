@@ -5,6 +5,9 @@ All notable changes to Wand are documented here. Format roughly follows
 
 ## [Unreleased]
 
+- Retain subprocess diagnostic tails in a bounded circular buffer, avoiding repeated
+  multi-megabyte copies on output overflow while preserving exact bytes, exit status
+  and timeout handling. Small outputs allocate only as they arrive.
 - Add optional screenshot previews and source-pixel crops with explicit tap-coordinate
   mapping. Keep full captures unchanged; avoid upscaling/duplicating small images.
 - Skip macOS CI for known documentation-only changes and cancel superseded macOS

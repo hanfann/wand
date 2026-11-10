@@ -26,6 +26,7 @@ Established before the deep-audit candidate was measured:
 | iPhone gestures | 6/6 app outcomes: tap, long press, pinch, rotate, drag/drop, exact text |
 | Input recovery | no automatic replay after ambiguous delivery; successful next observed action |
 | Control-plane failure | monotonic subprocess deadline, bounded output, no replay after timeout |
+| Subprocess output overflow | exact final byte tail with unchanged truncation/status/deadlines; 32 MiB emitter with 8 MiB tail improves p95 by at least 20%; small-output p95 stays within the regression budget |
 | Framing | Unicode, fragmented/coalesced messages, bounded frames, partial EOF rejected |
 | Invalid input / batch | no NaN crash, no silent numeric zero, validate all steps before first action |
 | Observation | diff exposes movement, disabled state, ref changes and duplicate removals |

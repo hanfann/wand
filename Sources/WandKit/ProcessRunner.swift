@@ -31,8 +31,7 @@ public enum ProcessRunner {
         var killDeadline: TimeInterval?
         var drainDeadline: TimeInterval?
         var timedOut = false
-        var truncated = false
-        var data = Data()
+        var tail = OutputTail(limit: outputLimit)
         var buffer = [UInt8](repeating: 0, count: 16 * 1024)
         while true {
             let now = ProcessInfo.processInfo.systemUptime
@@ -54,10 +53,8 @@ public enum ProcessRunner {
             if let limit = killDeadline, now >= limit { break }
             let count = read(descriptor, &buffer, buffer.count)
             if count > 0 {
-                data.append(contentsOf: buffer.prefix(count))
-                if data.count > max(0, outputLimit) {
-                    data = Data(data.suffix(max(0, outputLimit)))
-                    truncated = true
+                buffer.withUnsafeBytes { bytes in
+                    tail.append(UnsafeRawBufferPointer(rebasing: bytes.prefix(count)))
                 }
             } else if !process.isRunning { break }
             else if count < 0 && errno == EINTR { continue }
@@ -68,8 +65,8 @@ public enum ProcessRunner {
             }
         }
         // Foundation reaps a killed child asynchronously; never wait without a bound.
-        var output = String(decoding: data, as: UTF8.self)
-        if truncated { output = "[output truncated to last \(max(0, outputLimit)) bytes]\n" + output }
+        var output = String(decoding: tail.data, as: UTF8.self)
+        if tail.truncated { output = "[output truncated to last \(tail.limit) bytes]\n" + output }
         if timedOut {
             output += "\nsubprocess timed out after \(timeout)s; operation may have applied. Inspect state before retrying"
         }
