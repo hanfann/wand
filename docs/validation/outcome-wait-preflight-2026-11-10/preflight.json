@@ -1,0 +1,70 @@
+[
+  {
+    "label": "root-ui",
+    "args": [
+      "ui",
+      "full"
+    ],
+    "status": 0,
+    "elapsed_ms": 22.167041955981404,
+    "output": "1 elements (full tree)\ne1 Application \"Settings\" @81,99\n",
+    "error": ""
+  },
+  {
+    "label": "open",
+    "args": [
+      "tap",
+      "81",
+      "70"
+    ],
+    "status": 0,
+    "elapsed_ms": 1522.8816250455566,
+    "output": "tapped @81,70\n",
+    "error": ""
+  },
+  {
+    "label": "detail-ui",
+    "args": [
+      "ui",
+      "full"
+    ],
+    "status": 0,
+    "elapsed_ms": 44.52533402945846,
+    "output": "1 elements (full tree)\ne1 Application \"Settings\" @81,99\n",
+    "error": ""
+  },
+  {
+    "label": "detail-image",
+    "args": [
+      "screenshot",
+      "/tmp/wand-outcome/notifications.png"
+    ],
+    "status": 0,
+    "elapsed_ms": 23.274082981515676,
+    "output": "/tmp/wand-outcome/notifications.png\n",
+    "error": ""
+  },
+  {
+    "label": "back",
+    "args": [
+      "tap",
+      "20",
+      "28"
+    ],
+    "status": 0,
+    "elapsed_ms": 1278.3007499529049,
+    "output": "tapped @20,28\n",
+    "error": ""
+  },
+  {
+    "label": "returned-ui",
+    "args": [
+      "ui",
+      "full"
+    ],
+    "status": 0,
+    "elapsed_ms": 32.8893749974668,
+    "output": "1 elements (full tree)\ne1 Application \"Settings\" @81,99\n",
+    "error": ""
+  }
+]

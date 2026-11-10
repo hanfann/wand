@@ -20,7 +20,8 @@ skill. After a binary update, `stop` only your selected daemon to load the new b
    after navigation/layout changes: refs expire after input, named targets refresh
    geometry. `type`/`typein` support US ASCII; use `setvalue` for Unicode.
 4. Watch AX may expose only the app. Repeated `ui`/`find`/`wait` cannot reveal
-   missing controls. Try filtered `see "text"` once, then `screenshot <path>`.
+   missing controls. An app-only tree cannot distinguish in-app transitions or
+   justify ending settling early. Try filtered `see "text"` once, then `screenshot <path>`.
    AX has a 5s worker deadline; OCR has 3s fast / 5s accurate deadlines. Accurate
    Vision stalls on the tested Xcode 27.2 host: do not retry it repeatedly.
    OCR taps require unique confident text, trying exact fast matches first and
