@@ -120,6 +120,21 @@ shutdown exceeded its deadline but deletion returned successfully; this is
 recorded as a cleanup failure, not a clean pass. The draft PR's live CI gate
 remains red. No fresh iOS startup or full-platform reliability claim is made.
 
+A further local run with 47% reported free memory installed the fixture and
+started Wand, then timed out on app launch. A retained-fixture investigation
+subsequently timed out on installation and the read-only `get_app_container`
+query. At that point host load was 545.94/281.91/162.21 with 34% memory reported
+free; the process inventory showed exactly one `launchd_sim`, belonging to this
+task. Shutdown completed in 4.45 s and deletion in 0.44 s. This does not establish
+RAM as the sole cause; fresh iOS startup itself remains unqualified. No unrelated
+simulators or processes were terminated.
+
+Han confirmed that another test Mac is unavailable and asked to document these
+blockers for now. Remaining work is to qualify cold iOS startup and accurate OCR
+on a stable alternate host/runtime, then rerun the required live gates. The
+installed binary remains the watch-verified `d52e4b1` build. Production QA watch
+`B0CDF864` remained shut down; local test simulators and owned workers were stopped.
+
 ## Failure handling and tradeoffs
 
 AX requests have a 5 s deadline and 2 s cooldown after failure; the worker is killed

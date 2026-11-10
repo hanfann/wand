@@ -52,6 +52,8 @@ unready child; a timeout is not permission to replay input.
 `boot` is headless; use `--show` only for visible checks. Reuse one DeviceHub window
 and select devices in its sidebar. Keep the Mac unlocked; do not create windows or
 reset a watch to work around a lock. Keep only needed simulators running.
+Reuse one task-owned fixture for local debugging and inspect failures in place;
+reserve the create/delete CI harness for cold-start qualification.
 `stop` closes the daemon/workers, **not** the simulator. Shut down task-owned
 throwaways afterward; preserve unrelated processes and stateful QA accounts.
 Erase/delete/uninstall is not routine cleanup. Keep evidence, remove scratch images.
