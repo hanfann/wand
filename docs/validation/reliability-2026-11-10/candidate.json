@@ -2,5 +2,11 @@
   "binary_sha256": "1323aafd4cf3bd08b718faaf406a2d5f45517d3b4e852e77f06181dccf8ea2ed",
   "xcode": "Xcode 27.2\nBuild version 27B52",
   "note": "Final guard/settle candidate. watch-settle.txt and unit-guards.txt exercise this build; ipad-final predates guards/settle and validates display/setvalue. CI rechecks final iPhone input.",
-  "commit": "06ddaf7"
+  "commit": "06ddaf7",
+  "installed_candidate": {
+    "commit": "d52e4b1",
+    "binary_sha256": "82db58d5e050eb3da5b594d58ab846e5687512d2166d66473a1ba1cab4bb336a",
+    "changes": "Legacy geometry, compatible CI device selection, legacy drag/error propagation, lazy framework loading and cached toolchain discovery",
+    "validation": "Both Xcodes pass builds, 41 unit tests and protocol/gesture/display contracts. d52e4b1 watch: 10 navigation actions, 6 Crown transitions, drag/batch safeguards pass; tap p95 1537 ms; startup 1392 ms. Xcode 26 full iPhone 7+3 live cases passed on 651b47f. Latest hosted live run failed before input (launch/install), so full cold-start qualification remains open."
+  }
 }

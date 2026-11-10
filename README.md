@@ -31,7 +31,10 @@ connection, with no guest helper. See the [fix and outcome evidence](docs/valida
 Cold CoreSimulator startup can still stall; an input acknowledgement alone is
 not a verified app outcome. iPad landscape gestures are also verified in the
 [reliability report](docs/validation/reliability-2026-11-10.md); other runtime
-versions still require qualification.
+versions still require qualification. Xcode 26.6 / iOS 26.5 has also passed all
+seven portrait and three landscape iPhone fixture checks. Fresh simulator setup
+remains unreliable on the small hosted runners; the report distinguishes those
+failures from completed input tests.
 
 ## Why Wand
 

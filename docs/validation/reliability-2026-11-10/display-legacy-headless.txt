@@ -1,0 +1,66 @@
+2026-11-10 14:07:08.857 display-legacy-live[88742:11223358] DISPLAY QUERY {
+    exif = 1;
+    height = 2532;
+    scale = 3;
+    width = 1170;
+}
+2026-11-10 14:07:08.858 display-legacy-live[88742:11223358] ERROR (null)
+2026-11-10 14:07:08.887 display-legacy-live[88742:11223358] SCREEN id=4 orientation=0 unique=B4E2F8EA-A243-418F-9192-944A0D8E6AEA size={0, 0}
+2026-11-10 14:07:08.891 display-legacy-live[88742:11223358] SCREEN id=3 orientation=0 unique=0073112D-AA56-43C3-8783-B3C3592DB94A size={0, 0}
+2026-11-10 14:07:08.894 display-legacy-live[88742:11223358] SCREEN id=2 orientation=0 unique=0CB70CC0-4329-4037-8B19-2F926A79B53F size={0, 0}
+2026-11-10 14:07:08.897 display-legacy-live[88742:11223358] SCREEN id=1 orientation=1 unique=9AACA310-4A58-44DA-BD73-E954BB94C955 size={1170, 2532}
+PROTOCOL SimScreen
+  registerScreenCallbacksWithUUID:callbackQueue:frameCallback:surfacesChangedCallback:propertiesChangedCallback: v56@0:8@16@24@?32@?40@?48
+  unregisterScreenCallbacksWithUUID: v24@0:8@16
+  setCurrentMode:pixelSize:carPlayProperties:completionQueue:completionHandler: v64@0:8@16{CGSize=dd}24@40@48@?56
+  setPowerState:completionQueue:completionHandler: v36@0:8i16@20@?28
+  screenProperties @16@0:8
+PROTOCOL SimDisplayRenderable
+  registerCallbackWithUUID:damageRectanglesCallback: v32@0:8@16@?24
+  unregisterDamageRectanglesCallbackWithUUID: v24@0:8@16
+  registerCallbackWithUUID:displayPropertiesChanged: v32@0:8@16@?24
+  unregisterDisplayPropertiesChangedCallbackWithUUID: v24@0:8@16
+  displaySize {CGSize=dd}16@0:8
+  displayPitch Q16@0:8
+  displaySizeInBytes Q16@0:8
+PROTOCOL SimDisplayIOSurfaceRenderable
+  registerCallbackWithUUID:ioSurfacesChangeCallback: v32@0:8@16@?24
+  unregisterIOSurfacesChangeCallbackWithUUID: v24@0:8@16
+  framebufferSurface @16@0:8
+  maskedFramebufferSurface @16@0:8
+PROTOCOL SimDisplayResizeableRenderable
+  didChangeDisplaySize:options: v40@0:8{CGSize=dd}16@32
+CLASS SimDevice
+  setDisplayBacklightActive:error: B28@0:8B16^@20
+  updateNearbyInteractionDeviceRect:deviceRotation:error: B64@0:8{CGRect={CGPoint=dd}{CGSize=dd}}16d48^@56
+CLASS SimDeviceIOClient
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-18697347-22AE-4474-AA99-80A41C40CAF4-ROCKImpersonateable-SimDeviceIOMachServiceProvider-SimDeviceIOPortDescriptorInterface-SimScreenCaptureService
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-D4229EE8-F7AC-4F3A-9D55-983A3326997E-SimScreen-SimDeviceIOPortDescriptorInterface-ROCKImpersonateable-SimDisplayIOSurfaceRenderable-SimDisplayResizeableRenderable-SimDisplayRenderable
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-D4229EE8-F7AC-4F3A-9D55-983A3326997E-SimScreen-SimDeviceIOPortDescriptorInterface-ROCKImpersonateable-SimDisplayIOSurfaceRenderable-SimDisplayResizeableRenderable-SimDisplayRenderable
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-D4229EE8-F7AC-4F3A-9D55-983A3326997E-SimScreen-SimDeviceIOPortDescriptorInterface-ROCKImpersonateable-SimDisplayIOSurfaceRenderable-SimDisplayResizeableRenderable-SimDisplayRenderable
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-D4229EE8-F7AC-4F3A-9D55-983A3326997E-SimScreen-SimDeviceIOPortDescriptorInterface-ROCKImpersonateable-SimDisplayIOSurfaceRenderable-SimDisplayResizeableRenderable-SimDisplayRenderable
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-17668932-A488-4D65-BD37-3BCB23F77F43-ROCKImpersonateable-SimDeviceIOPortDescriptorInterface-SimScreenAdapter-SimDeviceIOMachServiceProvider-SimEnvironmentProvider
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-BF90F252-6738-4778-B9BA-88DE141DF44E-ROCKImpersonateable-SimAcceleratorMetalDevice-SimDeviceIOPortDescriptorInterface-SimDeviceIOMachServiceProvider
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-A3E03572-C4D7-437D-96A4-A767D1EEB21B-ROCKImpersonateable-SimAcceleratorIOSurface-SimDeviceIOPortDescriptorInterface-SimDeviceIOMachServiceProvider
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-FB218171-0732-4009-8037-7FBED3AB629F-ROCKImpersonateable-SimDeviceIOPortDescriptorInterface-SimLegacyHIDDescriptor-SimEnvironmentProvider
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-368A0826-77DC-435A-A40B-4D34AC1A0C3B-ROCKImpersonateable-SimStreamProcessable-SimDeviceIOPortDescriptorInterface-SimDeviceIOResourceManagerInterface-SimStreamProcessorProgramInterface
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-368A0826-77DC-435A-A40B-4D34AC1A0C3B-ROCKImpersonateable-SimStreamProcessable-SimDeviceIOPortDescriptorInterface-SimDeviceIOResourceManagerInterface-SimStreamProcessorProgramInterface
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-368A0826-77DC-435A-A40B-4D34AC1A0C3B-ROCKImpersonateable-SimStreamProcessable-SimDeviceIOPortDescriptorInterface-SimDeviceIOResourceManagerInterface-SimStreamProcessorProgramInterface
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-D74B8B58-CB5E-4805-B345-0586B4E146EE-ROCKImpersonateable-SimDeviceIOPortDescriptorInterface-SimAudioHostRoutable-SimEnvironmentProvider
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-DDFF56CF-3FEC-4222-96BF-EDBA8BED8B8D-SimDeviceIOPortDescriptorInterface-ROCKImpersonateable-SimDeviceIOMachServiceProvider
+CLASS ROCKRemoteProxy-A72E7B9D-C399-481F-867A-214FA7D1D364-ROCKImpersonateable-SimDeviceIOPortInterface
+CLASS ROCKRemoteProxy-DDFF56CF-3FEC-4222-96BF-EDBA8BED8B8D-SimDeviceIOPortDescriptorInterface-ROCKImpersonateable-SimDeviceIOMachServiceProvider

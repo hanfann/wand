@@ -1,0 +1,8 @@
+{
+  "device": "iPhone 14",
+  "runtime": "iOS 27.2",
+  "udid": "6490032B-E593-43AE-93C6-67C658231958",
+  "display_probe": "PASS: one live screen, portrait, 1170x2532 pixels at 3x",
+  "fixture_install": "FAIL: simctl install exceeded 90 seconds; gestures not run",
+  "cleanup": "Wand stopped; simulator shut down and deleted"
+}

@@ -44,8 +44,16 @@ All notable changes to Wand are documented here. Format roughly follows
 
 ### Changed
 - Multiple booted devices require an explicit target rather than choosing the first.
+- Load SimulatorKit only for legacy input/layout diagnostics and the accessibility
+  framework only inside the AX worker. Cache toolchain discovery per process.
 
 ### Fixed
+- Read legacy interface orientation from the one active display rather than
+  assuming screen ID 0. Ignore disconnected outputs and reject ambiguous panels.
+- Encode legacy single-finger drag moves as continued contacts; propagate pinch
+  and rotation failures at down, movement and release instead of returning success.
+- Select compatible runtime/device pairs in CI, avoiding accidental use of a
+  device-specific foldable runtime for the ordinary iPhone fixture.
 - Xcode 27 uses one persistent host DTUHID connection for touch, multitouch,
   keyboard and native Watch Crown. Removed the guest helper and its SDK/compiler
   subprocesses. Bounded liveness probes precede input; interruptions fail without
