@@ -250,6 +250,21 @@ waiting 5s. `see accurate` explicitly retries; success restores automatic fallba
 Cancellation does not trigger cooldown. Cooldown refuses input rather than accepting
 uncertain text; input is never targeted from a time-based cache.
 
+For lighter visual inspection, `wand screenshot /tmp/screen.png --preview 640`
+keeps the full capture and derives `/tmp/screen.preview.png` with a longest edge of
+640 pixels. Small captures reuse the full image without upscaling or duplicating it.
+Add `--crop x y width height` to select a region in **source pixels**, measured from
+the top left. Output is JSON with both paths, image dimensions and
+`previewPixelToPoint`: `tapX = xOffset + previewX * xScale`, likewise for Y.
+Use this mapping instead of the full screenshot's scale. Keep the original for
+pixel/clipping audits; reduced previews can hide small defects. Full captures and
+previews are user artifacts and are not automatically pruned.
+
+CI skips macOS builds/live simulators only for a known documentation-only diff.
+Code, test fixtures, workflows and unknown files retain full qualification. Manual
+CI runs always qualify both Xcodes. A newer code run cancels superseded macOS jobs
+for that branch/PR and Xcode; a docs-only push cannot cancel an active code test.
+
 ## How it works
 
 ```

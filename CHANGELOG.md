@@ -5,6 +5,11 @@ All notable changes to Wand are documented here. Format roughly follows
 
 ## [Unreleased]
 
+- Add optional screenshot previews and source-pixel crops with explicit tap-coordinate
+  mapping. Keep full captures unchanged; avoid upscaling/duplicating small images.
+- Skip macOS CI for known documentation-only changes and cancel superseded macOS
+  code jobs per branch/Xcode. Preserve live gates for code/fixtures/unknown changes;
+  docs-only pushes cannot interrupt active input qualification.
 - Add optional `batch --summary` / MCP `summary: true` output: completed count and
   final result or exact failed step, without retaining intermediate success text.
   Preflight CLI/MCP batches before simulator dispatch; preserve full output by default.

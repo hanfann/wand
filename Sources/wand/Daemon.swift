@@ -468,8 +468,13 @@ final class Daemon {
                 return Reply(ok: true, text: "scroll \(sdir) \(clicks)")
 
             case "screenshot":
-                let path = a.first ?? "\(Net.socketDir())/last.png"
+                let options = try ScreenshotOptions(arguments: a)
+                let path = options.path ?? "\(Net.socketDir())/last.png"
                 try sim.screenshot(toPath: path)
+                if options.maxEdge != nil {
+                    let preview = try ScreenshotPreview.make(path: path, pointSize: sim.screenPointSize, options: options)
+                    return Reply(ok: true, text: try preview.description())
+                }
                 return Reply(ok: true, text: path)
 
             case "see":

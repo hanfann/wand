@@ -31,6 +31,8 @@ Established before the deep-audit candidate was measured:
 | Observation | diff exposes movement, disabled state, ref changes and duplicate removals |
 | Compact MCP catalog | under 1 KB minified; preserve explicit targeting |
 | Optional batch summary | at least 80% fewer UTF-8 response bytes on the 32-step fixture; identical execution order, exact final/error text, no replay |
+| Optional screenshot preview | preserved full PNG; correct crop/orientation and independent X/Y point mapping; no upscaling; at least 70% fewer PNG bytes on the saved iPad fixture at 640px |
+| CI change filtering | docs-only skip; source/tests/workflows/fixtures/unknown changes and unavailable diffs require macOS; docs runs cannot cancel code qualification |
 | Resource use | daemon plus worker RSS growth below 20 MB over 1,000 warm reads; idle CPU under 1% over 5 s |
 | Cleanup | no task-owned helper/worker/recording process or scratch files after stop; no extra running sims |
 

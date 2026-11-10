@@ -130,3 +130,20 @@ assert result.returncode != 0 and result.stderr == failure + '\n' and len(receiv
 result, received = exchange(summary_cli, lambda conn, _: None)
 assert result.returncode != 0 and 'may have run' in result.stderr and len(received) == 1, result
 print('PASS: summary preserves exact failure text and never replays a lost reply')
+
+preview_calls = [
+    dict(path='/tmp/a b.png', previewMaxEdge=640, crop='10 20 300 400'),
+    dict(previewMaxEdge=640), dict(previewMaxEdge=0), dict(previewMaxEdge=True),
+    dict(crop='0 0 10 10'), dict(previewMaxEdge=640, crop='0 0 NaN 10'),
+]
+def preview_mcp(udid):
+    messages = [dict(jsonrpc='2.0', id=i, method='tools/call', params=dict(name='screenshot',
+        arguments=dict(arguments, udid=udid))) for i, arguments in enumerate(preview_calls)]
+    data = b''.join(json.dumps(message).encode() + b'\n' for message in messages)
+    return subprocess.run([wand, 'mcp'], input=data, capture_output=True, timeout=4)
+result, received = exchange(preview_mcp, lambda conn, _: conn.sendall(b'{"ok":true,"text":"preview metadata"}\n'))
+responses = [json.loads(line) for line in result.stdout.splitlines()]
+assert [response['result']['isError'] for response in responses] == [False, False, True, True, True, True], responses
+assert received == [['screenshot', '/tmp/a b.png', '--preview', '640', '--crop', '10', '20', '300', '400'],
+                    ['screenshot', '--preview', '640']], received
+print('PASS: preview options preserve path/crop; invalid MCP preview arguments send no input')

@@ -30,6 +30,11 @@ skill. After a binary update, `stop` only your selected daemon to load the new b
 5. Touches, AX and OCR use **points**; screenshots use **pixels**. Divide screenshot
    coordinates by `info` scale. Geometry follows active interface orientation;
    unsupported/ambiguous display geometry fails before input.
+   For lighter inspection, `screenshot /tmp/screen.png --preview 640` preserves the
+   full PNG and returns a smaller preview plus `previewPixelToPoint` mapping:
+   `pointX = xOffset + pixelX * xScale` (likewise Y). Optional `--crop x y w h` uses
+   source pixels. Use full captures for pixel/clipping QA; do not apply `info` scale
+   to resized previews. Small captures are not upscaled or duplicated.
 6. Verify the app outcome. Dispatch success and pixel settling do not prove it.
    `scroll down` uses touch; `drag 80 165 80 65` allows precise scrolling. `crown`
    sends native Watch Crown events; a swipe does not validate Crown behavior.

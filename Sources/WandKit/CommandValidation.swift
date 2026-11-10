@@ -26,6 +26,7 @@ public enum CommandValidation {
         }
         switch command {
         case "batch": _ = try CommandBatch(arguments: a)
+        case "screenshot": _ = try ScreenshotOptions(arguments: a)
         case "tap":
             try selector()
             if a.count >= 2 && Double(a[0]) != nil {

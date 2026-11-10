@@ -144,8 +144,13 @@ enum MCP {
                      return ["rotate", numStr(a, "x") ?? "nan", numStr(a, "y") ?? "nan", numStr(a, "radians") ?? "0"]
                  },
             Tool(name: "screenshot",
-                 description: "Save a PNG (default ~/.wand/last.png). Prefer text observations when useful; sparse watch AX may need screenshots. Divide pixels by info scale before tapping.",
-                 schema: obj(["path": pStr])) { a in str(a, "path").map { ["screenshot", $0] } ?? ["screenshot"] },
+                 description: "Save a full PNG. Optional previewMaxEdge (1–4096) adds a smaller PNG and pixel-to-point mapping; crop is 'x y width height' in source pixels and requires preview. Default path ~/.wand/last.png.",
+                 schema: obj(["path": pStr, "previewMaxEdge": pNum, "crop": pStr])) { a in
+                     var command = str(a, "path").map { ["screenshot", $0] } ?? ["screenshot"]
+                     if let edge = numStr(a, "previewMaxEdge") { command += ["--preview", edge] }
+                     if let crop = str(a, "crop") { command += ["--crop"] + crop.split(whereSeparator: { $0.isWhitespace }).map(String.init) }
+                     return command
+                 },
             Tool(name: "assert",
                  description: "Assert an element's state: cond is exists | gone | value=… | label=…. Returns PASS/FAIL.",
                  schema: obj(["selector": pStr, "cond": pStr], required: ["selector"])) { a in
