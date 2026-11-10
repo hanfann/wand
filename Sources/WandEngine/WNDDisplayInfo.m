@@ -7,10 +7,10 @@
 // properties. This is interface orientation, not physical device attitude.
 @protocol WNDLegacyScreenProperties <NSObject>
 - (unsigned int)uiOrientation;
-- (unsigned int)screenID;
 @end
 @protocol WNDLegacyScreen <NSObject>
 - (id<WNDLegacyScreenProperties>)screenProperties;
+- (CGSize)displaySize;
 @end
 
 @implementation WNDDisplayInfo {
@@ -44,9 +44,12 @@
         id<WNDLegacyScreen> primary = nil;
         for (id<WNDIOPort> port in [(id<WNDIOClient>)[self->_device io] ioPorts]) {
           id descriptor = [port descriptor];
-          if (![descriptor respondsToSelector:@selector(screenProperties)]) continue;
-          id<WNDLegacyScreenProperties> properties = [(id<WNDLegacyScreen>)descriptor screenProperties];
-          if (!properties || [properties screenID] != 0) continue;
+          if (![descriptor respondsToSelector:@selector(screenProperties)] ||
+              ![descriptor respondsToSelector:@selector(displaySize)]) continue;
+          // Screen IDs are one-based identities, not HID panel indices. Ignore
+          // disconnected zero-size outputs and require a single live panel.
+          CGSize size = [(id<WNDLegacyScreen>)descriptor displaySize];
+          if (!isfinite(size.width) || !isfinite(size.height) || size.width <= 0 || size.height <= 0) continue;
           if (primary) { primary = nil; break; }
           primary = descriptor;
         }

@@ -11,8 +11,20 @@
 @implementation TestProperties @end
 @interface TestScreen : NSObject
 @property(nonatomic, strong) id screenProperties;
+@property CGSize displaySize;
 @end
 @implementation TestScreen @end
+@interface StalledScreen : TestScreen
+@property(nonatomic, strong) dispatch_semaphore_t releaseRead;
+@property(atomic) NSUInteger reads;
+@end
+@implementation StalledScreen
+- (id)screenProperties {
+  self.reads += 1;
+  if (self.reads == 1) dispatch_semaphore_wait(self.releaseRead, DISPATCH_TIME_FOREVER);
+  return [super screenProperties];
+}
+@end
 @interface TestPort : NSObject
 @property(nonatomic, strong) id descriptor;
 @end
@@ -81,7 +93,9 @@ int main(void) { @autoreleasepool {
   assert([reader decode:reply]!=nil);
   xpc_array_append_value(displays,item); assert([reader decode:reply]==nil);
   TestProperties *properties=[TestProperties new];
+  properties.screenID=1; // A screen identity is not a zero-based HID panel index.
   TestScreen *screen=[TestScreen new]; screen.screenProperties=properties;
+  screen.displaySize=CGSizeMake(1200,2600);
   TestPort *port=[TestPort new]; port.descriptor=screen;
   TestIO *io=[TestIO new]; io.ioPorts=@[port];
   TestDeviceType *typeInfo=[TestDeviceType new]; typeInfo.mainScreenSize=CGSizeMake(1200,2600); typeInfo.mainScreenScale=3;
@@ -96,8 +110,30 @@ int main(void) { @autoreleasepool {
   }
   properties.uiOrientation=0; assert([legacy readLegacyWithError:nil]==nil);
   properties.uiOrientation=1; assert([legacy readLegacyWithError:nil]!=nil);
+  TestScreen *disconnected=[TestScreen new]; disconnected.screenProperties=properties;
+  TestPort *unused=[TestPort new]; unused.descriptor=disconnected;
+  io.ioPorts=@[unused,port];
+  legacy=[[WNDDisplayInfo alloc] initWithDevice:(id)device];
+  assert([legacy readLegacyWithError:nil]!=nil);
   io.ioPorts=@[port,port];
   legacy=[[WNDDisplayInfo alloc] initWithDevice:(id)device];
   assert([legacy readLegacyWithError:nil]==nil);
+  StalledScreen *stalled=[StalledScreen new];
+  stalled.displaySize=screen.displaySize;
+  stalled.releaseRead=dispatch_semaphore_create(0);
+  stalled.screenProperties=properties;
+  port.descriptor=stalled; io.ioPorts=@[port];
+  legacy=[[WNDDisplayInfo alloc] initWithDevice:(id)device];
+  double started=NSProcessInfo.processInfo.systemUptime;
+  NSError *error=nil;
+  assert([legacy readLegacyWithError:&error]==nil);
+  assert(NSProcessInfo.processInfo.systemUptime-started < 2);
+  assert([error.localizedDescription containsString:@"deadline"]);
+  started=NSProcessInfo.processInfo.systemUptime;
+  for (int i=0;i<100;i++) assert([legacy readLegacyWithError:nil]==nil);
+  assert(NSProcessInfo.processInfo.systemUptime-started < 0.1);
+  assert(stalled.reads==1); // No queue of blocked reads on repeated commands.
+  dispatch_semaphore_signal(stalled.releaseRead);
   puts("PASS: modern/legacy orientations; valid panel geometry; malformed/inactive/ambiguous displays refuse targeting");
+  puts("PASS: stalled legacy read has a bounded deadline and refuses further work");
 }}

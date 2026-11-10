@@ -8,6 +8,19 @@ import time
 from unittest.mock import patch
 import ci
 
+phone = dict(name='iPhone 14', identifier='phone')
+duo = dict(name='iPhone Duo', identifier='duo')
+general = dict(isAvailable=True, identifier='test.iOS-27-2', version='27.2', supportedDeviceTypes=[phone])
+specialized = dict(isAvailable=True, identifier='test.iOS-27-2-iPhone19-4', version='27.2', supportedDeviceTypes=[duo])
+for runtimes in ([specialized, general], [general, specialized]):
+    assert ci.select_device(dict(runtimes=runtimes, devicetypes=[phone, duo])) == (general, phone)
+try:
+    ci.select_device(dict(runtimes=[specialized], devicetypes=[phone, duo]))
+    raise AssertionError('foldable-only runtime must not silently substitute for the fixture')
+except AssertionError as error:
+    assert 'No available iOS runtime' in str(error)
+print('PASS: runtime/device selection excludes device-specific foldable runtimes')
+
 assert ci.run(['/bin/echo', 'ok'], stdout=subprocess.PIPE).stdout == b'ok\n'
 with tempfile.TemporaryFile() as log:
     try:

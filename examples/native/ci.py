@@ -45,6 +45,25 @@ def output(args, timeout=60):
     return run(args, timeout, stdout=subprocess.PIPE, text=True).stdout
 
 
+def select_device(catalog):
+    # Device-specific runtimes can share a version with the general iOS runtime.
+    # Pick a compatible pair; never fall back to an unqualified foldable panel.
+    preferred = ['iPhone 14', 'iPhone 16e', 'iPhone 17', 'iPhone 17 Pro',
+                 'iPhone 16', 'iPhone 15', 'iPhone SE (3rd generation)']
+    pairs = []
+    for runtime in catalog['runtimes']:
+        if not runtime.get('isAvailable') or not runtime['identifier'].split('.')[-1].startswith('iOS-'):
+            continue
+        supported = {d['identifier'] for d in runtime.get('supportedDeviceTypes', [])}
+        for device in catalog['devicetypes']:
+            if device['name'] in preferred and (not supported or device['identifier'] in supported):
+                rank = (tuple(int(n) for n in runtime['version'].split('.')), -preferred.index(device['name']))
+                pairs.append((rank, runtime, device))
+    assert pairs, 'No available iOS runtime supports a qualified single-screen iPhone fixture'
+    _, runtime, device = max(pairs, key=lambda pair: pair[0])
+    return runtime, device
+
+
 def main():
     EVIDENCE.mkdir(exist_ok=True)
     udid = None
@@ -56,13 +75,7 @@ def main():
                 env=dict(os.environ, WAND_BUILD_ONLY='1', WAND_UDID='build-only'),
                 stdout=log, stderr=subprocess.STDOUT)
         catalog = json.loads(output(['xcrun', 'simctl', 'list', '-j'], timeout=120))
-        runtimes = [r for r in catalog['runtimes'] if r.get('isAvailable') and r['identifier'].split('.')[-1].startswith('iOS-')]
-        assert runtimes, 'No available iOS runtime; live correctness gate cannot run'
-        runtime = max(runtimes, key=lambda r: tuple(int(n) for n in r['version'].split('.')))
-        supported = {d['identifier'] for d in runtime.get('supportedDeviceTypes', [])}
-        types = [d for d in catalog['devicetypes'] if d['name'].startswith('iPhone') and (not supported or d['identifier'] in supported)]
-        assert types, 'No supported iPhone device type'
-        preferred = next((d for d in types if d['name'] == 'iPhone 14'), types[-1])
+        runtime, preferred = select_device(catalog)
         udid = output(['xcrun', 'simctl', 'create', 'Wand CI owned', preferred['identifier'], runtime['identifier']], timeout=30).strip()
         (EVIDENCE / 'device.json').write_text(json.dumps(dict(udid=udid, device=preferred['name'], runtime=runtime['version']), indent=2))
         env = dict(os.environ, WAND_UDID=udid, WAND=WAND, WAND_OUTCOME_TIMEOUT_SECONDS='20',
