@@ -14,27 +14,52 @@ WAND = str(ROOT / '.build/release/wand')
 EVIDENCE = ROOT / 'live-evidence'
 
 
+def has_live_group(group):
+    """Bounded verification for a group whose signal failed; zombies cannot run."""
+    result = subprocess.run(['/bin/ps', '-axo', 'pgid=,stat='], capture_output=True,
+                            text=True, timeout=2, check=True)
+    rows = [line.split() for line in result.stdout.splitlines()]
+    if not rows or any(len(row) != 2 or not row[0].isdigit() for row in rows):
+        raise RuntimeError('cannot verify process-group cleanup from malformed process inventory')
+    return any(int(pgid) == group and not state.startswith('Z') for pgid, state in rows)
+
+
+def signal_group(group, sig):
+    try:
+        os.killpg(group, sig)
+    except ProcessLookupError:
+        pass
+    except PermissionError:
+        # macOS can refuse a late signal to an exiting group. Verify it has no
+        # running members; never treat a live denied group as cleaned up.
+        if has_live_group(group):
+            raise
+
+
 def run(args, timeout=60, **kwargs):
     print(time.strftime('%H:%M:%S'), shlex.join(map(str, args)), flush=True)
     process = subprocess.Popen(args, start_new_session=True, **kwargs)
     try:
         stdout, stderr = process.communicate(timeout=timeout)
-    except BaseException:
+    except BaseException as original:
         # Killing a shell alone leaves its compiler/test children consuming RAM.
         # The new session belongs exclusively to this invocation.
-        try:
-            os.killpg(process.pid, signal.SIGTERM)
-            process.wait(timeout=1)
-        except ProcessLookupError:
-            pass
-        except subprocess.TimeoutExpired:
-            pass
-        finally:
+        cleanup_errors = []
+        for sig, wait in [(signal.SIGTERM, 1), (signal.SIGKILL, 2)]:
             try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            process.wait(timeout=2)
+                signal_group(process.pid, sig)
+            except (OSError, subprocess.SubprocessError, RuntimeError) as error:
+                cleanup_errors.append(str(error))
+            try:
+                process.wait(timeout=wait)
+            except subprocess.TimeoutExpired:
+                if sig == signal.SIGKILL:
+                    cleanup_errors.append('owned parent did not exit after SIGKILL')
+        if cleanup_errors:
+            message = 'Owned process cleanup failed: ' + '; '.join(cleanup_errors)
+            print(message, file=sys.stderr)
+            if hasattr(original, 'add_note'):
+                original.add_note(message)
         raise
     if process.returncode:
         raise subprocess.CalledProcessError(process.returncode, args, stdout, stderr)
