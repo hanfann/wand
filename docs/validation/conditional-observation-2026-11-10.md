@@ -104,8 +104,15 @@ The prior GitHub run `42833099897` passed Xcode 26.6 unit tests, then failed a C
 cleanup test when macOS denied a late group signal. The helper now verifies that
 no live group members remain before accepting such a denial, preserves the original
 exception, and tests denied live groups/unavailable inventories. Xcode 27.2 live
-installation remained blocked in that run. A new push must requalify CI; no live
-gate was removed or weakened.
+installation remained blocked in that run. The new run
+[42839712156](https://github.com/hanfann/wand/actions/runs/42839712156) passed builds,
+all unit tests, protocol/cancellation/cleanup regressions and smoke checks on both
+Xcode versions. Both live gates then failed during the 60-second `simctl install`,
+before Wand input; process diagnostics and shutdown also timed out. Runtime
+selection was compatible: iOS 26.5 with Xcode 26.6, iOS 27.2 with Xcode 27.2, both
+iPhone 14. This supports an environment/setup blocker but does not establish its
+root cause or successful iOS input qualification. No live gate was removed or
+weakened. Exact job conclusions and failure excerpts are in `ci-result.json`.
 
 ## Reproduce
 

@@ -1,0 +1,137 @@
+{
+  "run": 42839712156,
+  "source_commit": "6be4cd187357926f24de3238dbcfaa9f9b96bbc6",
+  "installed_sha256": "2ce1362ff67ba269f73c984c0ddcdb42660128d0b51185140bd266c38c0180c1",
+  "jobs": [
+    {
+      "name": "Xcode 27.2",
+      "conclusion": "failure",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Select required Xcode",
+          "conclusion": "success"
+        },
+        {
+          "name": "Versions",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build (debug)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build (release)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Unit tests",
+          "conclusion": "success"
+        },
+        {
+          "name": "Client and MCP protocol regressions (no simulator)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Smoke \u2014 help + layout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Required live input outcomes (owned throwaway)",
+          "conclusion": "failure"
+        },
+        {
+          "name": "Preserve live evidence",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ],
+      "failure_evidence": [
+        "2026-11-10T15:05:21.9568790Z 15:05:21 xcrun simctl install 0D60A805-7D32-4376-B269-379CD83D9B50 /Users/runner/work/wand/wand/examples/native/build/WandShowcaseNative.app",
+        "2026-11-10T15:06:46.7163330Z Cleanup failed: ['xcrun', 'simctl', 'io'] Command '['xcrun', 'simctl', 'io', '0D60A805-7D32-4376-B269-379CD83D9B50', 'screenshot', '/Users/runner/work/wand/wand/live-evidence/final.png']' timed out after 10 seconds",
+        "2026-11-10T15:06:46.8805510Z 15:06:46 xcrun simctl shutdown 0D60A805-7D32-4376-B269-379CD83D9B50",
+        "2026-11-10T15:07:17.8943000Z Cleanup failed: ['xcrun', 'simctl', 'shutdown'] Command '['xcrun', 'simctl', 'shutdown', '0D60A805-7D32-4376-B269-379CD83D9B50']' timed out after 30 seconds",
+        "2026-11-10T15:07:34.9704630Z subprocess.TimeoutExpired: Command '['xcrun', 'simctl', 'install', '0D60A805-7D32-4376-B269-379CD83D9B50', '/Users/runner/work/wand/wand/examples/native/build/WandShowcaseNative.app']' timed out after 60 seconds"
+      ]
+    },
+    {
+      "name": "Xcode 26.6",
+      "conclusion": "failure",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Select required Xcode",
+          "conclusion": "success"
+        },
+        {
+          "name": "Versions",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build (debug)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build (release)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Unit tests",
+          "conclusion": "success"
+        },
+        {
+          "name": "Client and MCP protocol regressions (no simulator)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Smoke \u2014 help + layout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Required live input outcomes (owned throwaway)",
+          "conclusion": "failure"
+        },
+        {
+          "name": "Preserve live evidence",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ],
+      "failure_evidence": [
+        "2026-11-10T15:05:10.3094680Z 15:05:07 xcrun simctl install E320F192-7EAC-480A-81FA-9762635976E7 /Users/runner/work/wand/wand/examples/native/build/WandShowcaseNative.app",
+        "2026-11-10T15:06:36.6371190Z Cleanup failed: ['xcrun', 'simctl', 'io'] Command '['xcrun', 'simctl', 'io', 'E320F192-7EAC-480A-81FA-9762635976E7', 'screenshot', '/Users/runner/work/wand/wand/live-evidence/final.png']' timed out after 10 seconds",
+        "2026-11-10T15:06:37.2471760Z 15:06:36 xcrun simctl shutdown E320F192-7EAC-480A-81FA-9762635976E7",
+        "2026-11-10T15:07:11.0914720Z Cleanup failed: ['xcrun', 'simctl', 'shutdown'] Command '['xcrun', 'simctl', 'shutdown', 'E320F192-7EAC-480A-81FA-9762635976E7']' timed out after 30 seconds",
+        "2026-11-10T15:07:12.7009490Z subprocess.TimeoutExpired: Command '['xcrun', 'simctl', 'install', 'E320F192-7EAC-480A-81FA-9762635976E7', '/Users/runner/work/wand/wand/examples/native/build/WandShowcaseNative.app']' timed out after 60 seconds"
+      ]
+    }
+  ]
+}
