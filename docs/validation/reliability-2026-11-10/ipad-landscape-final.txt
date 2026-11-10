@@ -1,0 +1,17 @@
+com.wand.showcase.native: 79058
+appeared e5 Button "Tap me" #tapButton @292,141
+Wand E2E — native showcase
+tapped e5 Button Tap me
+  PASS  tap  ->  tap:1
+long-pressed
+  PASS  long-press  ->  longpress
+pinched
+  PASS  pinch  ->  pinched:1.80
+rotated
+  PASS  rotate  ->  rotated:50
+drag-and-dropped
+  PASS  drag-drop  ->  drop:zoneB
+typed into e18
+  PASS  type  ->  typed:hello
+
+  6 passed, 0 failed

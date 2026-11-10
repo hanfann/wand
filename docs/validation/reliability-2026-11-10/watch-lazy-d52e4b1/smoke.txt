@@ -1,0 +1,32 @@
+PASS: Settings app is foreground before input
+PASS: tap 1 opens Notifications
+PASS: back 1 returns to Settings
+PASS: tap 2 opens Notifications
+PASS: back 2 returns to Settings
+PASS: tap 3 opens Notifications
+PASS: back 3 returns to Settings
+PASS: tap 4 opens Notifications
+PASS: back 4 returns to Settings
+PASS: tap 5 opens Notifications
+PASS: back 5 returns to Settings
+PASS: HID transport needs no guest helper process
+PASS: vertical drag scrolls
+PASS: crown returns to top
+PASS: native Crown down 1 scrolls
+PASS: native Crown up 1 returns to top
+PASS: native Crown down 2 scrolls
+PASS: native Crown up 2 returns to top
+PASS: native Crown down 3 scrolls
+PASS: native Crown up 3 returns to top
+Verified native Crown transitions: 6
+PASS: Settings root verified before batch
+PASS: batch navigation 1 returns to Settings
+PASS: batch numeric-preflight reports failure
+PASS: batch numeric-preflight prevents the tap
+PASS: batch preflight reports failure
+PASS: batch preflight prevents the tap
+PASS: batch stop-on-error reports failure
+PASS: batch stop-on-error prevents the tap
+Watch input smoke test complete; screenshots: /tmp/wand-reliability/watch-lazy-qualified/screenshots
+Tap latency: n=10, median=1371.6715833288617ms, p95=1537.4805000028573ms
+PASS: observed watch tap p95 below 2 seconds

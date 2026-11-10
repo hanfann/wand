@@ -1,0 +1,9 @@
+{
+  "failures": [
+    [
+      "xcrun",
+      "simctl",
+      "shutdown"
+    ]
+  ]
+}

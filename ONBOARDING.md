@@ -7,7 +7,7 @@ rotate, manage apps, and assert results — **no app changes required**.
 ## Get going (3 steps)
 
 ```bash
-# 1. Install (builds a release binary, installs the skill, registers MCP)
+# 1. Install (builds a release binary, installs the shared Claude/Codex skill)
 ./install.sh              # or: brew tap hanfann/wand && brew install wand
 
 # 2. Boot a simulator + your app
@@ -22,7 +22,7 @@ wand assert "#welcome" exists
 ```
 
 First call boots a background daemon and warms accessibility (a few seconds,
-once). After that, each command is ~60 ms.
+once). Warm AX reads can be ~60 ms; input commands also wait for settling.
 
 ## Mental model
 
@@ -38,10 +38,17 @@ targeting more precise.
 
 ## For agents
 
-- Claude Code: the **skill** at `skills/wand/SKILL.md` is installed to
-  `~/.claude/skills/wand/` and documents the loop.
-- Any MCP client: `wand mcp` (stdio). Register with
-  `claude mcp add wand -- wand mcp`.
+- `wand setup` installs `skills/wand/SKILL.md` to `~/.agents/skills/wand/`
+  for Codex and links Claude's skill to the same file.
+- Use the CLI plus skill for the smallest context. `batch` combines known steps.
+- Optional MCP: `wand mcp --compact` (one tool); register with `wand setup --mcp`.
+  The legacy tool catalog remains available with `wand mcp`.
+- Select a device with `--udid` or `WAND_UDID`. Wand refuses ambiguous defaults.
+- On an app-only watch AX tree, try filtered `see` once, then use screenshots if
+  needed. OCR has a deadline and cannot wedge the input daemon. Watch screenshots
+  are often 2×; divide pixel coordinates by the `wand info` scale before tapping.
+- Reuse one DeviceHub window, keep the host unlocked, and shut down task-owned
+  throwaways after testing. See the skill for watch-specific handling.
 
 ## Develop / test
 
@@ -57,4 +64,5 @@ Architecture and internals: see `README.md`. Two runnable example apps live in
 
 ## Requirements
 
-macOS with Xcode (Xcode 26 / iOS 26 simulators), Swift 6.
+macOS, full Xcode with the target Simulator SDK, Swift 6. Watch input was
+revalidated on Xcode 27.2 / watchOS 27.2; older native backends remain available.

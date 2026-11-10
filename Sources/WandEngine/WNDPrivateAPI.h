@@ -43,6 +43,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)name;
 - (unsigned long long)state;          // 3 == Booted
 - (id)deviceType;                     // id<WNDDeviceType>
+- (mach_port_t)lookup:(NSString *)service error:(NSError **)error;
 - (id)io;                             // SimDeviceIOClient
 - (void)sendAccessibilityRequestAsync:(id)request
                        completionQueue:(dispatch_queue_t)queue

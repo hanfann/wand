@@ -10,6 +10,7 @@
 
 #import <AppKit/AppKit.h>
 #import <objc/runtime.h>
+#import <dlfcn.h>
 
 @interface WNDAXDispatcher () {
   NSMutableDictionary<NSString *, id> *_tokenToDevice;
@@ -37,6 +38,10 @@
 
 - (id)translator {
   if (!_translator) {
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+      dlopen("/System/Library/PrivateFrameworks/AccessibilityPlatformTranslation.framework/AccessibilityPlatformTranslation", RTLD_NOW);
+    });
     Class cls = objc_getClass("AXPTranslator");
     if (cls) {
       _translator = [(id<WNDAXPTranslatorClass>)cls sharedInstance];
@@ -75,14 +80,15 @@
     [(id<WNDSimDevice>)device sendAccessibilityRequestAsync:axRequest
                                             completionQueue:cbq
                                           completionHandler:^(id innerResponse) {
-      response = innerResponse;
+      @synchronized (group) { response = innerResponse; }
       dispatch_group_leave(group);
     }];
     dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)));
-    if (!response) {
-      response = [(id<WNDAXPResponseClass>)objc_getClass("AXPTranslatorResponse") emptyResponse];
-    }
-    return response;
+    // A late callback can arrive after the deadline. Read a synchronized copy;
+    // never race with it by replacing the shared response with an empty object.
+    id result = nil;
+    @synchronized (group) { result = response; }
+    return result ?: [(id<WNDAXPResponseClass>)objc_getClass("AXPTranslatorResponse") emptyResponse];
   };
 }
 

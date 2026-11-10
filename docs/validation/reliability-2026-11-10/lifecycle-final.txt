@@ -1,0 +1,7 @@
+PASS: contended startup lock respects the total deadline
+PASS: stalled daemon startup kills its own child and releases ownership
+PASS: active cancellation <500ms; queued request sends no input; no replay; next request succeeds
+PASS: malformed JSON/request/ID errors are explicit; notifications execute no input
+PASS: __ax exits after parent death
+PASS: __ocr exits after parent death
+PASS: __daemon exits after parent death

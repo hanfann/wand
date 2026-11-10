@@ -1,0 +1,9 @@
+8 elements (full tree)
+e1 Application "Wand Native" @422,195
+e2 StaticText "landscape" #landscapeReady @422,18
+e3 StaticText "typed:héllo🌱" #status @422,41
+e4 StaticText "Tap" @75,78
+e5 Button "Tap me" #tapButton @422,116
+e6 StaticText "count: 0" #tapCount @88,153
+e7 StaticText "Text entry" @93,195
+e8 TextField #textInput =héllo🌱 @422,226

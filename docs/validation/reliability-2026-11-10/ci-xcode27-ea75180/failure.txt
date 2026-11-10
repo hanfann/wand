@@ -1,0 +1,1 @@
+Run 42766469024, job 129664023204: iPhone 14 / general iOS 27.2 selected correctly. simctl install exceeded 60 seconds. ps diagnostics exceeded 5 seconds. No Wand input attempted. Owned simulator shutdown and deletion succeeded.

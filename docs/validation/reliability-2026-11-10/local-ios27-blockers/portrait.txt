@@ -1,0 +1,2 @@
+subprocess timed out after 30.0s; operation may have applied. Inspect state before retrying
+FAIL: could not launch the native fixture

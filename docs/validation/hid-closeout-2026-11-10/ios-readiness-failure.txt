@@ -1,0 +1,3 @@
+com.wand.showcase.native: 56921
+timeout waiting for #tapButton
+FAIL: native fixture did not expose its controls; no gestures attempted

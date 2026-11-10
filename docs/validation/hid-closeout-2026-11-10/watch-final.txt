@@ -1,0 +1,116 @@
+PASS: Settings app is foreground before input
+PASS: tap 1 opens Notifications
+PASS: back 1 returns to Settings
+PASS: tap 2 opens Notifications
+PASS: back 2 returns to Settings
+PASS: tap 3 opens Notifications
+PASS: back 3 returns to Settings
+PASS: tap 4 opens Notifications
+PASS: back 4 returns to Settings
+PASS: tap 5 opens Notifications
+PASS: back 5 returns to Settings
+PASS: tap 6 opens Notifications
+PASS: back 6 returns to Settings
+PASS: tap 7 opens Notifications
+PASS: back 7 returns to Settings
+PASS: tap 8 opens Notifications
+PASS: back 8 returns to Settings
+PASS: tap 9 opens Notifications
+PASS: back 9 returns to Settings
+PASS: tap 10 opens Notifications
+PASS: back 10 returns to Settings
+PASS: tap 11 opens Notifications
+PASS: back 11 returns to Settings
+PASS: tap 12 opens Notifications
+PASS: back 12 returns to Settings
+PASS: tap 13 opens Notifications
+PASS: back 13 returns to Settings
+PASS: tap 14 opens Notifications
+PASS: back 14 returns to Settings
+PASS: tap 15 opens Notifications
+PASS: back 15 returns to Settings
+PASS: tap 16 opens Notifications
+PASS: back 16 returns to Settings
+PASS: tap 17 opens Notifications
+PASS: back 17 returns to Settings
+PASS: tap 18 opens Notifications
+PASS: back 18 returns to Settings
+PASS: tap 19 opens Notifications
+PASS: back 19 returns to Settings
+PASS: tap 20 opens Notifications
+PASS: back 20 returns to Settings
+PASS: tap 21 opens Notifications
+PASS: back 21 returns to Settings
+PASS: tap 22 opens Notifications
+PASS: back 22 returns to Settings
+PASS: tap 23 opens Notifications
+PASS: back 23 returns to Settings
+PASS: tap 24 opens Notifications
+PASS: back 24 returns to Settings
+PASS: tap 25 opens Notifications
+PASS: back 25 returns to Settings
+PASS: tap 26 opens Notifications
+PASS: back 26 returns to Settings
+PASS: tap 27 opens Notifications
+PASS: back 27 returns to Settings
+PASS: tap 28 opens Notifications
+PASS: back 28 returns to Settings
+PASS: tap 29 opens Notifications
+PASS: back 29 returns to Settings
+PASS: tap 30 opens Notifications
+PASS: back 30 returns to Settings
+PASS: tap 31 opens Notifications
+PASS: back 31 returns to Settings
+PASS: tap 32 opens Notifications
+PASS: back 32 returns to Settings
+PASS: tap 33 opens Notifications
+PASS: back 33 returns to Settings
+PASS: tap 34 opens Notifications
+PASS: back 34 returns to Settings
+PASS: tap 35 opens Notifications
+PASS: back 35 returns to Settings
+PASS: tap 36 opens Notifications
+PASS: back 36 returns to Settings
+PASS: tap 37 opens Notifications
+PASS: back 37 returns to Settings
+PASS: tap 38 opens Notifications
+PASS: back 38 returns to Settings
+PASS: tap 39 opens Notifications
+PASS: back 39 returns to Settings
+PASS: tap 40 opens Notifications
+PASS: back 40 returns to Settings
+PASS: tap 41 opens Notifications
+PASS: back 41 returns to Settings
+PASS: tap 42 opens Notifications
+PASS: back 42 returns to Settings
+PASS: tap 43 opens Notifications
+PASS: back 43 returns to Settings
+PASS: tap 44 opens Notifications
+PASS: back 44 returns to Settings
+PASS: tap 45 opens Notifications
+PASS: back 45 returns to Settings
+PASS: tap 46 opens Notifications
+PASS: back 46 returns to Settings
+PASS: tap 47 opens Notifications
+PASS: back 47 returns to Settings
+PASS: tap 48 opens Notifications
+PASS: back 48 returns to Settings
+PASS: tap 49 opens Notifications
+PASS: back 49 returns to Settings
+PASS: tap 50 opens Notifications
+PASS: back 50 returns to Settings
+PASS: DTUHID needs no guest helper process
+PASS: vertical drag scrolls
+PASS: crown returns to top
+PASS: crown scrolls down
+PASS: Settings root verified before batch
+PASS: batch navigation returns to Settings
+PASS: batch numeric-preflight reports failure
+PASS: batch numeric-preflight prevents the tap
+PASS: batch preflight reports failure
+PASS: batch preflight prevents the tap
+PASS: batch stop-on-error reports failure
+PASS: batch stop-on-error prevents the tap
+Watch input smoke test complete; screenshots: /tmp/wand-hid-closeout/watch-final
+Tap latency: n=100, median=1427.49512498267ms, p95=1580.8279166813008ms
+PASS: observed watch tap p95 below 2 seconds

@@ -1,0 +1,688 @@
+{
+  "fast": {
+    "targets": 32,
+    "exact": 29,
+    "correct_centers": 29,
+    "rows": [
+      {
+        "file": "system-0.png",
+        "text": "Friend streak",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.19933033298002556,
+        "recognized": [
+          "Friend streak",
+          "70 days",
+          "Wear it",
+          "Not now"
+        ]
+      },
+      {
+        "file": "system-0.png",
+        "text": "70 days",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.19933033298002556,
+        "recognized": [
+          "Friend streak",
+          "70 days",
+          "Wear it",
+          "Not now"
+        ]
+      },
+      {
+        "file": "system-0.png",
+        "text": "Wear it",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.19933033298002556,
+        "recognized": [
+          "Friend streak",
+          "70 days",
+          "Wear it",
+          "Not now"
+        ]
+      },
+      {
+        "file": "system-0.png",
+        "text": "Not now",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.19933033298002556,
+        "recognized": [
+          "Friend streak",
+          "70 days",
+          "Wear it",
+          "Not now"
+        ]
+      },
+      {
+        "file": "system-1.png",
+        "text": "Notifications",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.1286950419889763,
+        "recognized": [
+          "Notifications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "system-1.png",
+        "text": "General",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.1286950419889763,
+        "recognized": [
+          "Notifications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "system-1.png",
+        "text": "Display",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.1286950419889763,
+        "recognized": [
+          "Notifications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "system-1.png",
+        "text": "Settings",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.1286950419889763,
+        "recognized": [
+          "Notifications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "small-0.png",
+        "text": "Friend streak",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.12082929100142792,
+        "recognized": [
+          "Friend streak",
+          "70 days",
+          "Wear it",
+          "Not now"
+        ]
+      },
+      {
+        "file": "small-0.png",
+        "text": "70 days",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.12082929100142792,
+        "recognized": [
+          "Friend streak",
+          "70 days",
+          "Wear it",
+          "Not now"
+        ]
+      },
+      {
+        "file": "small-0.png",
+        "text": "Wear it",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.12082929100142792,
+        "recognized": [
+          "Friend streak",
+          "70 days",
+          "Wear it",
+          "Not now"
+        ]
+      },
+      {
+        "file": "small-0.png",
+        "text": "Not now",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.12082929100142792,
+        "recognized": [
+          "Friend streak",
+          "70 days",
+          "Wear it",
+          "Not now"
+        ]
+      },
+      {
+        "file": "small-1.png",
+        "text": "Notifications",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 0.139206167019438,
+        "recognized": [
+          "Notif ications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "small-1.png",
+        "text": "General",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.139206167019438,
+        "recognized": [
+          "Notif ications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "small-1.png",
+        "text": "Display",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.139206167019438,
+        "recognized": [
+          "Notif ications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "small-1.png",
+        "text": "Settings",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.139206167019438,
+        "recognized": [
+          "Notif ications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "mono-0.png",
+        "text": "Friend streak",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.16313687496585771,
+        "recognized": [
+          "Friend streak",
+          "70 days",
+          "Wear it",
+          "Not now"
+        ]
+      },
+      {
+        "file": "mono-0.png",
+        "text": "70 days",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.16313687496585771,
+        "recognized": [
+          "Friend streak",
+          "70 days",
+          "Wear it",
+          "Not now"
+        ]
+      },
+      {
+        "file": "mono-0.png",
+        "text": "Wear it",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.16313687496585771,
+        "recognized": [
+          "Friend streak",
+          "70 days",
+          "Wear it",
+          "Not now"
+        ]
+      },
+      {
+        "file": "mono-0.png",
+        "text": "Not now",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.16313687496585771,
+        "recognized": [
+          "Friend streak",
+          "70 days",
+          "Wear it",
+          "Not now"
+        ]
+      },
+      {
+        "file": "mono-1.png",
+        "text": "Notifications",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.1758015420055017,
+        "recognized": [
+          "Notifications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "mono-1.png",
+        "text": "General",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.1758015420055017,
+        "recognized": [
+          "Notifications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "mono-1.png",
+        "text": "Display",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.1758015420055017,
+        "recognized": [
+          "Notifications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "mono-1.png",
+        "text": "Settings",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.1758015420055017,
+        "recognized": [
+          "Notifications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "pixel-0.png",
+        "text": "Friend streak",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.1544683749671094,
+        "recognized": [
+          "Friend streak",
+          "70 day8",
+          "Wear it",
+          "Not no"
+        ]
+      },
+      {
+        "file": "pixel-0.png",
+        "text": "70 days",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 0.1544683749671094,
+        "recognized": [
+          "Friend streak",
+          "70 day8",
+          "Wear it",
+          "Not no"
+        ]
+      },
+      {
+        "file": "pixel-0.png",
+        "text": "Wear it",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.1544683749671094,
+        "recognized": [
+          "Friend streak",
+          "70 day8",
+          "Wear it",
+          "Not no"
+        ]
+      },
+      {
+        "file": "pixel-0.png",
+        "text": "Not now",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 0.1544683749671094,
+        "recognized": [
+          "Friend streak",
+          "70 day8",
+          "Wear it",
+          "Not no"
+        ]
+      },
+      {
+        "file": "pixel-1.png",
+        "text": "Notifications",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.12840625003445894,
+        "recognized": [
+          "Notifications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "pixel-1.png",
+        "text": "General",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.12840625003445894,
+        "recognized": [
+          "Notifications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "pixel-1.png",
+        "text": "Display",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.12840625003445894,
+        "recognized": [
+          "Notifications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      },
+      {
+        "file": "pixel-1.png",
+        "text": "Settings",
+        "exact": true,
+        "correct_center": true,
+        "seconds": 0.12840625003445894,
+        "recognized": [
+          "Notifications",
+          "General",
+          "Display",
+          "Settings"
+        ]
+      }
+    ]
+  },
+  "accurate": {
+    "targets": 32,
+    "exact": 0,
+    "correct_centers": 0,
+    "rows": [
+      {
+        "file": "system-0.png",
+        "text": "Friend streak",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.509761042019818,
+        "recognized": []
+      },
+      {
+        "file": "system-0.png",
+        "text": "70 days",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.509761042019818,
+        "recognized": []
+      },
+      {
+        "file": "system-0.png",
+        "text": "Wear it",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.509761042019818,
+        "recognized": []
+      },
+      {
+        "file": "system-0.png",
+        "text": "Not now",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.509761042019818,
+        "recognized": []
+      },
+      {
+        "file": "system-1.png",
+        "text": "Notifications",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.5116140830214135,
+        "recognized": []
+      },
+      {
+        "file": "system-1.png",
+        "text": "General",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.5116140830214135,
+        "recognized": []
+      },
+      {
+        "file": "system-1.png",
+        "text": "Display",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.5116140830214135,
+        "recognized": []
+      },
+      {
+        "file": "system-1.png",
+        "text": "Settings",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.5116140830214135,
+        "recognized": []
+      },
+      {
+        "file": "small-0.png",
+        "text": "Friend streak",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.879521583032329,
+        "recognized": []
+      },
+      {
+        "file": "small-0.png",
+        "text": "70 days",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.879521583032329,
+        "recognized": []
+      },
+      {
+        "file": "small-0.png",
+        "text": "Wear it",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.879521583032329,
+        "recognized": []
+      },
+      {
+        "file": "small-0.png",
+        "text": "Not now",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.879521583032329,
+        "recognized": []
+      },
+      {
+        "file": "small-1.png",
+        "text": "Notifications",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.575526707980316,
+        "recognized": []
+      },
+      {
+        "file": "small-1.png",
+        "text": "General",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.575526707980316,
+        "recognized": []
+      },
+      {
+        "file": "small-1.png",
+        "text": "Display",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.575526707980316,
+        "recognized": []
+      },
+      {
+        "file": "small-1.png",
+        "text": "Settings",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.575526707980316,
+        "recognized": []
+      },
+      {
+        "file": "mono-0.png",
+        "text": "Friend streak",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.512608167016879,
+        "recognized": []
+      },
+      {
+        "file": "mono-0.png",
+        "text": "70 days",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.512608167016879,
+        "recognized": []
+      },
+      {
+        "file": "mono-0.png",
+        "text": "Wear it",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.512608167016879,
+        "recognized": []
+      },
+      {
+        "file": "mono-0.png",
+        "text": "Not now",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.512608167016879,
+        "recognized": []
+      },
+      {
+        "file": "mono-1.png",
+        "text": "Notifications",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.530332666996401,
+        "recognized": []
+      },
+      {
+        "file": "mono-1.png",
+        "text": "General",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.530332666996401,
+        "recognized": []
+      },
+      {
+        "file": "mono-1.png",
+        "text": "Display",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.530332666996401,
+        "recognized": []
+      },
+      {
+        "file": "mono-1.png",
+        "text": "Settings",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.530332666996401,
+        "recognized": []
+      },
+      {
+        "file": "pixel-0.png",
+        "text": "Friend streak",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.523257291992195,
+        "recognized": []
+      },
+      {
+        "file": "pixel-0.png",
+        "text": "70 days",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.523257291992195,
+        "recognized": []
+      },
+      {
+        "file": "pixel-0.png",
+        "text": "Wear it",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.523257291992195,
+        "recognized": []
+      },
+      {
+        "file": "pixel-0.png",
+        "text": "Not now",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.523257291992195,
+        "recognized": []
+      },
+      {
+        "file": "pixel-1.png",
+        "text": "Notifications",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.512551332998555,
+        "recognized": []
+      },
+      {
+        "file": "pixel-1.png",
+        "text": "General",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.512551332998555,
+        "recognized": []
+      },
+      {
+        "file": "pixel-1.png",
+        "text": "Display",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.512551332998555,
+        "recognized": []
+      },
+      {
+        "file": "pixel-1.png",
+        "text": "Settings",
+        "exact": false,
+        "correct_center": false,
+        "seconds": 5.512551332998555,
+        "recognized": []
+      }
+    ]
+  }
+}

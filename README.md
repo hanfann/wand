@@ -2,13 +2,11 @@
 
 # Wand
 
-**Drive any Apple simulator like a human — from an AI agent.**
+**Automate Apple simulators from an AI agent.**
 
-iPhone, iPad, **and Apple Watch** — including the **Digital Crown**, which no
-other automation tool can drive. Real HID touches and gestures, screen reading
-via the accessibility tree **or on-device OCR**, token-efficient, fast, and
-**zero third-party dependencies**. Test React Native / Expo and native SwiftUI
-apps end-to-end — **without adding a single `testID`**.
+A CLI for iPhone, iPad and Apple Watch with HID input commands, accessibility
+snapshots and bounded Apple Vision OCR. One binary, zero third-party runtime
+dependencies, and compact output for agents.
 
 [![CI](https://github.com/hanfann/wand/actions/workflows/ci.yml/badge.svg)](https://github.com/hanfann/wand/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -25,6 +23,19 @@ apps end-to-end — **without adding a single `testID`**.
 
 ---
 
+## Current compatibility
+
+On **Xcode 27.2**, native Watch Crown, 100 watch navigation transitions and all
+six iPhone gesture/text outcomes pass. Input uses one persistent host DTUHID
+connection, with no guest helper. See the [fix and outcome evidence](docs/validation/hid-closeout-2026-11-10.md).
+Cold CoreSimulator startup can still stall; an input acknowledgement alone is
+not a verified app outcome. iPad landscape gestures are also verified in the
+[reliability report](docs/validation/reliability-2026-11-10.md); other runtime
+versions still require qualification. Xcode 26.6 / iOS 26.5 has also passed all
+seven portrait and three landscape iPhone fixture checks. Fresh simulator setup
+remains unreliable on the small hosted runners; the report distinguishes those
+failures from completed input tests.
+
 ## Why Wand
 
 Agents are great at writing iOS apps and clumsy at the part that comes next:
@@ -34,18 +45,18 @@ things set it apart from the rest of the field: it drives screens that expose
 dependency-free binary**.
 
 - 🧠 **No app setup required.** Reads the accessibility tree, and falls back to
-  **Apple Vision OCR** to tap any *visible text* — so it drives canvas, games,
-  WebViews and vibe-coded apps that never added a `testID`.
+  **Apple Vision OCR** for visible text. When a watch exposes no useful tree
+  and OCR cannot read its pixel font, use screenshots and point coordinates.
 - 🪙 **Token-efficient.** One compact line per element (`e5 Button "Save" #save @120,300`)
-  with `find` / `assert` / `ui diff` — not screenshots.
+  with `find` / `assert` / `ui diff`, plus ordered batches and one-tool MCP.
 - ⚡ **Fast.** A warm daemon keeps the connection, accessibility translator and HID
-  client hot: **~60 ms** per snapshot.
-- 👆 **Every gesture, for real.** Tap, long-press, swipe, **drag-and-drop**,
+  client hot; see [measured latency and acceptance budgets](docs/performance.md).
+- 👆 **Gesture commands.** Tap, long-press, swipe, **drag-and-drop**,
   **pinch/zoom**, **rotate**, multi-touch, unicode/emoji text — genuine HID events.
 - ⌚ **Apple Watch + Digital Crown.** Drives watchOS simulators including the
-  **Digital Crown** (`wand crown down 3` — predictable detents) — a capability no
-  other tool has.
-- 🔌 **Agent-native.** Ships an **MCP server** (`wand mcp`) and a Claude Code skill.
+  **Digital Crown** command (`wand crown down 3`). Verify delivery on your runtime;
+  the Xcode 27.2 / 40mm Crown outcome checks pass.
+- 🔌 **Agent-native.** Shares one skill between Claude and Codex; optional compact MCP.
 - 🔒 **Local & private.** A `0600` per-user Unix socket. No network, no telemetry.
 - 📦 **Zero third-party runtime deps.** Talks straight to Apple's `CoreSimulator`,
   `SimulatorKit`, `AccessibilityPlatformTranslation`, Vision and `simctl`.
@@ -55,7 +66,7 @@ dependency-free binary**.
 | Agent-native (MCP + token-efficient snapshots) | ✅ | ✅ | ❌ | ❌ | ⚠️ |
 | Drives screens with **zero accessibility** (on-device OCR) | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Pinch · rotate · drag-and-drop · multi-touch | ✅ | ⚠️ | ✅ | ✅ | ⚠️ |
-| **Apple Watch + Digital Crown** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Apple Watch + Digital Crown** | ✅ | ❌ | ✅ | ❌ | ❌ |
 | Self-contained: one native binary, no Node/SDK runtime | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Fully open source, no proprietary parts | ✅&nbsp;MIT | ⚠️ | ✅ | ✅ | ✅ |
 | Platforms | iOS · iPadOS · **watchOS** | iOS · Android | iOS | iOS · Android · web | iOS · Android |
@@ -66,7 +77,7 @@ dependency-free binary**.
 ## Quick start
 
 ```bash
-# Install (one line) — builds, installs the skill, registers the MCP server
+# Install — builds the binary and installs the shared Claude/Codex skill
 brew install https://raw.githubusercontent.com/hanfann/wand/main/Formula/wand.rb
 wand setup
 
@@ -75,7 +86,7 @@ git clone https://github.com/hanfann/wand && cd wand && ./install.sh
 ```
 
 ```bash
-wand boot "iPhone 17 Pro"
+wand boot "iPhone 17 Pro" --show
 wand install ./MyApp.app && wand launch com.example.myapp
 
 wand ui                       # what's on screen (token-efficient)
@@ -85,7 +96,31 @@ wand assert "#welcome" exists # → PASS / FAIL (exit 0/1)
 ```
 
 > First call boots a background daemon and warms accessibility (a few seconds,
-> once). Every call after is ~60 ms. Requires macOS + Xcode 26 (iOS 26 sims), Swift 6.
+> once). Warm snapshots can be ~60 ms; actions also wait for UI settling. Requires
+> macOS, full Xcode with the target Simulator SDK, and Swift 6.
+
+### Xcode 27 and DeviceHub
+
+Xcode 27 uses one persistent host DTUHID connection for touch, multitouch,
+keyboard and native Watch Crown. No guest helper or SDK compilation is needed.
+Xcode 26 and earlier retain Indigo. `info` reports the selected transport.
+DeviceHub displays the actual simulator actions; Wand does not move the host mouse.
+A broken connection fails explicitly. Inspect the screen and stop the selected
+Wand daemon before reconnecting; ambiguous input is never replayed automatically.
+
+For repeatable watch outcome checks on a disposable watch with Settings visible:
+
+```sh
+WAND_CROWN_CYCLES=50 swift examples/watch/touch-smoke.swift WATCH_UDID "$PWD/.build/release/wand" /tmp/wand-smoke
+```
+
+The suite checks navigation, drag, native Crown movement/restoration and batch
+failure guards. `WAND_SMOKE_CYCLES=50` checks 100 navigation taps;
+`WAND_CROWN_CYCLES=50` checks 100 Crown transitions. They are separate counts.
+
+Keep the Mac unlocked for visible checks. Reuse one DeviceHub window, select
+needed devices in its sidebar, and shut down task-owned simulators afterward.
+The validation reports distinguish tested devices/runtimes from untested ones.
 
 ## The loop
 
@@ -114,7 +149,7 @@ $ wand assert "#status" label=done  →  PASS exists e2 …
 ```
 Observe
   ui [diff|full]            on-screen snapshot (diff = changes, full = incl. off-screen)
-  see                       OCR every visible text + tap coords (any app)
+  see [accurate] [query]    bounded OCR with optional text filter (points)
   find <query>              elements matching label/id/value/role
   scrollto <sel>            scroll until an element is visible
   assert <sel> [exists|gone|value=..|label=..]
@@ -134,7 +169,7 @@ Act   (sel = eN ref · #identifier · "label")
   crown <delta> [steps]     raw crown turn (sign = direction)
 
 App / device
-  devices | boot <udid|name> | shutdown <udid|all>
+  devices | boot <udid|name> [--show] | shutdown <udid|all>
   install <app> | launch <bundle> | terminate <bundle> | apps | open <url>
   logs [bundle] [seconds] | crashes [bundle]
   permission <grant|revoke|reset> <service> <bundle>
@@ -176,11 +211,34 @@ tapped (ocr) "Settings" @200,703     →  #status = canvas:Settings
 
 ## For AI agents
 
-- **Claude Code** — `wand setup` installs the skill (`skills/wand/SKILL.md`).
-- **Any MCP client** (Codex, Cursor, …) — `claude mcp add wand -- wand mcp`.
-  Tools: `ui, see, find, scrollTo, tap, tapText, type, setValue, clear, key,
-  swipe, drag, dragdrop, longpress, pinch, rotate, scroll, crown, screenshot,
-  assert, wait, install, launch, terminate, apps, logs, crashes, open, info`.
+- **Claude and Codex** — `wand setup` updates `~/.agents/skills/wand/SKILL.md`
+  and links Claude's skill to it. The CLI plus skill needs no MCP tool catalog.
+- **Optional compact MCP** — `wand mcp --compact` exposes one `run` tool.
+  `wand setup --mcp` registers it with Claude; `wand mcp` and
+  `wand setup --full-mcp` retain the separate legacy tools. Existing registrations
+  are not silently replaced by setup. All MCP tools accept an optional `udid`.
+- Pass `--udid <ID>` (CLI), `udid` (MCP), or `WAND_UDID` when multiple devices
+  are booted; Wand refuses to guess a device.
+
+### Fewer round trips and smaller observations
+
+```sh
+wand --udid <ID> batch '[["tap","40","80"],["ui","diff"]]'
+# JSON can also arrive on stdin: wand --udid <ID> batch -
+wand --udid <ID> see "Continue"           # only matching OCR regions
+wand --udid <ID> see accurate "Continue"  # slower recognition, bounded to 5s
+```
+
+Batches run 1–64 known commands in order with normal settling, stop on the first
+failure, and never roll back earlier actions. Observe between steps whose next
+coordinates depend on the result. An ambiguous lost reply is never replayed.
+Use `find`, `assert` or `ui diff` on useful AX trees; app-only watch trees need
+OCR or screenshots instead of repeated empty queries. Only capture images that
+add evidence, and keep screenshot pixel coordinates distinct from touch points.
+
+OCR runs in a disposable CPU worker (3s fast / 5s accurate deadline), keeping the
+input daemon responsive after a Vision stall. Identical PNG content and recognition
+mode reuse the last OCR result; input is never targeted from a time-based cache.
 
 ## How it works
 
@@ -192,19 +250,24 @@ agent ──► wand mcp (MCP server) ──┤ Unix socket (~/.wand/daemon-<udi
                                    │  Obj-C engine, dlopen'd private frameworks
                     ┌──────────────┼───────────────┐
                     ▼              ▼                ▼
-              SimulatorKit    CoreSimulator   AccessibilityPlatformTranslation
-              (Indigo HID)    (SimDevice)     (AXPTranslator → a11y tree)  + Vision (OCR)
+            DTUHID / Indigo   CoreSimulator   AccessibilityPlatformTranslation
+              (HID input)     (SimDevice)     (AXPTranslator → a11y tree)  + Vision (OCR)
                     └──────────────┴────────────────┘
                           booted iOS Simulator
 ```
 
-- **HID injection** reimplements the Indigo touch wire-format
-  (`SimDeviceLegacyHIDClient`) — taps/drags/multitouch are byte-for-byte what the
-  simulator's guest HID service expects.
-- **Accessibility** drives `AXPTranslator` with a token delegate that bridges each
+- **HID injection** uses one persistent DTUHID XPC connection on Xcode 27 for
+  touch, multitouch, keyboard and Crown. It probes the service before input and
+  refuses interrupted delivery without replay. Older Xcodes retain SimulatorKit
+  Indigo. There is no guest helper or on-demand SDK compilation.
+  The protocol reference is [Meta idb](https://github.com/facebook/idb/tree/main/FBSimulatorControl/HID);
+  see `THIRD_PARTY_NOTICES`.
+- **Accessibility** runs in a persistent, killable worker (5s request deadline)
+  and drives `AXPTranslator` with a token delegate that bridges each
   attribute read to an async `SimDevice` XPC request, yielding the element tree in
   **point coordinates that match the tap space**.
-- **OCR** runs Apple Vision over an in-process framebuffer capture (IOSurface).
+- **OCR** captures the framebuffer in-process, then runs Apple Vision in a bounded
+  CPU worker so model initialization cannot indefinitely block the input daemon.
 
 ## Showcase / tests
 
@@ -220,7 +283,7 @@ through the accessibility tree alone:
 ```bash
 make build   # debug build
 make test    # unit tests
-make e2e     # gesture regression vs the native showcase (needs a booted sim)
+WAND_UDID=<disposable-iOS-UDID> make e2e  # native gesture regression
 ```
 
 ## Limitations
@@ -228,7 +291,12 @@ make e2e     # gesture regression vs the native showcase (needs a booted sim)
 - **Icon-only controls with no text and no accessibility label** are ambiguous to
   *any* automation — use coordinates, or add an `accessibilityLabel`.
 - Apple **simulators** only (iOS, iPadOS, watchOS). Real devices and Android are out of scope.
-- On **watchOS**, SwiftUI's accessibility tree is shallow — prefer the OCR path (`see` / `tapocr`).
+- On **watchOS**, the AX tree may contain only an application. Try filtered OCR
+  once; use screenshots and correctly scaled point coordinates if it fails.
+- Pixel stability is a bounded heuristic, not an assertion that an app action succeeded.
+- Accurate Vision OCR currently times out on this Xcode 27.2 host. Fast OCR
+  remains usable, but missed or low-confidence labels require a screenshot.
+  Neither mode guarantees recognition of custom pixel fonts.
 - The prebuilt binary isn't notarized unless built with your own Apple Developer
   ID (`release.sh`); the `clone` and Homebrew paths build from source.
 - `wand record` produces H.264 MP4; live FPS streaming isn't implemented.
@@ -246,3 +314,30 @@ authors for the HID/accessibility engine this builds on.
 - License: [MIT](LICENSE)
 
 <div align="center"><sub>Verified on Xcode 26 against iPhone 17 Pro (iOS) and Apple Watch Series 11 (watchOS, incl. Digital Crown), with SwiftUI + Expo/React Native showcases and a real production app.</sub></div>
+
+## Performance validation
+
+See [acceptance criteria and reproduction](docs/performance.md). The suite records
+latency distributions, context bytes, framing failures, navigation outcomes and
+memory/idle CPU. Fast OCR and accurate OCR have different quality/latency tradeoffs;
+benchmark both on the target app. UI acknowledgement alone is not an outcome assertion.
+
+`boot` is headless by default; `--show` opens DeviceHub (or Simulator on older
+Xcode). `shutdown` also asks the selected Wand daemon to stop its workers. Fresh
+observations are required before reusing positional `eN` references after input.
+
+Latest reliability work isolates accessibility in a persistent worker, bounds
+startup ownership and cancellation, and measures the parent plus worker memory.
+See [the reliability report](docs/validation/reliability-2026-11-10.md) for measured
+results, failed experiments and remaining platform limitations.
+
+`wand cleanup --dry-run` previews diagnostic pruning; `wand cleanup` applies it.
+Startup performs this maintenance at most daily. Only recognized inactive daemon
+logs and OCR scratch are eligible: seven-day retention, at most 32 logs / 8 MiB
+under pressure. Active owners, recordings, screenshots, unknown files and lock
+files are preserved. Existing legacy helper caches are not used by this version.
+
+MCP accepts cancellation while a request is running. Queued commands are skipped;
+active socket waits are released and later batch steps stop at the next boundary.
+Already-dispatched input or accepted CoreSimulator operations may still complete.
+Cancelled requests receive no MCP reply; inspect state before issuing replacement input.

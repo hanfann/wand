@@ -1,0 +1,1 @@
+Run 42769643818, job 129674171616: ordinary iPhone 14 / iOS 27.2. simctl install exceeded its 60-second wait; severe host scheduling/launch delay made elapsed wall time longer. No Wand input ran. ps and screenshot diagnostics timed out. Shutdown hit its deadline; delete returned successfully. The required live gate failed.

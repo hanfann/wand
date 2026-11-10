@@ -1,0 +1,2 @@
+PASS: modern/legacy orientations; valid panel geometry; malformed/inactive/ambiguous displays refuse targeting
+PASS: stalled legacy read has a bounded deadline and refuses further work

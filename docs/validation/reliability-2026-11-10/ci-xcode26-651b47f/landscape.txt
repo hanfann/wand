@@ -1,0 +1,12 @@
+com.wand.showcase.native: 13761
+appeared e5 Button "Tap me" #tapButton @99,156
+appeared e2 StaticText "landscape" #landscapeReady @422,18
+Wand E2E — native showcase
+tapped e5 Button Tap me
+  PASS  tap  ->  tap:1
+typed into e8
+  PASS  type  ->  typed:hello
+set value of #textInput
+  PASS  unicode  ->  typed:héllo🌱
+
+  3 passed, 0 failed

@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""Exercise CI process ownership without booting a simulator."""
+import os
+from pathlib import Path
+import subprocess
+import tempfile
+import time
+from unittest.mock import patch
+import ci
+
+phone = dict(name='iPhone 14', identifier='phone')
+duo = dict(name='iPhone Duo', identifier='duo')
+general = dict(isAvailable=True, identifier='test.iOS-27-2', version='27.2', supportedDeviceTypes=[phone])
+specialized = dict(isAvailable=True, identifier='test.iOS-27-2-iPhone19-4', version='27.2', supportedDeviceTypes=[duo])
+for runtimes in ([specialized, general], [general, specialized]):
+    assert ci.select_device(dict(runtimes=runtimes, devicetypes=[phone, duo])) == (general, phone)
+try:
+    ci.select_device(dict(runtimes=[specialized], devicetypes=[phone, duo]))
+    raise AssertionError('foldable-only runtime must not silently substitute for the fixture')
+except AssertionError as error:
+    assert 'No available iOS runtime' in str(error)
+print('PASS: runtime/device selection excludes device-specific foldable runtimes')
+
+assert ci.run(['/bin/echo', 'ok'], stdout=subprocess.PIPE).stdout == b'ok\n'
+with tempfile.TemporaryFile() as log:
+    try:
+        ci.run(['/bin/sh', '-c', 'sleep 30 & echo $!; wait'], timeout=1, stdout=log)
+        raise AssertionError('deadline did not fire')
+    except subprocess.TimeoutExpired:
+        pass
+    log.seek(0)
+    child = int(log.read())
+    deadline = time.monotonic() + 2
+    while True:
+        try: os.kill(child, 0)
+        except ProcessLookupError: break
+        assert time.monotonic() < deadline, 'orphan child survived timeout'
+        time.sleep(.01)
+print('PASS: CI timeout stops the entire owned subprocess group')
+
+commands = []
+def fake_run(args, *positional, **kwargs):
+    commands.append(args)
+    if 'install' in args: raise subprocess.TimeoutExpired(args, 60)
+    return subprocess.CompletedProcess(args, 0)
+catalog = '{"runtimes":[{"isAvailable":true,"identifier":"test.iOS-27","version":"27"}],"devicetypes":[{"name":"iPhone 14","identifier":"test"}]}'
+with tempfile.TemporaryDirectory() as directory, patch.object(ci, 'EVIDENCE', Path(directory)), \
+     patch.object(ci, 'output', side_effect=[catalog, 'owned-test']), patch.object(ci, 'run', side_effect=fake_run), \
+     patch.object(ci.subprocess, 'run', side_effect=subprocess.TimeoutExpired('ps', 5)):
+    try:
+        ci.main()
+        raise AssertionError('install failure was lost')
+    except subprocess.TimeoutExpired as error:
+        assert 'install' in error.cmd
+assert any('shutdown' in args for args in commands)
+assert any('delete' in args for args in commands)
+print('PASS: setup and diagnostics failure still shut down/delete the owned simulator')

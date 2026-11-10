@@ -1,0 +1,19 @@
+com.wand.showcase.native: 12436
+appeared e5 Button "Tap me" #tapButton @99,156
+Wand E2E — native showcase
+tapped e5 Button Tap me
+  PASS  tap  ->  tap:1
+long-pressed
+  PASS  long-press  ->  longpress
+pinched
+  PASS  pinch  ->  pinched:1.80
+rotated
+  PASS  rotate  ->  rotated:51
+error: invalid or unsupported native HID message
+  FAIL  drag-drop (input command failed)
+typed into e18
+  FAIL  type  ->  'drop:zoneA' (wanted typed:hello)
+set value of #textInput
+  PASS  unicode  ->  typed:héllo🌱
+
+  5 passed, 2 failed

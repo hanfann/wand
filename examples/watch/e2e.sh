@@ -8,13 +8,10 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 WAND="${WAND:-$ROOT/.build/debug/wand}"
 BUNDLE="com.apple.NanoSettings"
 
-# Resolve a booted watch simulator (explicit env wins).
+# Explicit opt-in avoids accidentally driving an unrelated/production watch.
 UDID="${WAND_WATCH_UDID:-}"
 if [ -z "$UDID" ]; then
-  UDID="$(xcrun simctl list devices booted | grep -i watch | grep -oE '[0-9A-F-]{36}' | head -1)"
-fi
-if [ -z "$UDID" ]; then
-  echo "SKIP: no booted watchOS simulator (boot one, e.g. 'Apple Watch Series 11 (46mm)')"
+  echo "SKIP: set WAND_WATCH_UDID to a booted disposable watch"
   exit 0
 fi
 

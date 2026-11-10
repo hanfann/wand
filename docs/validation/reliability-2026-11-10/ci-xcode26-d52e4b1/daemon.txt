@@ -1,0 +1,1 @@
+wandd: ready on /Users/runner/.wand/daemon-ECB1A21C-90CA-416E-A8AC-A34F342045C7.sock [Wand CI owned]

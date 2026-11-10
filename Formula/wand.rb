@@ -16,15 +16,17 @@ class Wand < Formula
   def install
     system "swift", "build", "-c", "release", "--disable-sandbox"
     bin.install ".build/release/wand"
+    pkgshare.install "THIRD_PARTY_NOTICES" if File.exist?("THIRD_PARTY_NOTICES")
     (pkgshare/"skills/wand").install "skills/wand/SKILL.md"
   end
 
   def caveats
     <<~EOS
-      Finish setup (installs the Claude Code skill + registers the MCP server):
+      Install the shared Claude/Codex skill:
         wand setup
 
-      Then boot a simulator, and:  wand info && wand ui
+      Optional one-tool MCP: wand setup --mcp
+      Then select a simulator: wand --udid <ID> info
     EOS
   end
 

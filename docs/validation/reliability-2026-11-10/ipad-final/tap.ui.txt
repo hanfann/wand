@@ -1,0 +1,20 @@
+19 elements (full tree)
+e1 Application "Wand Native" @579,378
+e2 StaticText "tap:1" #status @579,59
+e3 StaticText "Tap" @28,103
+e4 StaticText "Long press" @624,110
+e5 Button "Tap me" #tapButton @292,141
+e6 StaticText "count: 1" #tapCount @41,178
+e7 StaticText "hold me" #longPressBox @867,151
+e8 StaticText "Pinch / Zoom" @55,221
+e9 StaticText "Rotate" @612,221
+e10 GenericElement #pinchBox @292,294
+e11 GenericElement #rotateBox @867,294
+e12 StaticText "Drag & drop (drag red circle onto A or B)" @133,389
+e13 StaticText "drag" #dragHandle @48,445
+e14 StaticText "A" #zoneA @380,445
+e15 StaticText "B" #zoneB @778,445
+e16 StaticText "—" #dropResult @23,500
+e17 StaticText "Text entry" @46,542
+e18 TextField #textInput =type here @579,573
+e19 StaticText "Canvas — zero accessibility (OCR only)" @129,625

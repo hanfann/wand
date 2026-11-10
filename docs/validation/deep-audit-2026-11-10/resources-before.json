@@ -1,0 +1,8 @@
+{
+  "pid": 95452,
+  "samples": 1000,
+  "rss_before_kb": 28720,
+  "rss_after_kb": 33664,
+  "growth_mb": 4.828125,
+  "idle_cpu_percent": 0.0
+}

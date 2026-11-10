@@ -1,0 +1,22 @@
+{
+  "udid": "A4BEF51E-9F9D-4B34-AA0F-E93ADBE083AB",
+  "install": "60-second timeout",
+  "read_only_app_lookup": "30-second timeout",
+  "host_load": [
+    545.94,
+    281.91,
+    162.21
+  ],
+  "memory_free_percent": 34,
+  "launchd_sim_count": 1,
+  "owned_launchd_sim_pid": 2661,
+  "shutdown": {
+    "exit": 0,
+    "seconds": 4.45
+  },
+  "delete": {
+    "exit": 0,
+    "seconds": 0.44
+  },
+  "decision": "Han requested documenting remaining blockers; no alternate Mac available."
+}

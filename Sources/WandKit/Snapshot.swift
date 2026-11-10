@@ -67,6 +67,7 @@ public struct Snapshot {
             n += 1
             let x = (e["x"] as? Double) ?? 0
             let y = (e["y"] as? Double) ?? 0
+            guard [x, y, w, h].allSatisfy({ $0.isFinite && abs($0) < 1_000_000 }) else { continue }
             // On-screen if the rect intersects the viewport (with a small margin).
             let onScreen = screenW <= 0 || screenH <= 0
                 || (x + w > -1 && x < screenW + 1 && y + h > -1 && y < screenH + 1)
@@ -105,7 +106,8 @@ public struct Snapshot {
     /// Prefers on-screen, top-most matches.
     public func resolve(_ selector: String) -> UIElement? {
         let sel = selector.trimmingCharacters(in: .whitespaces)
-        if sel.hasPrefix("e"), byRef[sel] != nil { return byRef[sel] }
+        guard !sel.isEmpty, sel != "#" else { return nil }
+        if sel.hasPrefix("e"), Int(sel.dropFirst()) != nil { return byRef[sel] }
         func pick(_ pred: (UIElement) -> Bool) -> UIElement? {
             all.filter { pred($0) && $0.onScreen }.min(by: { $0.y < $1.y })
                 ?? all.first(where: pred)
@@ -129,15 +131,67 @@ public struct Snapshot {
         }
     }
 
+    /// Input cannot safely choose the first of several matches, a disabled
+    /// control, or a center outside the viewport. Observation stays permissive.
+    public func resolveForInput(_ selector: String, requiresVisibleCenter: Bool = true) throws -> UIElement? {
+        let sel = selector.trimmingCharacters(in: .whitespaces)
+        guard !sel.isEmpty, sel != "#" else { return nil }
+        var candidates: [UIElement]
+        if sel.hasPrefix("e"), Int(sel.dropFirst()) != nil {
+            candidates = byRef[sel].map { [$0] } ?? []
+        } else if sel.hasPrefix("#") {
+            let id = String(sel.dropFirst())
+            candidates = all.filter { $0.id == id }
+            if candidates.isEmpty { candidates = all.filter { $0.id?.localizedCaseInsensitiveContains(id) == true } }
+        } else {
+            let text = sel.lowercased()
+            candidates = all.filter { $0.label?.lowercased() == text || $0.value?.lowercased() == text }
+            if candidates.isEmpty {
+                candidates = all.filter { $0.label?.lowercased().contains(text) == true || $0.value?.lowercased().contains(text) == true }
+            }
+        }
+        let visible = candidates.filter(\.onScreen)
+        if !visible.isEmpty { candidates = visible }
+        guard candidates.count <= 1 else { throw TargetError.ambiguous }
+        guard let element = candidates.first else { return nil }
+        guard element.enabled else { throw TargetError.disabled }
+        if requiresVisibleCenter {
+            guard element.onScreen, element.cx >= 0, element.cy >= 0,
+                  screenW <= 0 || Double(element.cx) < screenW,
+                  screenH <= 0 || Double(element.cy) < screenH else { throw TargetError.offscreen }
+        }
+        return element
+    }
+
+    public enum TargetError: String, LocalizedError {
+        case ambiguous = "ambiguous accessibility target; use a fresh eN reference or unique identifier"
+        case disabled = "accessibility target is disabled; no input sent"
+        case offscreen = "accessibility target center is off-screen; scroll into view before input"
+        public var errorDescription: String? { rawValue }
+    }
+
     /// Token-saving diff: what changed vs a previous snapshot, keyed by identity.
     public func diff(from prev: Snapshot) -> String {
-        let prevByKey = Dictionary(prev.all.map { ($0.key, $0) }, uniquingKeysWith: { a, _ in a })
-        let curByKey = Dictionary(all.map { ($0.key, $0) }, uniquingKeysWith: { a, _ in a })
+        // Occurrence-qualified identities preserve repeated labels/IDs instead
+        // of collapsing a list of identical controls into one dictionary entry.
+        func keyed(_ elements: [UIElement]) -> [(String, UIElement)] {
+            var counts: [String: Int] = [:]
+            return elements.map { element in
+                let index = counts[element.key, default: 0]
+                counts[element.key] = index + 1
+                return ("\(element.key)|occurrence:\(index)", element)
+            }
+        }
+        let old = keyed(prev.all), current = keyed(all)
+        let prevByKey = Dictionary(uniqueKeysWithValues: old)
+        let curByKey = Dictionary(uniqueKeysWithValues: current)
         var lines: [String] = []
-        for e in all where prevByKey[e.key] == nil { lines.append("+ \(line(e))") }
-        for e in prev.all where curByKey[e.key] == nil { lines.append("- \(prev.line(e))") }
-        for e in all {
-            if let p = prevByKey[e.key], p.value != e.value || p.label != e.label {
+        for (key, e) in current where prevByKey[key] == nil { lines.append("+ \(line(e))") }
+        for (key, e) in old where curByKey[key] == nil { lines.append("- \(prev.line(e))") }
+        for (key, e) in current {
+            if let p = prevByKey[key], p.value != e.value || p.label != e.label
+                || p.ref != e.ref || p.role != e.role || p.enabled != e.enabled
+                || p.onScreen != e.onScreen || p.x != e.x || p.y != e.y || p.w != e.w || p.h != e.h {
                 lines.append("~ \(line(e))")
             }
         }

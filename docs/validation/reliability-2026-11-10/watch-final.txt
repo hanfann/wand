@@ -1,0 +1,37 @@
+PASS: Settings app is foreground before input
+PASS: tap 1 opens Notifications
+PASS: back 1 returns to Settings
+PASS: tap 2 opens Notifications
+PASS: back 2 returns to Settings
+PASS: tap 3 opens Notifications
+PASS: back 3 returns to Settings
+PASS: tap 4 opens Notifications
+PASS: back 4 returns to Settings
+PASS: tap 5 opens Notifications
+PASS: back 5 returns to Settings
+PASS: tap 6 opens Notifications
+PASS: back 6 returns to Settings
+PASS: tap 7 opens Notifications
+PASS: back 7 returns to Settings
+PASS: tap 8 opens Notifications
+PASS: back 8 returns to Settings
+PASS: tap 9 opens Notifications
+PASS: back 9 returns to Settings
+PASS: tap 10 opens Notifications
+PASS: back 10 returns to Settings
+PASS: HID transport needs no guest helper process
+PASS: vertical drag scrolls
+PASS: crown returns to top
+PASS: native Crown down 1 scrolls
+PASS: native Crown up 1 returns to top
+PASS: native Crown down 2 scrolls
+PASS: native Crown up 2 returns to top
+PASS: native Crown down 3 scrolls
+PASS: native Crown up 3 returns to top
+PASS: native Crown down 4 scrolls
+PASS: native Crown up 4 returns to top
+PASS: native Crown down 5 scrolls
+PASS: native Crown up 5 returns to top
+Verified native Crown transitions: 10
+PASS: Settings root verified before batch
+FAIL: batch navigation returns to Settings

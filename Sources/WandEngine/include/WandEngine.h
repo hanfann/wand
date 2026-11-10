@@ -12,14 +12,18 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) NSString *udid;
 @property (nonatomic, readonly) NSString *name;
+@property (nonatomic, readonly) NSInteger displayOrientation; // EXIF: 1, 3, 6, 8
+- (BOOL)refreshDisplayGeometryWithError:(NSError **)error NS_SWIFT_NAME(refreshDisplayGeometry());
 @property (nonatomic, readonly) CGSize screenPointSize; // logical points
+@property (nonatomic, readonly) BOOL isWatch;
+@property (nonatomic, readonly) NSString *inputTransport;
 @property (nonatomic, readonly) CGFloat screenScale;    // 2.0 / 3.0
 
 /// First booted simulator, or nil with error if none / framework load failed.
 + (nullable instancetype)bootedSimulatorWithError:(NSError **)error;
 
 /// Specific simulator by UDID (must be booted).
-+ (nullable instancetype)simulatorWithUDID:(NSString *)udid error:(NSError **)error
++ (nullable instancetype)simulatorWithUDID:(nullable NSString *)udid error:(NSError **)error
     NS_SWIFT_NAME(withUDID(_:));
 
 // --- HID gestures (points, top-left origin) ---
@@ -47,6 +51,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Whether the bound simulator is still booted (re-reads device state).
 - (BOOL)isBooted;
+/// Close persistent HID connections before acknowledging daemon shutdown.
+- (void)closeInput;
 
 /// Type a string via the hardware keyboard (the focused field receives it).
 - (BOOL)typeText:(NSString *)text error:(NSError **)error NS_SWIFT_NAME(type(_:));
@@ -73,14 +79,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSArray<NSDictionary<NSString *, id> *> *)accessibilityTreeWithError:(NSError **)error
     NS_SWIFT_NAME(accessibilityTree());
 
+/// Coarse framebuffer signature for settling when watchOS exposes only an app AX node.
+- (uint64_t)screenFingerprint;
+
 /// In-process screenshot (framebuffer IOSurface -> PNG). No subprocess.
 - (BOOL)screenshotToPath:(NSString *)path error:(NSError **)error
     NS_SWIFT_NAME(screenshot(toPath:));
-
-/// On-device OCR (Apple Vision) of the current screen. Each dict: text, x, y, w,
-/// h (points, top-left), conf. Works on ANY app — no accessibility needed.
-- (nullable NSArray<NSDictionary<NSString *, id> *> *)recognizeTextWithError:(NSError **)error
-    NS_SWIFT_NAME(recognizeText());
 
 /// Set a field's value directly (any unicode) by matching its identifier/label.
 - (BOOL)setAccessibilityValue:(NSString *)value
@@ -92,9 +96,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// Diagnostic: verifies the Indigo struct layout matches the wire format.
 + (NSString *)layoutDescription;
 
-/// nil if the Indigo wire-format struct sizes match what wand was built against;
-/// otherwise a clear message. A mismatch means the host Xcode's SimulatorKit
-/// differs and injecting would send wrong bytes — callers MUST refuse to inject.
+/// Legacy Indigo layout guard. Xcode 27 uses DTUHID instead; that transport
+/// validates its service with a bounded liveness probe on first input.
 + (nullable NSString *)wireFormatError;
 
 /// nil if this simulator is ready to inject input; otherwise a clear reason

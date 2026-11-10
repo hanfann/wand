@@ -1,0 +1,7 @@
+{
+  "concurrent_clients": 8,
+  "elapsed_s": 1.04489,
+  "daemon_count": 1,
+  "stop_with_recording_s": 0.10534087499999994,
+  "recorders_remaining": 0
+}

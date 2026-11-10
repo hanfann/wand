@@ -2,6 +2,52 @@ import XCTest
 @testable import WandKit
 
 final class SnapshotTests: XCTestCase {
+    func testInputRefusesAmbiguityAndUnsafeCenters() throws {
+        let rows: [[String: Any]] = [
+            ["role": "AXButton", "label": "Save", "x": 0.0, "y": 0.0, "w": 40.0, "h": 30.0],
+            ["role": "AXButton", "label": "Save", "x": 0.0, "y": 50.0, "w": 40.0, "h": 30.0],
+            ["role": "AXButton", "id": "partial", "x": 90.0, "y": 0.0, "w": 40.0, "h": 30.0]
+        ]
+        let snapshot = Snapshot(elements: rows, screenW: 100, screenH: 100)
+        XCTAssertThrowsError(try snapshot.resolveForInput("Save"))
+        XCTAssertEqual(try snapshot.resolveForInput("e2")?.cy, 65)
+        XCTAssertThrowsError(try snapshot.resolveForInput("#partial"))
+        XCTAssertThrowsError(try sample().resolveForInput("#off"))
+        XCTAssertThrowsError(try sample().resolveForInput("#row-99"))
+        XCTAssertNotNil(try sample().resolveForInput("#row-99", requiresVisibleCenter: false))
+        XCTAssertNil(try snapshot.resolveForInput("e999"))
+    }
+
+    func testDiffKeepsDuplicateControlsAndChangedGeometry() {
+        let rows: [[String: Any]] = [
+            ["role": "AXButton", "label": "Save", "x": 0.0, "y": 0.0, "w": 40.0, "h": 30.0],
+            ["role": "AXButton", "label": "Save", "x": 0.0, "y": 50.0, "w": 40.0, "h": 30.0],
+        ]
+        let before = Snapshot(elements: rows)
+        XCTAssertTrue(Snapshot(elements: [rows[0]]).diff(from: before).contains("- e2"))
+        var moved = rows
+        moved[1]["y"] = 70.0
+        moved[1]["enabled"] = false
+        let diff = Snapshot(elements: moved).diff(from: before)
+        XCTAssertTrue(diff.contains("~ e2"))
+        XCTAssertTrue(diff.contains("@20,85 (disabled)"))
+        XCTAssertEqual(before.diff(from: before), "(no change)")
+    }
+
+    func testEmptyAndMissingRefsNeverFallBackToLabels() {
+        let snapshot = sample()
+        XCTAssertNil(snapshot.resolve(""))
+        XCTAssertNil(snapshot.resolve("#"))
+        XCTAssertNil(snapshot.resolve("e999"))
+    }
+
+    func testInvalidGeometryDoesNotCrashFormatting() {
+        let snapshot = Snapshot(elements: [
+            ["role": "AXButton", "x": Double.nan, "y": 0.0, "w": 10.0, "h": 10.0],
+            ["role": "AXButton", "x": 0.0, "y": Double.infinity, "w": 10.0, "h": 10.0],
+        ])
+        XCTAssertEqual(snapshot.compact, "")
+    }
     // A representative tree: a button with id, a label-only text, a value field,
     // a decorative empty container (should be filtered), and an off-screen row.
     func sample(screenW: Double = 400, screenH: Double = 800) -> Snapshot {

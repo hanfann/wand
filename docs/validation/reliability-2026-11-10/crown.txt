@@ -1,0 +1,118 @@
+PASS: Settings app is foreground before input
+PASS: tap 1 opens Notifications
+PASS: back 1 returns to Settings
+PASS: HID transport needs no guest helper process
+PASS: vertical drag scrolls
+PASS: crown returns to top
+PASS: native Crown down 1 scrolls
+PASS: native Crown up 1 returns to top
+PASS: native Crown down 2 scrolls
+PASS: native Crown up 2 returns to top
+PASS: native Crown down 3 scrolls
+PASS: native Crown up 3 returns to top
+PASS: native Crown down 4 scrolls
+PASS: native Crown up 4 returns to top
+PASS: native Crown down 5 scrolls
+PASS: native Crown up 5 returns to top
+PASS: native Crown down 6 scrolls
+PASS: native Crown up 6 returns to top
+PASS: native Crown down 7 scrolls
+PASS: native Crown up 7 returns to top
+PASS: native Crown down 8 scrolls
+PASS: native Crown up 8 returns to top
+PASS: native Crown down 9 scrolls
+PASS: native Crown up 9 returns to top
+PASS: native Crown down 10 scrolls
+PASS: native Crown up 10 returns to top
+PASS: native Crown down 11 scrolls
+PASS: native Crown up 11 returns to top
+PASS: native Crown down 12 scrolls
+PASS: native Crown up 12 returns to top
+PASS: native Crown down 13 scrolls
+PASS: native Crown up 13 returns to top
+PASS: native Crown down 14 scrolls
+PASS: native Crown up 14 returns to top
+PASS: native Crown down 15 scrolls
+PASS: native Crown up 15 returns to top
+PASS: native Crown down 16 scrolls
+PASS: native Crown up 16 returns to top
+PASS: native Crown down 17 scrolls
+PASS: native Crown up 17 returns to top
+PASS: native Crown down 18 scrolls
+PASS: native Crown up 18 returns to top
+PASS: native Crown down 19 scrolls
+PASS: native Crown up 19 returns to top
+PASS: native Crown down 20 scrolls
+PASS: native Crown up 20 returns to top
+PASS: native Crown down 21 scrolls
+PASS: native Crown up 21 returns to top
+PASS: native Crown down 22 scrolls
+PASS: native Crown up 22 returns to top
+PASS: native Crown down 23 scrolls
+PASS: native Crown up 23 returns to top
+PASS: native Crown down 24 scrolls
+PASS: native Crown up 24 returns to top
+PASS: native Crown down 25 scrolls
+PASS: native Crown up 25 returns to top
+PASS: native Crown down 26 scrolls
+PASS: native Crown up 26 returns to top
+PASS: native Crown down 27 scrolls
+PASS: native Crown up 27 returns to top
+PASS: native Crown down 28 scrolls
+PASS: native Crown up 28 returns to top
+PASS: native Crown down 29 scrolls
+PASS: native Crown up 29 returns to top
+PASS: native Crown down 30 scrolls
+PASS: native Crown up 30 returns to top
+PASS: native Crown down 31 scrolls
+PASS: native Crown up 31 returns to top
+PASS: native Crown down 32 scrolls
+PASS: native Crown up 32 returns to top
+PASS: native Crown down 33 scrolls
+PASS: native Crown up 33 returns to top
+PASS: native Crown down 34 scrolls
+PASS: native Crown up 34 returns to top
+PASS: native Crown down 35 scrolls
+PASS: native Crown up 35 returns to top
+PASS: native Crown down 36 scrolls
+PASS: native Crown up 36 returns to top
+PASS: native Crown down 37 scrolls
+PASS: native Crown up 37 returns to top
+PASS: native Crown down 38 scrolls
+PASS: native Crown up 38 returns to top
+PASS: native Crown down 39 scrolls
+PASS: native Crown up 39 returns to top
+PASS: native Crown down 40 scrolls
+PASS: native Crown up 40 returns to top
+PASS: native Crown down 41 scrolls
+PASS: native Crown up 41 returns to top
+PASS: native Crown down 42 scrolls
+PASS: native Crown up 42 returns to top
+PASS: native Crown down 43 scrolls
+PASS: native Crown up 43 returns to top
+PASS: native Crown down 44 scrolls
+PASS: native Crown up 44 returns to top
+PASS: native Crown down 45 scrolls
+PASS: native Crown up 45 returns to top
+PASS: native Crown down 46 scrolls
+PASS: native Crown up 46 returns to top
+PASS: native Crown down 47 scrolls
+PASS: native Crown up 47 returns to top
+PASS: native Crown down 48 scrolls
+PASS: native Crown up 48 returns to top
+PASS: native Crown down 49 scrolls
+PASS: native Crown up 49 returns to top
+PASS: native Crown down 50 scrolls
+PASS: native Crown up 50 returns to top
+Verified native Crown transitions: 100
+PASS: Settings root verified before batch
+PASS: batch navigation returns to Settings
+PASS: batch numeric-preflight reports failure
+PASS: batch numeric-preflight prevents the tap
+PASS: batch preflight reports failure
+PASS: batch preflight prevents the tap
+PASS: batch stop-on-error reports failure
+PASS: batch stop-on-error prevents the tap
+Watch input smoke test complete; screenshots: /tmp/wand-reliability/crown
+Tap latency: n=2, median=1721.7872083419934ms, p95=1721.7872083419934ms
+PASS: observed watch tap p95 below 2 seconds

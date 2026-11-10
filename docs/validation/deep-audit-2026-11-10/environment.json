@@ -1,0 +1,12 @@
+{
+  "baseline_binary_sha256": "2e21e4c982d5fa7615e612eb6fc86186df920fe7602f0e90ed49ada8b2d563a4",
+  "candidate_binary_sha256": "712b6250da5c31da8660483fcfe7f34fcce15ccdc24d29bc13fa78021ca36a90",
+  "machine": "Apple M4, 10 cores, 24 GiB",
+  "macOS": "27.2",
+  "Xcode": "27.2 (27B52)",
+  "watchOS": "27.2",
+  "iOS": "27.2",
+  "skill_sha256": "a7994917ffd220ea9df170702807a41716335c292031ebbf1aa58188e6994313",
+  "local_head": "ec4725fb733d5ca5f1047f83c5e19900f7c45c5a",
+  "remote_main_verified": "7d2e831f8abe106480abad0ed7fedfe67cfa4954"
+}

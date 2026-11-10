@@ -1,0 +1,2 @@
+PASS: native single-contact down/move/up all produce valid Indigo packets
+PASS: pinch/rotate propagate down, move and release failures without replay
