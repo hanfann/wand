@@ -18,8 +18,9 @@ wand — autonomous Apple-simulator (iOS · iPadOS · watchOS) E2E driver for AI
     wand scrollto <sel>            scroll until an element is visible
     wand assert <sel> [exists|gone|value=..|label=..]
     wand wait <sel> [timeoutMs]
-    wand screenshot [path] [--preview maxEdge] [--crop x y width height]
+    wand screenshot [path] [--preview maxEdge] [--crop x y width height] [--since none|TOKEN]
                                    keeps full PNG; crop uses source pixels; preview reports tap mapping
+                                   since returns a token; changed=false means fresh bytes and geometry match
 
   Act (sel = eN | #id | "label"; tap falls back to OCR text):
     wand tap <sel> | wand tap <x> <y> | wand tapocr <text>

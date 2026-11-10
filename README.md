@@ -154,7 +154,7 @@ Observe
   scrollto <sel>            scroll until an element is visible
   assert <sel> [exists|gone|value=..|label=..]
   wait <sel> [timeoutMs]
-  screenshot [path]
+  screenshot [path] [--preview maxEdge] [--crop x y width height] [--since none|TOKEN]
 
 Act   (sel = eN ref · #identifier · "label")
   tap <sel> | tap <x> <y> | tapocr <text>
@@ -259,6 +259,32 @@ the top left. Output is JSON with both paths, image dimensions and
 Use this mapping instead of the full screenshot's scale. Keep the original for
 pixel/clipping audits; reduced previews can hide small defects. Full captures and
 previews are user artifacts and are not automatically pruned.
+
+For repeated visual observations, add `--since none` and retain the returned
+`token`. Pass that token as `--since TOKEN` on the next capture. Each request still
+saves a fresh full PNG; matching bytes, device, point geometry and preview/crop
+settings return `changed:false` without a preview/image payload. The baseline is
+caller-owned, so another agent cannot suppress your first image. This is visual
+equality, not proof of hidden app state or action success. Keep the previous image
+and mapping; force `none` if that context is lost. Clocks and animations invalidate
+the token too.
+
+With compact MCP, request an inline image in the action response:
+
+```json
+{"udid":"DEVICE_ID","summary":true,"image":true,
+ "commands":[["tap","40","80"],["screenshot","/tmp/screen.png"]]}
+```
+
+`image:true` requires a final screenshot, defaults to a 640px preview and returns
+standard MCP image content with coordinate metadata. The full MCP `screenshot`
+tool also accepts `image:true`. Add `--since TOKEN` to the final command (or `since`
+to the full tool) to omit unchanged images. Attachments are bounded to 2 MiB and
+4096px per edge; request a smaller preview if needed. If image delivery fails after
+actions completed, capture again without replaying those actions. Without an
+explicit path, inline images use `~/.wand/mcp-<process>-<device>.png`; preserve
+needed evidence and remove your scratch captures when done.
+
 
 CI skips macOS builds/live simulators only for a known documentation-only diff.
 Code, test fixtures, workflows and unknown files retain full qualification. Manual

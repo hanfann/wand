@@ -1,0 +1,76 @@
+[
+  {
+    "ok": true,
+    "profile": {
+      "daemon_cpu_ms": 10.360999999999954,
+      "elapsed_ms": 16.3696666713804,
+      "phases": {
+        "dispatch": {
+          "calls": 1,
+          "exclusive_ms": 0.3595000016503036,
+          "inclusive_ms": 16.333999985363334
+        },
+        "geometry": {
+          "calls": 1,
+          "exclusive_ms": 0.0008333008736371994,
+          "inclusive_ms": 0.0008333008736371994
+        },
+        "image_observation": {
+          "calls": 1,
+          "exclusive_ms": 1.0907499818131328,
+          "inclusive_ms": 15.970250009559095
+        },
+        "screenshot": {
+          "calls": 1,
+          "exclusive_ms": 14.879500027745962,
+          "inclusive_ms": 14.879500027745962
+        },
+        "session_check": {
+          "calls": 1,
+          "exclusive_ms": 0.00341667328029871,
+          "inclusive_ms": 0.00341667328029871
+        }
+      },
+      "result_bytes": 342
+    },
+    "result": "{\"changed\":true,\"cropPixels\":[0,0,324,394],\"full\":\"/tmp/wand-observation-audit/profile.png\",\"fullPixels\":[324,394],\"preview\":\"/tmp/wand-observation-audit/profile.png\",\"previewPixels\":[324,394],\"previewPixelToPoint\":{\"xOffset\":0,\"xScale\":0.5,\"yOffset\":0,\"yScale\":0.5},\"token\":\"c18760653dd69fd46cf8844c8cf5c5a8f11292bb7b21c93f4bbf51802619ed43\"}",
+    "schema": 1
+  },
+  {
+    "ok": true,
+    "profile": {
+      "daemon_cpu_ms": 5.982000000000043,
+      "elapsed_ms": 9.206958347931504,
+      "phases": {
+        "dispatch": {
+          "calls": 1,
+          "exclusive_ms": 0.010958290658891201,
+          "inclusive_ms": 9.20220831176266
+        },
+        "geometry": {
+          "calls": 1,
+          "exclusive_ms": 0.000625033862888813,
+          "inclusive_ms": 0.000625033862888813
+        },
+        "image_observation": {
+          "calls": 1,
+          "exclusive_ms": 0.8145416504703462,
+          "inclusive_ms": 9.18975000968203
+        },
+        "screenshot": {
+          "calls": 1,
+          "exclusive_ms": 8.375208359211683,
+          "inclusive_ms": 8.375208359211683
+        },
+        "session_check": {
+          "calls": 1,
+          "exclusive_ms": 0.0008749775588512421,
+          "inclusive_ms": 0.0008749775588512421
+        }
+      },
+      "result_bytes": 342
+    },
+    "result": "{\"changed\":true,\"cropPixels\":[0,0,324,394],\"full\":\"/tmp/wand-observation-audit/profile.png\",\"fullPixels\":[324,394],\"preview\":\"/tmp/wand-observation-audit/profile.png\",\"previewPixels\":[324,394],\"previewPixelToPoint\":{\"xOffset\":0,\"xScale\":0.5,\"yOffset\":0,\"yScale\":0.5},\"token\":\"c18760653dd69fd46cf8844c8cf5c5a8f11292bb7b21c93f4bbf51802619ed43\"}",
+    "schema": 1
+  }
+]

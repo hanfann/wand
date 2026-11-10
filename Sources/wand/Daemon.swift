@@ -470,6 +470,14 @@ final class Daemon {
             case "screenshot":
                 let options = try ScreenshotOptions(arguments: a)
                 let path = options.path ?? "\(Net.socketDir())/last.png"
+                if options.since != nil {
+                    return Reply(ok: true, text: try timed("image_observation") {
+                        try ScreenshotObservation.capture(path: path, scope: sim.udid, options: options) { path in
+                            try timed("screenshot") { try sim.screenshot(toPath: path) }
+                            return sim.screenPointSize
+                        }
+                    })
+                }
                 try timed("screenshot") { try sim.screenshot(toPath: path) }
                 if options.maxEdge != nil {
                     let preview = try timed("preview") { try ScreenshotPreview.make(path: path, pointSize: sim.screenPointSize, options: options) }

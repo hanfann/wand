@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Adversarial simulator-free CLI/MCP checks; never starts a real daemon."""
+import base64
 import json
+import tempfile
 from pathlib import Path
 import socket
 import subprocess
@@ -171,3 +173,75 @@ def profile_once(udid):
 result, received = exchange(profile_once, lambda conn, _: None)
 assert result.returncode != 0 and 'may have run' in result.stderr and len(received) == 1
 print('PASS: profile accepts argv/stdin, preflights all input and never replays a lost reply')
+
+since_calls = [dict(path='/tmp/a.png', since='none'), dict(since='a' * 64, previewMaxEdge=640),
+               dict(since=True), dict(since='bad'), dict(since='A' * 64)]
+def since_mcp(udid):
+    messages = [dict(jsonrpc='2.0', id=i, method='tools/call', params=dict(name='screenshot',
+        arguments=dict(arguments, udid=udid))) for i, arguments in enumerate(since_calls)]
+    return subprocess.run([wand, 'mcp'], input=b''.join(json.dumps(m).encode() + b'\n' for m in messages),
+                          capture_output=True, timeout=4)
+result, received = exchange(since_mcp, lambda conn, _: conn.sendall(b'{"ok":true,"text":"observation"}\n'))
+responses = [json.loads(line) for line in result.stdout.splitlines()]
+assert [r['result']['isError'] for r in responses] == [False, False, True, True, True]
+assert received == [['screenshot', '/tmp/a.png', '--since', 'none'],
+                    ['screenshot', '--preview', '640', '--since', 'a' * 64]], received
+def since_cli(udid):
+    good = subprocess.run([wand, '--udid', udid, 'screenshot', '--since', 'none'], capture_output=True, timeout=4)
+    bad = subprocess.run([wand, '--udid', udid, 'batch', '[["tap","1","2"],["screenshot","--since","bad"]]'],
+                         capture_output=True, timeout=4)
+    assert good.returncode == 0 and bad.returncode != 0
+result, received = exchange(since_cli, lambda conn, _: conn.sendall(b'{"ok":true,"text":"observation"}\n'))
+assert received == [['screenshot', '--since', 'none']], received
+print('PASS: screenshot tokens route exactly; malformed tokens and batch steps send no input')
+
+# Final screenshots are attached in the same response; input is dispatched once.
+fixture = (Path(__file__).resolve().parents[1] /
+    'docs/validation/workflow-profiling-2026-11-10/ocr-source.png').read_bytes()
+token = 'a' * 64
+with tempfile.TemporaryDirectory(prefix='wand-mcp-image-') as directory:
+    frame = str(Path(directory) / 'frame.png')
+    def image_call(udid, *, compact=True, since='none', image=True, final=True):
+        args = dict(udid=udid, image=image)
+        if compact:
+            args.update(commands=[['tap', '10', '20']] +
+                ([['screenshot', frame, '--since', since]] if final else []), summary=True)
+        else:
+            args.update(path=frame, since=since)
+        message = dict(jsonrpc='2.0', id=1, method='tools/call',
+                       params=dict(name='run' if compact else 'screenshot', arguments=args))
+        return subprocess.run([wand, 'mcp'] + (['--compact'] if compact else []),
+            input=json.dumps(message).encode() + b'\n', capture_output=True, timeout=4)
+    def image_reply(conn, command, *, changed=True, write=True, ok=True):
+        is_batch = command[0] == 'batch'
+        steps = json.loads(command[-1]) if is_batch else [command]
+        expected = ['screenshot', frame, '--preview', '640', '--since', 'none' if changed else token]
+        assert steps[-1] == expected, steps
+        if is_batch: assert steps[:-1] == [['tap', '10', '20']]
+        if write: Path(frame).write_bytes(fixture)
+        observation = dict(full=frame, preview=frame, changed=changed, token=token,
+                           previewPixelToPoint=dict(xScale=.5, yScale=.5, xOffset=0, yOffset=0))
+        text = ('completed 2/2\n2 OK ' if is_batch else '') + json.dumps(observation)
+        if not ok: text = 'completed 0/2\n1 FAIL target missing'
+        conn.sendall(json.dumps(dict(ok=ok, text=text)).encode() + b'\n')
+    for compact in (True, False):
+        result, received = exchange(lambda u: image_call(u, compact=compact), image_reply)
+        response = json.loads(result.stdout)['result']
+        assert not response['isError'] and len(received) == 1
+        assert [c['type'] for c in response['content']] == ['text', 'image']
+        assert base64.b64decode(response['content'][1]['data']) == fixture
+        assert 'previewPixelToPoint' in response['content'][0]['text']
+    Path(frame).unlink()
+    result, received = exchange(lambda u: image_call(u, since=token),
+        lambda c, cmd: image_reply(c, cmd, changed=False, write=False))
+    response = json.loads(result.stdout)['result']
+    assert not response['isError'] and len(response['content']) == 1 and len(received) == 1
+    for options in (dict(final=False), dict(image='true')):
+        result, received = exchange(lambda u: image_call(u, **options), image_reply)
+        assert json.loads(result.stdout)['result']['isError'] and not received
+    for ok in (False, True):
+        result, received = exchange(image_call, lambda c, cmd: image_reply(c, cmd, ok=ok, write=False))
+        response = json.loads(result.stdout)['result']
+        assert response['isError'] and len(response['content']) == 1 and len(received) == 1
+        if ok: assert 'Commands completed; image delivery failed' in response['content'][0]['text']
+print('PASS: inline MCP PNG is exact; unchanged omits image; validation/failure never replays input')

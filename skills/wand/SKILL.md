@@ -39,6 +39,10 @@ skill. After a binary update, `stop` only your selected daemon to load the new b
    `pointX = xOffset + pixelX * xScale` (likewise Y). Optional `--crop x y w h` uses
    source pixels. Use full captures for pixel/clipping QA; do not apply `info` scale
    to resized previews. Small captures are not upscaled or duplicated.
+   For repeated observations, add `--since none`, then reuse the returned token.
+   Every call saves a fresh full PNG; `changed:false` skips preview/image delivery.
+   This proves visual equality only. Retain the prior image and mapping; use
+   `none` after losing that context. Animations/clocks still trigger fresh images.
 6. Verify the app outcome. Dispatch success and pixel settling do not prove it.
    `scroll down` uses touch; `drag 80 165 80 65` allows precise scrolling. `crown`
    sends native Watch Crown events; a swipe does not validate Crown behavior.
@@ -90,6 +94,11 @@ fixture installed. Both assert actual outcomes. Coverage, budgets and limits:
 `docs/validation/reliability-2026-11-10.md`, `docs/performance.md`.
 
 `mcp --compact` exposes one `run` tool (`udid`, `commands`, optional `summary: true`).
+Add `image: true` and end with `screenshot` to receive its PNG in the same response
+(default 640px preview, full capture retained). Reuse `--since TOKEN` in that final
+command to omit unchanged images. An attachment failure after completed actions
+requires another screenshot, never a replay of those actions. Use explicit paths
+for curated evidence; remove task scratch screenshots afterward.
 `setup --mcp` registers compact mode with Claude; `mcp` / `setup --full-mcp` retain
 legacy tools. Cancellation skips queued work and later batch steps; dispatched
 input may finish. Observe before resuming.

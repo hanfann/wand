@@ -34,6 +34,8 @@ Established before the deep-audit candidate was measured:
 | Compact MCP catalog | under 1 KB minified; preserve explicit targeting |
 | Optional batch summary | at least 80% fewer UTF-8 response bytes on the 32-step fixture; identical execution order, exact final/error text, no replay |
 | Optional screenshot preview | preserved full PNG; correct crop/orientation and independent X/Y point mapping; no upscaling; at least 70% fewer PNG bytes on the saved iPad fixture at 640px |
+| Conditional screenshot | fresh capture on every call; single-pixel/device/geometry/crop invalidation; exact full/preview bytes; 20 identical observations deliver one image; unchanged large-frame response p95 improves at least 20% or 5 ms |
+| Inline MCP image | action and final PNG in one response; exact saved bytes/mapping; invalid request sends no input; attachment failure never replays input; catalog stays below 1 KB |
 | CI change filtering | docs-only skip; source/tests/workflows/fixtures/unknown changes and unavailable diffs require macOS; docs runs cannot cancel code qualification |
 | Resource use | daemon plus worker RSS growth below 20 MB over 1,000 warm reads; idle CPU under 1% over 5 s |
 | Cleanup | no task-owned helper/worker/recording process or scratch files after stop; no extra running sims |
@@ -90,3 +92,7 @@ have applied the operation. These bounds do not cancel work already accepted by
 CoreSimulator. AX calls are isolated in a worker with a 5 s deadline. Other
 private framework calls are not universally interruptible. Startup ownership
 waits have a 20 s total deadline, and an unready owned child is stopped on expiry.
+
+Measured conditional-image and inline-MCP results, rejected preview experiments,
+and remaining capture/settling priorities are documented in
+[conditional observation qualification](validation/conditional-observation-2026-11-10.md).

@@ -10,14 +10,17 @@ enum ScreenshotPreview {
         let crop: CGRect
         let xOffset: Double, yOffset: Double, xScale: Double, yScale: Double
 
-        func description() throws -> String {
-            let value: [String: Any] = [
+        var metadata: [String: Any] {
+            [
                 "full": fullPath, "preview": previewPath,
                 "fullPixels": [fullWidth, fullHeight], "previewPixels": [width, height],
                 "cropPixels": [Int(crop.minX), Int(crop.minY), Int(crop.width), Int(crop.height)],
                 "previewPixelToPoint": ["xOffset": xOffset, "yOffset": yOffset, "xScale": xScale, "yScale": yScale]
             ]
-            return String(decoding: try JSONSerialization.data(withJSONObject: value, options: [.sortedKeys, .withoutEscapingSlashes]), as: UTF8.self)
+        }
+
+        func description() throws -> String {
+            String(decoding: try JSONSerialization.data(withJSONObject: metadata, options: [.sortedKeys, .withoutEscapingSlashes]), as: UTF8.self)
         }
     }
 

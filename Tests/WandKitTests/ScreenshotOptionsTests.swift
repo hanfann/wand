@@ -10,6 +10,8 @@ final class ScreenshotOptionsTests: XCTestCase {
         XCTAssertEqual(options.maxEdge, 640)
         XCTAssertEqual(options.crop?.x, 10)
         XCTAssertEqual(options.crop?.height, 40)
+        XCTAssertEqual(try ScreenshotOptions(arguments: ["--since", "none"]).since, "none")
+        XCTAssertEqual(try ScreenshotOptions(arguments: ["--since", String(repeating: "a", count: 64)]).since, String(repeating: "a", count: 64))
     }
 
     func testInvalidArgumentsFailDuringBatchPreflight() {
@@ -17,7 +19,8 @@ final class ScreenshotOptionsTests: XCTestCase {
                      ["--preview", "640.5"], ["--preview", "10", "--preview", "20"], ["a.png", "b.png"],
                      ["--crop", "0", "0", "10", "10"], ["--preview", "640", "--crop", "-1", "0", "10", "10"],
                      ["--preview", "640", "--crop", "0", "0", "0", "10"], ["--preview", "640", "--crop", "0"],
-                     ["--typo"], [""]] {
+                     ["--since"], ["--since", "bad"], ["--since", String(repeating: "A", count: 64)],
+                     ["--since", "none", "--since", "none"], ["--typo"], [""]] {
             XCTAssertThrowsError(try CommandValidation.validate(["screenshot"] + args), "\(args)")
         }
         XCTAssertThrowsError(try CommandBatch(json: #"[["tap","10","20"],["screenshot","--preview","NaN"]]"#))

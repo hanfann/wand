@@ -1,0 +1,293 @@
+Building for debugging...
+[Using on-disk description]
+[3 / 28]
+[5 / 29] WandEngine
+[8 / 30] WandEngine
+[14 / 36] WandEngine
+[19 / 28] wand-product
+[20 / 51]
+[31 / 51] wand-product
+[32 / 51] wand-product
+[38 / 53] wand
+[43 / 54] wand-product
+[44 / 54] wand-product
+[46 / 56]
+[46 / 56] wand-product
+[46 / 56] wand
+[46 / 56] wand-product
+[50 / 58] wand
+[50 / 58] wand-product
+[53 / 58] WandTests-product
+[62 / 67] WandTests-product
+[64 / 67] WandTests-product
+[66 / 70] WandTests-product
+Build complete! (6.21 secs)
+Test Suite 'All tests' started at 2026-11-10 22:52:26.892.
+Test Suite 'WandTests.xctest' started at 2026-11-10 22:52:26.894.
+Test Suite 'BatchExecutionTests' started at 2026-11-10 22:52:26.894.
+Test Case '-[WandTests.BatchExecutionTests testCancellationBeforeOrDuringBatchSendsNoRemainingCommands]' started.
+Test Case '-[WandTests.BatchExecutionTests testCancellationBeforeOrDuringBatchSendsNoRemainingCommands]' passed (0.001 seconds).
+Test Case '-[WandTests.BatchExecutionTests testDefaultRetainsEveryStepWithoutChangingFormat]' started.
+Test Case '-[WandTests.BatchExecutionTests testDefaultRetainsEveryStepWithoutChangingFormat]' passed (0.000 seconds).
+Test Case '-[WandTests.BatchExecutionTests testFailureAtAnyStepStopsWithoutReplayAndPreservesErrorAndExit]' started.
+Test Case '-[WandTests.BatchExecutionTests testFailureAtAnyStepStopsWithoutReplayAndPreservesErrorAndExit]' passed (0.000 seconds).
+Test Case '-[WandTests.BatchExecutionTests testRepresentativeLongBatchCutsResponseBytesWithoutChangingExecution]' started.
+Test Case '-[WandTests.BatchExecutionTests testRepresentativeLongBatchCutsResponseBytesWithoutChangingExecution]' passed (0.000 seconds).
+Test Case '-[WandTests.BatchExecutionTests testSingleStepSummaryRetainsEntireResult]' started.
+Test Case '-[WandTests.BatchExecutionTests testSingleStepSummaryRetainsEntireResult]' passed (0.000 seconds).
+Test Case '-[WandTests.BatchExecutionTests testSummaryExecutesEveryStepAndPreservesFinalUnicodeObservation]' started.
+Test Case '-[WandTests.BatchExecutionTests testSummaryExecutesEveryStepAndPreservesFinalUnicodeObservation]' passed (0.000 seconds).
+Test Suite 'BatchExecutionTests' passed at 2026-11-10 22:52:26.897.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'MCPImageTests' started at 2026-11-10 22:52:26.897.
+Test Case '-[WandTests.MCPImageTests testAttachmentUsesActualPNGAndHandlesMultilineBatchText]' started.
+Test Case '-[WandTests.MCPImageTests testAttachmentUsesActualPNGAndHandlesMultilineBatchText]' passed (0.007 seconds).
+Test Case '-[WandTests.MCPImageTests testPreparationPreservesBatchAndRequiresExplicitFinalScreenshot]' started.
+Test Case '-[WandTests.MCPImageTests testPreparationPreservesBatchAndRequiresExplicitFinalScreenshot]' passed (0.001 seconds).
+Test Case '-[WandTests.MCPImageTests testUnchangedImageRequiresMatchingCallerTokenAndDoesNotReadFile]' started.
+Test Case '-[WandTests.MCPImageTests testUnchangedImageRequiresMatchingCallerTokenAndDoesNotReadFile]' passed (0.001 seconds).
+Test Case '-[WandTests.MCPImageTests testUnexpectedPathsInvalidPNGAndOversizedPayloadFail]' started.
+Test Case '-[WandTests.MCPImageTests testUnexpectedPathsInvalidPNGAndOversizedPayloadFail]' passed (0.003 seconds).
+Test Suite 'MCPImageTests' passed at 2026-11-10 22:52:26.909.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.011 (0.012) seconds
+Test Suite 'OCRServiceTests' started at 2026-11-10 22:52:26.909.
+Test Case '-[WandTests.OCRServiceTests testCancellationStopsWorkerWithoutStartingCooldown]' started.
+Test Case '-[WandTests.OCRServiceTests testCancellationStopsWorkerWithoutStartingCooldown]' passed (0.452 seconds).
+Test Case '-[WandTests.OCRServiceTests testCaptureFailureAndInvalidWorkerOutputAreNotCached]' started.
+Test Case '-[WandTests.OCRServiceTests testCaptureFailureAndInvalidWorkerOutputAreNotCached]' passed (0.321 seconds).
+Test Case '-[WandTests.OCRServiceTests testEmptySuccessfulResultsAreCachedPerMode]' started.
+Test Case '-[WandTests.OCRServiceTests testEmptySuccessfulResultsAreCachedPerMode]' passed (0.409 seconds).
+Test Case '-[WandTests.OCRServiceTests testExplicitRetryBypassesCooldownAndSuccessRestoresAutomaticFallback]' started.
+Test Case '-[WandTests.OCRServiceTests testExplicitRetryBypassesCooldownAndSuccessRestoresAutomaticFallback]' passed (5.151 seconds).
+Test Case '-[WandTests.OCRServiceTests testFallbackSharesOneCaptureAndModesRemainCached]' started.
+Test Case '-[WandTests.OCRServiceTests testFallbackSharesOneCaptureAndModesRemainCached]' passed (0.351 seconds).
+Test Case '-[WandTests.OCRServiceTests testPixelAndGeometryChangesInvalidateBothModesAndBoundCache]' started.
+Test Case '-[WandTests.OCRServiceTests testPixelAndGeometryChangesInvalidateBothModesAndBoundCache]' passed (0.418 seconds).
+Test Case '-[WandTests.OCRServiceTests testTimeoutSuppressesAutomaticRetriesUntilExpiryAndKeepsFastCache]' started.
+Test Case '-[WandTests.OCRServiceTests testTimeoutSuppressesAutomaticRetriesUntilExpiryAndKeepsFastCache]' passed (5.425 seconds).
+Test Suite 'OCRServiceTests' passed at 2026-11-10 22:52:39.437.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 12.526 (12.528) seconds
+Test Suite 'ProfilingTests' started at 2026-11-10 22:52:39.437.
+Test Case '-[WandTests.ProfilingTests testProfilePreservesFailureExitAndNeverReplays]' started.
+Test Case '-[WandTests.ProfilingTests testProfilePreservesFailureExitAndNeverReplays]' passed (0.001 seconds).
+Test Suite 'ProfilingTests' passed at 2026-11-10 22:52:39.438.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'ScreenshotObservationTests' started at 2026-11-10 22:52:39.438.
+Test Case '-[WandTests.ScreenshotObservationTests testCallerOwnsBaselineAndEveryRequestCapturesFresh]' started.
+Test Case '-[WandTests.ScreenshotObservationTests testCallerOwnsBaselineAndEveryRequestCapturesFresh]' passed (0.007 seconds).
+Test Case '-[WandTests.ScreenshotObservationTests testCaptureFailureCannotClaimUnchangedFromOldFile]' started.
+Test Case '-[WandTests.ScreenshotObservationTests testCaptureFailureCannotClaimUnchangedFromOldFile]' passed (0.002 seconds).
+Test Case '-[WandTests.ScreenshotObservationTests testInvalidDataGeometryAndCropFail]' started.
+Test Case '-[WandTests.ScreenshotObservationTests testInvalidDataGeometryAndCropFail]' passed (0.002 seconds).
+Test Case '-[WandTests.ScreenshotObservationTests testPixelGeometryDeviceAndPresentationChangesInvalidateToken]' started.
+Test Case '-[WandTests.ScreenshotObservationTests testPixelGeometryDeviceAndPresentationChangesInvalidateToken]' passed (0.006 seconds).
+Test Case '-[WandTests.ScreenshotObservationTests testUnchangedCaptureSkipsPreviewButForceRefreshRegeneratesIt]' started.
+Test Case '-[WandTests.ScreenshotObservationTests testUnchangedCaptureSkipsPreviewButForceRefreshRegeneratesIt]' passed (0.006 seconds).
+Test Suite 'ScreenshotObservationTests' passed at 2026-11-10 22:52:39.460.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.021 (0.022) seconds
+Test Suite 'ScreenshotPreviewTests' started at 2026-11-10 22:52:39.460.
+Test Case '-[WandTests.ScreenshotPreviewTests testExistingIPadCaptureProducesBoundedPreview]' started.
+Test Case '-[WandTests.ScreenshotPreviewTests testExistingIPadCaptureProducesBoundedPreview]' passed (0.037 seconds).
+Test Case '-[WandTests.ScreenshotPreviewTests testInvalidCropAndGeometryLeaveFullCaptureIntact]' started.
+Test Case '-[WandTests.ScreenshotPreviewTests testInvalidCropAndGeometryLeaveFullCaptureIntact]' passed (0.011 seconds).
+Test Case '-[WandTests.ScreenshotPreviewTests testPortraitAndLandscapeResizePreserveOrientationAndFullCapture]' started.
+Test Case '-[WandTests.ScreenshotPreviewTests testPortraitAndLandscapeResizePreserveOrientationAndFullCapture]' passed (0.333 seconds).
+Test Case '-[WandTests.ScreenshotPreviewTests testPreviewSymlinkCannotOverwriteOriginal]' started.
+Test Case '-[WandTests.ScreenshotPreviewTests testPreviewSymlinkCannotOverwriteOriginal]' passed (0.012 seconds).
+Test Case '-[WandTests.ScreenshotPreviewTests testRoundedDimensionsHaveIndependentExactPointMapping]' started.
+Test Case '-[WandTests.ScreenshotPreviewTests testRoundedDimensionsHaveIndependentExactPointMapping]' passed (0.188 seconds).
+Test Case '-[WandTests.ScreenshotPreviewTests testSmallImageIsNotUpscaledOrDuplicated]' started.
+Test Case '-[WandTests.ScreenshotPreviewTests testSmallImageIsNotUpscaledOrDuplicated]' passed (0.133 seconds).
+Test Case '-[WandTests.ScreenshotPreviewTests testTopRightCropHasCorrectPixelsAndPointOffset]' started.
+Test Case '-[WandTests.ScreenshotPreviewTests testTopRightCropHasCorrectPixelsAndPointOffset]' passed (0.160 seconds).
+Test Suite 'ScreenshotPreviewTests' passed at 2026-11-10 22:52:40.337.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.875 (0.876) seconds
+Test Suite 'WandTests.xctest' passed at 2026-11-10 22:52:40.337.
+	 Executed 30 tests, with 0 failures (0 unexpected) in 13.438 (13.443) seconds
+Test Suite 'All tests' passed at 2026-11-10 22:52:40.337.
+	 Executed 30 tests, with 0 failures (0 unexpected) in 13.438 (13.445) seconds
+Batch fixture: 641 -> 46 UTF-8 bytes; 32 commands executed in each mode
+OCR timeout 5.065637333376799s; 20 suppressed retries 0.020070625003427267s; workers started 2
+iPad preview: 2316x1512 -> 640x418; 273361 -> 61481 PNG bytes
+Test Suite 'All tests' started at 2026-11-10 22:52:40.577.
+Test Suite 'WandKitTests.xctest' started at 2026-11-10 22:52:40.579.
+Test Suite 'ArtifactMaintenanceTests' started at 2026-11-10 22:52:40.579.
+Test Case '-[WandKitTests.ArtifactMaintenanceTests testDryRunAndCleanupPreserveActiveUnknownAndSymlinkFiles]' started.
+Test Case '-[WandKitTests.ArtifactMaintenanceTests testDryRunAndCleanupPreserveActiveUnknownAndSymlinkFiles]' passed (0.008 seconds).
+Test Case '-[WandKitTests.ArtifactMaintenanceTests testLogCountAndByteBudgetsEvictOldestInactiveLogs]' started.
+Test Case '-[WandKitTests.ArtifactMaintenanceTests testLogCountAndByteBudgetsEvictOldestInactiveLogs]' passed (0.004 seconds).
+Test Suite 'ArtifactMaintenanceTests' passed at 2026-11-10 22:52:40.591.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.012 (0.013) seconds
+Test Suite 'CommandBatchTests' started at 2026-11-10 22:52:40.592.
+Test Case '-[WandKitTests.CommandBatchTests testBothOutputModesPreflightEveryCommandAtProtocolBoundary]' started.
+Test Case '-[WandKitTests.CommandBatchTests testBothOutputModesPreflightEveryCommandAtProtocolBoundary]' passed (0.001 seconds).
+Test Case '-[WandKitTests.CommandBatchTests testBoundsLongSequences]' started.
+Test Case '-[WandKitTests.CommandBatchTests testBoundsLongSequences]' passed (0.000 seconds).
+Test Case '-[WandKitTests.CommandBatchTests testPreservesOrderAndLiteralText]' started.
+Test Case '-[WandKitTests.CommandBatchTests testPreservesOrderAndLiteralText]' passed (0.000 seconds).
+Test Case '-[WandKitTests.CommandBatchTests testRejectsInvalidOrRecursiveSequencesBeforeExecution]' started.
+Test Case '-[WandKitTests.CommandBatchTests testRejectsInvalidOrRecursiveSequencesBeforeExecution]' passed (0.000 seconds).
+Test Case '-[WandKitTests.CommandBatchTests testSummaryIsOptInAndFlagsAreStrict]' started.
+Test Case '-[WandKitTests.CommandBatchTests testSummaryIsOptInAndFlagsAreStrict]' passed (0.000 seconds).
+Test Suite 'CommandBatchTests' passed at 2026-11-10 22:52:40.594.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'CommandValidationTests' started at 2026-11-10 22:52:40.594.
+Test Case '-[WandKitTests.CommandValidationTests testInvalidLaterBatchStepPreventsAnyDispatch]' started.
+Test Case '-[WandKitTests.CommandValidationTests testInvalidLaterBatchStepPreventsAnyDispatch]' passed (0.000 seconds).
+Test Case '-[WandKitTests.CommandValidationTests testRejectsNonfiniteMalformedAndUnboundedInput]' started.
+Test Case '-[WandKitTests.CommandValidationTests testRejectsNonfiniteMalformedAndUnboundedInput]' passed (0.000 seconds).
+Test Case '-[WandKitTests.CommandValidationTests testTypingNeverSilentlyDropsUnsupportedText]' started.
+Test Case '-[WandKitTests.CommandValidationTests testTypingNeverSilentlyDropsUnsupportedText]' passed (0.000 seconds).
+Test Case '-[WandKitTests.CommandValidationTests testValidSelectorsCoordinatesAndIntegralJSONNumbers]' started.
+Test Case '-[WandKitTests.CommandValidationTests testValidSelectorsCoordinatesAndIntegralJSONNumbers]' passed (0.000 seconds).
+Test Suite 'CommandValidationTests' passed at 2026-11-10 22:52:40.595.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'FrameSettlerTests' started at 2026-11-10 22:52:40.596.
+Test Case '-[WandKitTests.FrameSettlerTests testAnimationChangingLateMustEstablishFreshStability]' started.
+Test Case '-[WandKitTests.FrameSettlerTests testAnimationChangingLateMustEstablishFreshStability]' passed (0.000 seconds).
+Test Case '-[WandKitTests.FrameSettlerTests testCancelledDuringDeferredPeriodDoesNotCapture]' started.
+Test Case '-[WandKitTests.FrameSettlerTests testCancelledDuringDeferredPeriodDoesNotCapture]' passed (0.000 seconds).
+Test Case '-[WandKitTests.FrameSettlerTests testChangingFramesStopAtDeadlineAndUnavailableFrameStops]' started.
+Test Case '-[WandKitTests.FrameSettlerTests testChangingFramesStopAtDeadlineAndUnavailableFrameStops]' passed (0.000 seconds).
+Test Case '-[WandKitTests.FrameSettlerTests testPhoneStillSamplesImmediatelyAndWaitsForThreeReads]' started.
+Test Case '-[WandKitTests.FrameSettlerTests testPhoneStillSamplesImmediatelyAndWaitsForThreeReads]' passed (0.000 seconds).
+Test Case '-[WandKitTests.FrameSettlerTests testWatchDefersSamplesButKeepsMinimumAndThreeStableReads]' started.
+Test Case '-[WandKitTests.FrameSettlerTests testWatchDefersSamplesButKeepsMinimumAndThreeStableReads]' passed (0.000 seconds).
+Test Suite 'FrameSettlerTests' passed at 2026-11-10 22:52:40.597.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'LineReaderTests' started at 2026-11-10 22:52:40.597.
+Test Case '-[WandKitTests.LineReaderTests testCancellationDoesNotConsumeAlreadyBufferedNextFrame]' started.
+Test Case '-[WandKitTests.LineReaderTests testCancellationDoesNotConsumeAlreadyBufferedNextFrame]' passed (0.001 seconds).
+Test Case '-[WandKitTests.LineReaderTests testDelimiterAtEachReadBoundaryAndCompactionPreserveNextFrame]' started.
+Test Case '-[WandKitTests.LineReaderTests testDelimiterAtEachReadBoundaryAndCompactionPreserveNextFrame]' passed (0.004 seconds).
+Test Case '-[WandKitTests.LineReaderTests testEmbeddedNullInvalidUTF8AndPartialEOF]' started.
+Test Case '-[WandKitTests.LineReaderTests testEmbeddedNullInvalidUTF8AndPartialEOF]' passed (0.002 seconds).
+Test Case '-[WandKitTests.LineReaderTests testExactFrameLimitAcceptsAndOneByteOverRejectsAcrossReads]' started.
+Test Case '-[WandKitTests.LineReaderTests testExactFrameLimitAcceptsAndOneByteOverRejectsAcrossReads]' passed (0.002 seconds).
+Test Case '-[WandKitTests.LineReaderTests testFragmentedUnicodeSurvivesPartialReadTimeouts]' started.
+Test Case '-[WandKitTests.LineReaderTests testFragmentedUnicodeSurvivesPartialReadTimeouts]' passed (0.025 seconds).
+Test Case '-[WandKitTests.LineReaderTests testIdlePeerHasBoundedDeadline]' started.
+Test Case '-[WandKitTests.LineReaderTests testIdlePeerHasBoundedDeadline]' passed (0.031 seconds).
+Test Case '-[WandKitTests.LineReaderTests testIncompleteAndOversizedFramesAreRejected]' started.
+Test Case '-[WandKitTests.LineReaderTests testIncompleteAndOversizedFramesAreRejected]' passed (0.031 seconds).
+Test Case '-[WandKitTests.LineReaderTests testManyCoalescedUnicodeFramesRetainOrderAndEmptyLines]' started.
+Test Case '-[WandKitTests.LineReaderTests testManyCoalescedUnicodeFramesRetainOrderAndEmptyLines]' passed (0.029 seconds).
+Test Case '-[WandKitTests.LineReaderTests testPipelinedUnicodeAndEmptyLines]' started.
+Test Case '-[WandKitTests.LineReaderTests testPipelinedUnicodeAndEmptyLines]' passed (0.000 seconds).
+Test Suite 'LineReaderTests' passed at 2026-11-10 22:52:40.723.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.125 (0.126) seconds
+Test Suite 'OCRTargetTests' started at 2026-11-10 22:52:40.723.
+Test Case '-[WandKitTests.OCRTargetTests testDuplicateAndSubstringAmbiguityRefuseInput]' started.
+Test Case '-[WandKitTests.OCRTargetTests testDuplicateAndSubstringAmbiguityRefuseInput]' passed (0.000 seconds).
+Test Case '-[WandKitTests.OCRTargetTests testExactWinsOverSubstring]' started.
+Test Case '-[WandKitTests.OCRTargetTests testExactWinsOverSubstring]' passed (0.000 seconds).
+Test Case '-[WandKitTests.OCRTargetTests testMissingTargetDoesNotSelectAnotherLabel]' started.
+Test Case '-[WandKitTests.OCRTargetTests testMissingTargetDoesNotSelectAnotherLabel]' passed (0.000 seconds).
+Test Case '-[WandKitTests.OCRTargetTests testUncertainAndUnsafeGeometryRefuseInput]' started.
+Test Case '-[WandKitTests.OCRTargetTests testUncertainAndUnsafeGeometryRefuseInput]' passed (0.000 seconds).
+Test Suite 'OCRTargetTests' passed at 2026-11-10 22:52:40.724.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'OutputTailTests' started at 2026-11-10 22:52:40.724.
+Test Case '-[WandKitTests.OutputTailTests testDeterministicChunkBoundariesMatchReferenceWithoutUnboundedRetention]' started.
+Test Case '-[WandKitTests.OutputTailTests testDeterministicChunkBoundariesMatchReferenceWithoutUnboundedRetention]' passed (0.050 seconds).
+Test Case '-[WandKitTests.OutputTailTests testEmptyExactLimitAndZeroOrNegativeLimits]' started.
+Test Case '-[WandKitTests.OutputTailTests testEmptyExactLimitAndZeroOrNegativeLimits]' passed (0.000 seconds).
+Test Case '-[WandKitTests.OutputTailTests testPartialFillWrapAndLargeReplacementKeepExactTail]' started.
+Test Case '-[WandKitTests.OutputTailTests testPartialFillWrapAndLargeReplacementKeepExactTail]' passed (0.000 seconds).
+Test Case '-[WandKitTests.OutputTailTests testReturnedDataDoesNotMutateAndUTF8TailMatchesExistingDecoding]' started.
+Test Case '-[WandKitTests.OutputTailTests testReturnedDataDoesNotMutateAndUTF8TailMatchesExistingDecoding]' passed (0.000 seconds).
+Test Suite 'OutputTailTests' passed at 2026-11-10 22:52:40.775.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.050 (0.051) seconds
+Test Suite 'PhaseProfileTests' started at 2026-11-10 22:52:40.775.
+Test Case '-[WandKitTests.PhaseProfileTests testNestedTimesPartitionInsteadOfDoubleCounting]' started.
+Test Case '-[WandKitTests.PhaseProfileTests testNestedTimesPartitionInsteadOfDoubleCounting]' passed (0.000 seconds).
+Test Case '-[WandKitTests.PhaseProfileTests testProfilePreflightsBatchAndRefusesRecursionAndLifecycle]' started.
+Test Case '-[WandKitTests.PhaseProfileTests testProfilePreflightsBatchAndRefusesRecursionAndLifecycle]' passed (0.000 seconds).
+Test Case '-[WandKitTests.PhaseProfileTests testThrowingAndRepeatedPhasesRemainBalanced]' started.
+Test Case '-[WandKitTests.PhaseProfileTests testThrowingAndRepeatedPhasesRemainBalanced]' passed (0.000 seconds).
+Test Suite 'PhaseProfileTests' passed at 2026-11-10 22:52:40.776.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'ProcessRunnerTests' started at 2026-11-10 22:52:40.776.
+Test Case '-[WandKitTests.ProcessRunnerTests testContinuouslyOverflowingChildStillHonorsDeadline]' started.
+Test Case '-[WandKitTests.ProcessRunnerTests testContinuouslyOverflowingChildStillHonorsDeadline]' passed (0.064 seconds).
+Test Case '-[WandKitTests.ProcessRunnerTests testDeadlineTerminatesAndReapsChild]' started.
+Test Case '-[WandKitTests.ProcessRunnerTests testDeadlineTerminatesAndReapsChild]' passed (0.069 seconds).
+Test Case '-[WandKitTests.ProcessRunnerTests testDrainsOutputLargerThanPipeCapacity]' started.
+Test Case '-[WandKitTests.ProcessRunnerTests testDrainsOutputLargerThanPipeCapacity]' passed (0.018 seconds).
+Test Case '-[WandKitTests.ProcessRunnerTests testExitedParentCannotLeaveAnEndlessOutputDrain]' started.
+Test Case '-[WandKitTests.ProcessRunnerTests testExitedParentCannotLeaveAnEndlessOutputDrain]' passed (0.388 seconds).
+Test Case '-[WandKitTests.ProcessRunnerTests testMissingExecutableFailsWithoutWaiting]' started.
+Test Case '-[WandKitTests.ProcessRunnerTests testMissingExecutableFailsWithoutWaiting]' passed (0.003 seconds).
+Test Case '-[WandKitTests.ProcessRunnerTests testRepeatedOverflowRetainsExactUnicodeTailAndExitStatus]' started.
+Test Case '-[WandKitTests.ProcessRunnerTests testRepeatedOverflowRetainsExactUnicodeTailAndExitStatus]' passed (0.060 seconds).
+Test Case '-[WandKitTests.ProcessRunnerTests testRetainsBoundedDiagnosticTailAndExitStatus]' started.
+Test Case '-[WandKitTests.ProcessRunnerTests testRetainsBoundedDiagnosticTailAndExitStatus]' passed (0.018 seconds).
+Test Case '-[WandKitTests.ProcessRunnerTests testZeroLimitStillDrainsAndReportsTruncation]' started.
+Test Case '-[WandKitTests.ProcessRunnerTests testZeroLimitStillDrainsAndReportsTruncation]' passed (0.023 seconds).
+Test Suite 'ProcessRunnerTests' passed at 2026-11-10 22:52:41.421.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.643 (0.645) seconds
+Test Suite 'ScreenshotOptionsTests' started at 2026-11-10 22:52:41.421.
+Test Case '-[WandKitTests.ScreenshotOptionsTests testInvalidArgumentsFailDuringBatchPreflight]' started.
+Test Case '-[WandKitTests.ScreenshotOptionsTests testInvalidArgumentsFailDuringBatchPreflight]' passed (0.001 seconds).
+Test Case '-[WandKitTests.ScreenshotOptionsTests testLegacyAndPreviewOptions]' started.
+Test Case '-[WandKitTests.ScreenshotOptionsTests testLegacyAndPreviewOptions]' passed (0.000 seconds).
+Test Suite 'ScreenshotOptionsTests' passed at 2026-11-10 22:52:41.422.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'SnapshotTests' started at 2026-11-10 22:52:41.422.
+Test Case '-[WandKitTests.SnapshotTests testCenterCoordinates]' started.
+Test Case '-[WandKitTests.SnapshotTests testCenterCoordinates]' passed (0.001 seconds).
+Test Case '-[WandKitTests.SnapshotTests testCompactLineFormat]' started.
+Test Case '-[WandKitTests.SnapshotTests testCompactLineFormat]' passed (0.000 seconds).
+Test Case '-[WandKitTests.SnapshotTests testDiffDetectsValueChange]' started.
+Test Case '-[WandKitTests.SnapshotTests testDiffDetectsValueChange]' passed (0.000 seconds).
+Test Case '-[WandKitTests.SnapshotTests testDiffKeepsDuplicateControlsAndChangedGeometry]' started.
+Test Case '-[WandKitTests.SnapshotTests testDiffKeepsDuplicateControlsAndChangedGeometry]' passed (0.000 seconds).
+Test Case '-[WandKitTests.SnapshotTests testDisabledFlag]' started.
+Test Case '-[WandKitTests.SnapshotTests testDisabledFlag]' passed (0.000 seconds).
+Test Case '-[WandKitTests.SnapshotTests testEmptyAndMissingRefsNeverFallBackToLabels]' started.
+Test Case '-[WandKitTests.SnapshotTests testEmptyAndMissingRefsNeverFallBackToLabels]' passed (0.000 seconds).
+Test Case '-[WandKitTests.SnapshotTests testFind]' started.
+Test Case '-[WandKitTests.SnapshotTests testFind]' passed (0.000 seconds).
+Test Case '-[WandKitTests.SnapshotTests testInputRefusesAmbiguityAndUnsafeCenters]' started.
+Test Case '-[WandKitTests.SnapshotTests testInputRefusesAmbiguityAndUnsafeCenters]' passed (0.001 seconds).
+Test Case '-[WandKitTests.SnapshotTests testInterestingFilterDropsEmptyContainers]' started.
+Test Case '-[WandKitTests.SnapshotTests testInterestingFilterDropsEmptyContainers]' passed (0.000 seconds).
+Test Case '-[WandKitTests.SnapshotTests testInvalidGeometryDoesNotCrashFormatting]' started.
+Test Case '-[WandKitTests.SnapshotTests testInvalidGeometryDoesNotCrashFormatting]' passed (0.000 seconds).
+Test Case '-[WandKitTests.SnapshotTests testRefsAreStableAndAddressable]' started.
+Test Case '-[WandKitTests.SnapshotTests testRefsAreStableAndAddressable]' passed (0.000 seconds).
+Test Case '-[WandKitTests.SnapshotTests testResolveById]' started.
+Test Case '-[WandKitTests.SnapshotTests testResolveById]' passed (0.000 seconds).
+Test Case '-[WandKitTests.SnapshotTests testResolveByLabelCaseInsensitive]' started.
+Test Case '-[WandKitTests.SnapshotTests testResolveByLabelCaseInsensitive]' passed (0.000 seconds).
+Test Case '-[WandKitTests.SnapshotTests testResolvePrefersOnScreen]' started.
+Test Case '-[WandKitTests.SnapshotTests testResolvePrefersOnScreen]' passed (0.000 seconds).
+Test Case '-[WandKitTests.SnapshotTests testViewportFiltering]' started.
+Test Case '-[WandKitTests.SnapshotTests testViewportFiltering]' passed (0.000 seconds).
+Test Suite 'SnapshotTests' passed at 2026-11-10 22:52:41.428.
+	 Executed 15 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+Test Suite 'WorkerProcessTests' started at 2026-11-10 22:52:41.428.
+Test Case '-[WandKitTests.WorkerProcessTests testCancellationSeparatesQueuedAndDispatchedWork]' started.
+Test Case '-[WandKitTests.WorkerProcessTests testCancellationSeparatesQueuedAndDispatchedWork]' passed (0.000 seconds).
+Test Case '-[WandKitTests.WorkerProcessTests testCancellationWakesWaitingReader]' started.
+Test Case '-[WandKitTests.WorkerProcessTests testCancellationWakesWaitingReader]' passed (0.103 seconds).
+Test Case '-[WandKitTests.WorkerProcessTests testClosedWorkerFailsWithoutReplay]' started.
+Test Case '-[WandKitTests.WorkerProcessTests testClosedWorkerFailsWithoutReplay]' passed (0.003 seconds).
+Test Case '-[WandKitTests.WorkerProcessTests testPersistentWorkerPreservesLargeUnicodeReplies]' started.
+Test Case '-[WandKitTests.WorkerProcessTests testPersistentWorkerPreservesLargeUnicodeReplies]' passed (0.026 seconds).
+Test Case '-[WandKitTests.WorkerProcessTests testStallIsBoundedAndChildDoesNotSurvive]' started.
+Test Case '-[WandKitTests.WorkerProcessTests testStallIsBoundedAndChildDoesNotSurvive]' passed (0.103 seconds).
+Test Suite 'WorkerProcessTests' passed at 2026-11-10 22:52:41.663.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.235 (0.236) seconds
+Test Suite 'WandKitTests.xctest' passed at 2026-11-10 22:52:41.663.
+	 Executed 66 tests, with 0 failures (0 unexpected) in 1.077 (1.084) seconds
+Test Suite 'All tests' passed at 2026-11-10 22:52:41.663.
+	 Executed 66 tests, with 0 failures (0 unexpected) in 1.077 (1.086) seconds
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.

@@ -1,0 +1,10 @@
+PASS: runtime/device selection excludes device-specific foldable runtimes
+22:54:16 /bin/echo ok
+22:54:16 /bin/sh -c 'sleep 30 & echo $$ $!; wait'
+Process diagnostics unavailable: Command 'ps' timed out after 5 seconds
+PASS: CI timeout stops the entire owned subprocess group
+PASS: denied group signals require bounded proof that no live member remains
+PASS: setup and diagnostics failure still shut down/delete the owned simulator
+22:54:17 owned-command
+Owned process cleanup failed: still live; still live
+PASS: cleanup failure preserves the original timeout and attempts both bounded waits

@@ -144,11 +144,12 @@ enum MCP {
                      return ["rotate", numStr(a, "x") ?? "nan", numStr(a, "y") ?? "nan", numStr(a, "radians") ?? "0"]
                  },
             Tool(name: "screenshot",
-                 description: "Save a full PNG. Optional previewMaxEdge (1–4096) adds a smaller PNG and pixel-to-point mapping; crop is 'x y width height' in source pixels and requires preview. Default path ~/.wand/last.png.",
-                 schema: obj(["path": pStr, "previewMaxEdge": pNum, "crop": pStr])) { a in
+                 description: "Save a fresh full PNG. previewMaxEdge (1–4096) adds a preview and point mapping; crop is 'x y width height' in source pixels and requires previewMaxEdge. since='none' returns a reusable unchanged-detection token. image=true attaches the PNG (default 640px); omit image for paths only.",
+                 schema: obj(["path": pStr, "previewMaxEdge": pNum, "crop": pStr, "since": pStr, "image": ["type": "boolean"]])) { a in
                      var command = str(a, "path").map { ["screenshot", $0] } ?? ["screenshot"]
                      if let edge = numStr(a, "previewMaxEdge") { command += ["--preview", edge] }
                      if let crop = str(a, "crop") { command += ["--crop"] + crop.split(whereSeparator: { $0.isWhitespace }).map(String.init) }
+                     if let since = str(a, "since") { command += ["--since", since] }
                      return command
                  },
             Tool(name: "assert",
@@ -173,8 +174,8 @@ enum MCP {
 
     static func run(compact: Bool = false, defaultUDID: String? = nil) {
         let runTool = Tool(name: "run",
-            description: "Run ordered Wand commands on an explicit simulator. Coordinates are points. Stops at first error; inspect before retrying. summary=true returns count and final result or failed step; end with ui diff/assert/screenshot to verify. See wand help or skill.",
-            schema: obj(["udid": pStr, "summary": ["type": "boolean"], "commands": ["type": "array", "minItems": 1, "maxItems": 64,
+            description: "Run ordered Wand commands. Coordinates are points; stops on first error. summary=true keeps the final result/error. image=true attaches a final screenshot (default 640px). End with ui diff/assert/screenshot to verify. See wand help or skill.",
+            schema: obj(["udid": pStr, "summary": ["type": "boolean"], "image": ["type": "boolean"], "commands": ["type": "array", "minItems": 1, "maxItems": 64,
                 "items": ["type": "array", "minItems": 1, "items": pStr]]], required: ["commands"])) { args in
                 guard let commands = args["commands"] as? [[String]],
                       let data = try? JSONSerialization.data(withJSONObject: commands) else { return ["batch", "null"] }
@@ -270,14 +271,33 @@ enum MCP {
             }
         }
         if invalid { return output(false, "invalid or missing tool arguments") }
-        let command = tool.toArgv(args)
+        var command = tool.toArgv(args)
         do { try CommandValidation.validate(command) }
         catch { return output(false, error.localizedDescription) }
         if cancellation.isCancelled { return output(false, "cancelled before dispatch") }
         guard let udid = Simctl.resolveUDID(str(args, "udid") ?? defaultUDID) else {
             return output(false, "no unique simulator; pass udid or set WAND_UDID")
         }
+        let imageRequest: MCPImageRequest?
+        do {
+            if args["image"] as? Bool == true {
+                guard name == "run" || name == "screenshot" else { return output(false, "image is supported by run/screenshot only") }
+                let request = try MCPImageRequest(command: command,
+                    defaultPath: "\(Net.socketDir())/mcp-\(ProcessInfo.processInfo.processIdentifier)-\(udid).png")
+                imageRequest = request
+                command = request.command
+            } else { imageRequest = nil }
+        } catch { return output(false, error.localizedDescription) }
         let (ok, text) = Client.send(udid, command, cancellation: cancellation)
+        if ok, let imageRequest, !cancellation.isCancelled {
+            do {
+                if let image = try imageRequest.attachment(reply: text) {
+                    return ["content": [["type": "text", "text": text], image], "isError": false]
+                }
+            } catch {
+                return output(false, text + "\nCommands completed; image delivery failed: \(error.localizedDescription). Request another screenshot; do not replay actions.")
+            }
+        }
         return output(ok, text)
     }
 

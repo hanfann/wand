@@ -5,6 +5,13 @@ All notable changes to Wand are documented here. Format roughly follows
 
 ## [Unreleased]
 
+- Add caller-owned screenshot tokens: capture fresh every time, skip preview and
+  repeated image delivery only when exact PNG bytes and presentation match.
+- Attach optional final screenshots directly to compact/full MCP responses with
+  bounded PNG reads, explicit coordinate mapping and no input replay on failure.
+- Preserve original CI timeouts when cleanup fails; tolerate denied group signals
+  only after bounded verification that no live group member remains.
+
 - Make OCR optional in the shared agent workflow; use screenshots directly for
   custom/canvas/pixel UI when accessibility is incomplete. Add confidence-aware
   offline evaluation with a single-timeout stop and separate readability gates.

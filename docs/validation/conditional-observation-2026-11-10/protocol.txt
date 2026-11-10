@@ -1,0 +1,11 @@
+PASS: fragmented large UTF-8 response is exact
+PASS: unterminated reply fails without replay
+PASS: invalid MCP calls send no input; numeric values and durations are preserved
+PASS: coalesced persistent MCP requests retain every response
+PASS: CLI summary and stdin preserve commands; invalid options/steps send no input
+PASS: compact MCP summary is optional; invalid batches are rejected before dispatch
+PASS: summary preserves exact failure text and never replays a lost reply
+PASS: preview options preserve path/crop; invalid MCP preview arguments send no input
+PASS: profile accepts argv/stdin, preflights all input and never replays a lost reply
+PASS: screenshot tokens route exactly; malformed tokens and batch steps send no input
+PASS: inline MCP PNG is exact; unchanged omits image; validation/failure never replays input
