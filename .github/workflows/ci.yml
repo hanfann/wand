@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: macos-15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -26,18 +27,26 @@ jobs:
       - name: Unit tests
         run: swift test
 
+      - name: Client and MCP protocol regressions (no simulator)
+        run: |
+          bash examples/dtuhid-contract.sh
+          bash examples/display-contract.sh
+          python3 examples/transport-smoke.py .build/release/wand
+          python3 examples/protocol-regressions.py .build/release/wand
+          python3 examples/lifecycle-regressions.py .build/release/wand
+
       - name: Smoke — help + layout
         run: |
           ./.build/release/wand help
           ./.build/release/wand layout
 
-      # Best-effort live smoke: boot a simulator and connect. Non-fatal because
-      # CI simulators occasionally fail to expose the accessibility bridge.
-      - name: Live smoke (boot + info)
-        continue-on-error: true
-        run: |
-          UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin);print([v['udid'] for k,vs in d['devices'].items() for v in vs if 'iPhone' in v['name']][0])")
-          xcrun simctl boot "$UDID"
-          xcrun simctl bootstatus "$UDID" -b
-          ./.build/release/wand --udid "$UDID" info
-          ./.build/release/wand --udid "$UDID" ui | head -5
+      - name: Required live input outcomes (owned throwaway)
+        run: python3 examples/native/ci.py
+
+      - name: Preserve live evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-input-evidence
+          path: live-evidence/
+          retention-days: 7

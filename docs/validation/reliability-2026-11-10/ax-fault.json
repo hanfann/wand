@@ -1,0 +1,37 @@
+[
+  {
+    "command": [
+      "ui"
+    ],
+    "seconds": 5.013,
+    "returncode": 1,
+    "output": "error: Accessibility worker timed out, disconnected or was cancelled; operation may have applied; inspect before retrying. Coordinate input and stop remain available"
+  },
+  {
+    "command": [
+      "tap",
+      "80",
+      "100"
+    ],
+    "seconds": 0.427,
+    "returncode": 0,
+    "output": "tapped @80,100"
+  },
+  {
+    "command": [
+      "screenshot",
+      "/tmp/wand-reliability/ax-stall-recovery.png"
+    ],
+    "seconds": 0.105,
+    "returncode": 0,
+    "output": "/tmp/wand-reliability/ax-stall-recovery.png"
+  },
+  {
+    "command": [
+      "stop"
+    ],
+    "seconds": 0.015,
+    "returncode": 0,
+    "output": "stopped 48B1CAAD-E31C-4E3D-BF36-2F8665006E89"
+  }
+]

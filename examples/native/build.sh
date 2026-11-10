@@ -6,6 +6,7 @@ set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
 APP="WandShowcaseNative"
 BUNDLE="com.wand.showcase.native"
+UDID="${WAND_UDID:?Set WAND_UDID to a disposable iOS simulator}"
 OUT="$DIR/build/$APP.app"
 SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
 
@@ -37,15 +38,20 @@ cat > "$OUT/Info.plist" <<PLIST
   <key>LSRequiresIPhoneOS</key><true/>
   <key>MinimumOSVersion</key><string>17.0</string>
   <key>DTPlatformName</key><string>iphonesimulator</string>
-  <key>UIDeviceFamily</key><array><integer>1</integer></array>
+  <key>UIDeviceFamily</key><array><integer>1</integer><integer>2</integer></array>
   <key>UILaunchScreen</key><dict/>
   <key>UISupportedInterfaceOrientations</key>
-  <array><string>UIInterfaceOrientationPortrait</string></array>
+  <array><string>UIInterfaceOrientationPortrait</string><string>UIInterfaceOrientationLandscapeLeft</string><string>UIInterfaceOrientationLandscapeRight</string><string>UIInterfaceOrientationPortraitUpsideDown</string></array>
 </dict>
 </plist>
 PLIST
 
-echo "Installing on booted simulator..."
-xcrun simctl install booted "$OUT"
-xcrun simctl launch booted "$BUNDLE"
+if [[ "${WAND_BUILD_ONLY:-0}" == "1" ]]; then
+  echo "Built: $OUT"
+  exit 0
+fi
+
+echo "Installing on selected simulator..."
+xcrun simctl install "$UDID" "$OUT"
+xcrun simctl launch "$UDID" "$BUNDLE"
 echo "Done: $OUT"

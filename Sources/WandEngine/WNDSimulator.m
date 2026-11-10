@@ -3,6 +3,9 @@
 #import "WNDIndigo.h"
 #import "WNDPrivateAPI.h"
 #import "WNDAccessibility.h"
+#import "WNDDTUHID.h"
+#import "WNDDisplayInfo.h"
+#import "WNDDisplayGeometry.h"
 
 #import <AppKit/AppKit.h>
 #import <CoreImage/CoreImage.h>
@@ -59,8 +62,15 @@ static NSString *WNDDeveloperDir(void) {
   return trimmed.length ? trimmed : @"/Applications/Xcode.app/Contents/Developer";
 }
 
+static BOOL WNDUsesDTUHID(void) {
+  NSString *info = [[WNDDeveloperDir() stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"Info.plist"];
+  return [[NSDictionary dictionaryWithContentsOfFile:info][@"CFBundleShortVersionString"] integerValue] >= 27;
+}
+
 @interface WNDSimulator () {
   id<WNDSimDevice> _device;
+  WNDDTUHID *_modernHID;
+  WNDDisplayInfo *_displayInfo;
   id<WNDLegacyHIDClient> _hidClient;
   dispatch_queue_t _hidQueue;
   dispatch_queue_t _axQueue;
@@ -70,7 +80,6 @@ static NSString *WNDDeveloperDir(void) {
   CGSize _pixelSize;
   BOOL _isWatch;
   NSString *_lastSendError;
-  NSString * _Nullable (^_guestSender)(NSData *);
 
 }
 @end
@@ -177,9 +186,12 @@ static NSString *WNDDeveloperDir(void) {
   _pixelSize = px;
   _screenScale = scale;
   _screenPointSize = CGSizeMake(px.width / scale, px.height / scale);
+  _displayOrientation = 1;
+  if (!_isWatch) _displayInfo = [[WNDDisplayInfo alloc] initWithDevice:device];
 
+  if (WNDUsesDTUHID()) _modernHID = [[WNDDTUHID alloc] initWithDevice:device];
   Class hidCls = objc_lookUpClass("SimulatorKit.SimDeviceLegacyHIDClient");
-  if (hidCls) {
+  if (!_modernHID && hidCls) {
     NSError *e = nil;
     _hidClient = [(id<WNDLegacyHIDClient>)[hidCls alloc] initWithDevice:device error:&e];
   }
@@ -193,9 +205,21 @@ static NSString *WNDDeveloperDir(void) {
 
 #pragma mark - Message construction
 
+- (BOOL)refreshDisplayGeometryWithError:(NSError **)error {
+  if (!_displayInfo) return YES; // Watch has a fixed, upright panel.
+  NSDictionary *info = [_displayInfo readWithError:error];
+  if (!info) return NO;
+  _pixelSize = CGSizeMake([info[@"width"] doubleValue], [info[@"height"] doubleValue]);
+  _screenScale = [info[@"scale"] doubleValue];
+  _displayOrientation = [info[@"exif"] integerValue];
+  _screenPointSize = WNDOrientedSize(CGSizeMake(_pixelSize.width / _screenScale, _pixelSize.height / _screenScale), _displayOrientation);
+  return YES;
+}
+
 - (CGPoint)ratioForPoint:(CGPoint)pt {
-  return CGPointMake((pt.x * _screenScale) / _pixelSize.width,
-                     (pt.y * _screenScale) / _pixelSize.height);
+  CGSize panel = CGSizeMake(_pixelSize.width / _screenScale, _pixelSize.height / _screenScale);
+  CGPoint raw = WNDPanelPoint(pt, panel, _displayOrientation);
+  return CGPointMake(raw.x / panel.width, raw.y / panel.height);
 }
 
 // Keep Apple's complete message, including its runtime-dependent payload stride,
@@ -217,7 +241,7 @@ static NSString *WNDDeveloperDir(void) {
   return message;
 }
 
-// The guest bridge acknowledges each Mach send. Keep the legacy backend for
+// The legacy bridge acknowledges each Mach send. Keep this backend for
 // older Xcodes; completion errors and timeouts must both fail the command.
 - (BOOL)sendMessage:(WNDIndigoMessage *)message size:(size_t)size wait:(BOOL)wait {
   if (!message || size == 0) {
@@ -244,22 +268,9 @@ static NSString *WNDDeveloperDir(void) {
   return YES;
 }
 
-- (void)setGuestTouchSender:(NSString * _Nullable (^)(NSData *))sender {
-  _guestSender = [sender copy];
-}
-
-- (BOOL)sendGuestTouches:(CGPoint *)points count:(uint32_t)count direction:(uint32_t)direction {
-  uint32_t header[] = {direction, count};
-  NSMutableData *packet = [NSMutableData dataWithBytes:header length:sizeof(header)];
-  [packet appendBytes:points length:count * sizeof(CGPoint)];
-  NSString *failure = _guestSender(packet);
-  if (failure) _lastSendError = failure;
-  return failure == nil;
-}
-
 - (BOOL)touchAtPoint:(CGPoint)pt direction:(int)direction wait:(BOOL)wait {
   CGPoint r = [self ratioForPoint:pt];
-  if (_guestSender) return [self sendGuestTouches:&r count:1 direction:direction];
+  if (_modernHID) { _lastSendError = [_modernHID touch:r second:NULL phase:direction]; return !_lastSendError; }
   size_t sz = 0;
   WNDIndigoMessage *m = [self buildTouchMessageAtRatio:r direction:direction sizeOut:&sz];
   BOOL ok = [self sendMessage:m size:sz wait:wait];
@@ -270,9 +281,9 @@ static NSString *WNDDeveloperDir(void) {
 // Let the native builder author all finger and summary payloads. Their stride
 // changed in Xcode 27, so patching hard-coded finger offsets corrupts the packet.
 - (BOOL)twoFingerTouchAtPoint1:(CGPoint)p1 point2:(CGPoint)p2 direction:(int)direction wait:(BOOL)wait {
-  if (!_mouseFn) return NO;
   CGPoint r1 = [self ratioForPoint:p1], r2 = [self ratioForPoint:p2];
-  if (_guestSender) { CGPoint points[] = {r1, r2}; return [self sendGuestTouches:points count:2 direction:direction]; }
+  if (_modernHID) { _lastSendError = [_modernHID touch:r1 second:&r2 phase:direction]; return !_lastSendError; }
+  if (!_mouseFn) return NO;
   WNDIndigoMessage *message = _mouseFn(&r1, &r2, 0x32, direction, 0, 1.0, 1.0);
   size_t size = WNDMessageSize(message);
   if (size && message->innerSize == 0x90) {
@@ -291,7 +302,7 @@ static NSString *WNDDeveloperDir(void) {
 #pragma mark - Gestures
 
 - (BOOL)tapAtX:(double)x y:(double)y error:(NSError **)error {
-  if (!_hidClient && !_guestSender) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
+  if (!_modernHID && !_hidClient) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
   CGPoint p = CGPointMake(x, y);
   if (![self touchAtPoint:p direction:WND_BUTTON_TYPE_DOWN wait:YES]) {
     if (error) *error = WNDMakeError(13, _lastSendError); return NO;
@@ -304,7 +315,7 @@ static NSString *WNDDeveloperDir(void) {
 }
 
 - (BOOL)longPressAtX:(double)x y:(double)y duration:(double)seconds error:(NSError **)error {
-  if (!_hidClient && !_guestSender) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
+  if (!_modernHID && !_hidClient) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
   CGPoint p = CGPointMake(x, y);
   if (![self touchAtPoint:p direction:WND_BUTTON_TYPE_DOWN wait:YES]) {
     if (error) *error = WNDMakeError(13, _lastSendError); return NO;
@@ -318,13 +329,13 @@ static NSString *WNDDeveloperDir(void) {
 
 - (BOOL)swipeFromX:(double)x1 y:(double)y1 toX:(double)x2 y:(double)y2
           duration:(double)duration error:(NSError **)error {
-  if (!_hidClient && !_guestSender) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
+  if (!_modernHID && !_hidClient) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
   return [self dragFromX:x1 y:y1 toX:x2 y:y2 holdDuration:0 moveDuration:duration error:error];
 }
 
 - (BOOL)dragFromX:(double)x1 y:(double)y1 toX:(double)x2 y:(double)y2
       holdDuration:(double)holdDuration moveDuration:(double)moveDuration error:(NSError **)error {
-  if (!_hidClient && !_guestSender) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
+  if (!_modernHID && !_hidClient) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
 
   CGPoint start = CGPointMake(x1, y1);
   CGPoint end = CGPointMake(x2, y2);
@@ -378,12 +389,12 @@ static NSString *WNDDeveloperDir(void) {
 
   CGPoint p1, p2;
   positions(0.0, &p1, &p2);
-  [self twoFingerTouchAtPoint1:p1 point2:p2 direction:WND_BUTTON_TYPE_DOWN wait:YES];
+  if (![self twoFingerTouchAtPoint1:p1 point2:p2 direction:WND_BUTTON_TYPE_DOWN wait:YES]) return;
   usleep(20 * 1000);
   for (NSUInteger i = 1; i <= steps; i++) {
     double t = (double)i / (double)steps;
     positions(t, &p1, &p2);
-    [self twoFingerTouchAtPoint1:p1 point2:p2 direction:6 wait:NO];
+    if (![self twoFingerTouchAtPoint1:p1 point2:p2 direction:6 wait:NO]) return;
     usleep(perStep);
   }
   positions(1.0, &p1, &p2);
@@ -391,7 +402,7 @@ static NSString *WNDDeveloperDir(void) {
 }
 
 - (BOOL)pinchAtX:(double)x y:(double)y scale:(double)scale duration:(double)duration error:(NSError **)error {
-  if ((!_hidClient && !_guestSender) || !_mouseFn) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
+  if (!_modernHID && (!_hidClient || !_mouseFn)) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
   CGPoint center = CGPointMake(x, y);
   double base = MIN(_screenPointSize.width, _screenPointSize.height) / 4.0;
   double startGap = (scale >= 1.0) ? base : base * scale;
@@ -405,7 +416,7 @@ static NSString *WNDDeveloperDir(void) {
 }
 
 - (BOOL)rotateAtX:(double)x y:(double)y radians:(double)radians duration:(double)duration error:(NSError **)error {
-  if ((!_hidClient && !_guestSender) || !_mouseFn) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
+  if (!_modernHID && (!_hidClient || !_mouseFn)) { if (error) *error = WNDMakeError(10, @"HID client unavailable"); return NO; }
   CGPoint center = CGPointMake(x, y);
   double radius = MIN(_screenPointSize.width, _screenPointSize.height) / 5.0;
   [self twoFingerGestureDuration:duration positions:^(double t, CGPoint *p1, CGPoint *p2) {
@@ -421,12 +432,18 @@ static NSString *WNDDeveloperDir(void) {
 // `duration` so the guest sees a continuous rotation rather than one jump.
 - (BOOL)turnCrownBy:(double)delta steps:(NSUInteger)steps duration:(double)duration error:(NSError **)error {
   if (!_isWatch) { if (error) *error = WNDMakeError(13, @"Digital Crown is only available on watchOS simulators"); return NO; }
-  if (!_crownFn) { if (error) *error = WNDMakeError(12, @"Digital Crown HID unavailable (non-watchOS sim?)"); return NO; }
+  if (!_modernHID && !_crownFn) { if (error) *error = WNDMakeError(12, @"Digital Crown HID unavailable (non-watchOS sim?)"); return NO; }
   if (steps < 1) steps = 1;
   double per = delta / (double)steps;
   double dur = duration > 0 ? duration : 0.25;
   useconds_t perStep = (useconds_t)((dur / steps) * 1e6);
   for (NSUInteger i = 0; i < steps; i++) {
+    if (_modernHID) {
+      _lastSendError = [_modernHID crown:per phase:i == 0 ? 1 : 2];
+      if (_lastSendError) { if (error) *error = WNDMakeError(13, _lastSendError); return NO; }
+      usleep(perStep);
+      continue;
+    }
     WNDIndigoMessage *m = _crownFn(per);
     if (!m) continue;
     size_t size = WNDMessageSize(m);
@@ -435,8 +452,15 @@ static NSString *WNDDeveloperDir(void) {
     if (!ok) { if (error) *error = WNDMakeError(13, _lastSendError); return NO; }
     usleep(perStep);
   }
+  if (_modernHID) {
+    _lastSendError = [_modernHID crown:0 phase:4];
+    if (_lastSendError) { if (error) *error = WNDMakeError(13, _lastSendError); return NO; }
+  }
   return YES;
 }
+
+- (void)closeInput {
+  [_displayInfo close]; [_modernHID close]; }
 
 - (BOOL)isBooted {
   @try { return [_device state] == 3; } @catch (__unused id e) { return NO; }
@@ -474,6 +498,17 @@ static BOOL WNDUsageForChar(unichar c, int *usage, BOOL *shift) {
     case ')': *usage = 0x27; *shift = YES; return YES;
     case '_': *usage = 0x2D; *shift = YES; return YES;
     case '+': *usage = 0x2E; *shift = YES; return YES;
+    case '"': *usage = 0x34; *shift = YES; return YES;
+    case '`': *usage = 0x35; return YES;
+    case '~': *usage = 0x35; *shift = YES; return YES;
+    case '[': *usage = 0x2F; return YES;
+    case '{': *usage = 0x2F; *shift = YES; return YES;
+    case ']': *usage = 0x30; return YES;
+    case '}': *usage = 0x30; *shift = YES; return YES;
+    case '\\': *usage = 0x31; return YES;
+    case '|': *usage = 0x31; *shift = YES; return YES;
+    case '<': *usage = 0x36; *shift = YES; return YES;
+    case '>': *usage = 0x37; *shift = YES; return YES;
     case '?': *usage = 0x38; *shift = YES; return YES;
     case ':': *usage = 0x33; *shift = YES; return YES;
     default: return NO;
@@ -481,6 +516,7 @@ static BOOL WNDUsageForChar(unichar c, int *usage, BOOL *shift) {
 }
 
 - (BOOL)sendKeyUsage:(int)usage down:(BOOL)down {
+  if (_modernHID) { _lastSendError = [_modernHID key:usage down:down]; return !_lastSendError; }
   if (!_keyboardFn) return NO;
   WNDIndigoMessage *m = _keyboardFn(usage, down ? WND_BUTTON_TYPE_DOWN : WND_BUTTON_TYPE_UP);
   if (!m) return NO;
@@ -491,24 +527,32 @@ static BOOL WNDUsageForChar(unichar c, int *usage, BOOL *shift) {
 }
 
 - (BOOL)typeText:(NSString *)text error:(NSError **)error {
-  if (!_keyboardFn) { if (error) *error = WNDMakeError(11, @"Keyboard HID unavailable"); return NO; }
+  if (!_modernHID && !_keyboardFn) { if (error) *error = WNDMakeError(11, @"Keyboard HID unavailable"); return NO; }
+  // Validate the whole string before sending any key; never silently drop text.
+  for (NSUInteger i = 0; i < text.length; i++) {
+    int usage; BOOL shift;
+    if (!WNDUsageForChar([text characterAtIndex:i], &usage, &shift)) {
+      if (error) *error = WNDMakeError(14, @"HID typing supports US ASCII; use setvalue for Unicode");
+      return NO;
+    }
+  }
   for (NSUInteger i = 0; i < text.length; i++) {
     unichar c = [text characterAtIndex:i];
     int usage; BOOL shift;
     if (!WNDUsageForChar(c, &usage, &shift)) continue;
-    if (shift) { [self sendKeyUsage:0xE1 down:YES]; usleep(6 * 1000); }
-    [self sendKeyUsage:usage down:YES];
+    if (shift) { if (![self sendKeyUsage:0xE1 down:YES]) break; usleep(6 * 1000); }
+    if (![self sendKeyUsage:usage down:YES]) break;
     usleep(9 * 1000);
-    [self sendKeyUsage:usage down:NO];
+    if (![self sendKeyUsage:usage down:NO]) break;
     usleep(5 * 1000);
-    if (shift) { [self sendKeyUsage:0xE1 down:NO]; usleep(6 * 1000); }
+    if (shift) { if (![self sendKeyUsage:0xE1 down:NO]) break; usleep(6 * 1000); }
   }
   if (_lastSendError) { if (error) *error = WNDMakeError(13, _lastSendError); return NO; }
   return YES;
 }
 
 - (BOOL)pressKeyUsage:(int)usage error:(NSError **)error {
-  if (!_keyboardFn) { if (error) *error = WNDMakeError(11, @"Keyboard HID unavailable"); return NO; }
+  if (!_modernHID && !_keyboardFn) { if (error) *error = WNDMakeError(11, @"Keyboard HID unavailable"); return NO; }
   if (![self sendKeyUsage:usage down:YES]) { if (error) *error = WNDMakeError(13, _lastSendError); return NO; }
   usleep(9 * 1000);
   if (![self sendKeyUsage:usage down:NO]) { if (error) *error = WNDMakeError(13, _lastSendError); return NO; }
@@ -628,8 +672,7 @@ static BOOL WNDUsageForChar(unichar c, int *usage, BOOL *shift) {
   if (tr) [(id<WNDAXPTranslationObject>)tr setBridgeDelegateToken:token];
   NSString *eid = [ax accessibilityIdentifier];
   NSString *elabel = [ax accessibilityLabel];
-  if ((identifier && eid && [eid isEqualToString:identifier]) ||
-      (label && elabel && [elabel isEqualToString:label])) {
+  if (identifier ? [eid isEqualToString:identifier] : (label && [elabel isEqualToString:label])) {
     return element;
   }
   for (id child in [ax accessibilityChildren]) {
@@ -665,6 +708,7 @@ static BOOL WNDUsageForChar(unichar c, int *usage, BOOL *shift) {
   if (!surface) return NULL;
   IOSurfaceIncrementUseCount(surface);
   CIImage *ci = [CIImage imageWithIOSurface:surface];
+  if (ci && _displayOrientation != 1) ci = [ci imageByApplyingOrientation:(int)_displayOrientation];
   CGImageRef cg = NULL;
   if (ci) {
     static CIContext *ctx;
@@ -711,35 +755,6 @@ static BOOL WNDUsageForChar(unichar c, int *usage, BOOL *shift) {
   return ok;
 }
 
-- (nullable NSArray<NSDictionary<NSString *, id> *> *)recognizeTextWithError:(NSError **)error {
-  CGImageRef cg = [self copyScreenCGImage];
-  if (!cg) { if (error) *error = WNDMakeError(30, @"could not capture framebuffer"); return nil; }
-  VNImageRequestHandler *handler = [[VNImageRequestHandler alloc] initWithCGImage:cg options:@{}];
-  VNRecognizeTextRequest *req = [[VNRecognizeTextRequest alloc] init];
-  req.recognitionLevel = VNRequestTextRecognitionLevelAccurate;
-  req.usesLanguageCorrection = YES;
-  NSError *e = nil;
-  BOOL ran = [handler performRequests:@[req] error:&e];
-  CGImageRelease(cg);
-  if (!ran) { if (error) *error = e ?: WNDMakeError(32, @"OCR failed"); return nil; }
-
-  double W = _screenPointSize.width, H = _screenPointSize.height;
-  NSMutableArray *out = [NSMutableArray array];
-  for (VNRecognizedTextObservation *obs in req.results) {
-    VNRecognizedText *t = [[obs topCandidates:1] firstObject];
-    if (!t || t.string.length == 0) continue;
-    CGRect bb = obs.boundingBox; // normalized, bottom-left origin
-    double x = bb.origin.x * W;
-    double y = (1.0 - bb.origin.y - bb.size.height) * H; // flip to top-left
-    [out addObject:@{
-      @"text": t.string,
-      @"x": @(x), @"y": @(y),
-      @"w": @(bb.size.width * W), @"h": @(bb.size.height * H),
-      @"conf": @(t.confidence),
-    }];
-  }
-  return out;
-}
 
 - (void)serializeElement:(id)element token:(NSString *)token depth:(int)depth into:(NSMutableArray *)out {
   if (depth > 60 || out.count > 3000) return;
@@ -801,19 +816,22 @@ static BOOL WNDUsageForChar(unichar c, int *usage, BOOL *shift) {
 
 + (nullable NSString *)wireFormatError {
   if (getenv("WAND_FORCE_UNSUPPORTED")) return @"forced unsupported build (WAND_FORCE_UNSUPPORTED set) — test of the fail-loud guard.";
+  if (WNDUsesDTUHID()) return nil;
   NSString *layout = [self layoutDescription];
   if ([layout hasSuffix:@"(OK)"]) return nil;
   return [@"unsupported native SimulatorKit HID format: " stringByAppendingString:layout];
 }
 
 - (nullable NSString *)readinessError {
-  if (!_hidClient && !_guestSender) return @"HID client unavailable (SimDeviceLegacyHIDClient failed to init) — cannot inject input.";
+  if (_modernHID) return nil;
+  if (!_modernHID && !_hidClient) return @"HID client unavailable (SimDeviceLegacyHIDClient failed to init) — cannot inject input.";
   if (!_mouseFn)   return @"required symbol IndigoHIDMessageForMouseNSEvent not found in SimulatorKit — incompatible Xcode build.";
   if (!_keyboardFn) return @"required symbol IndigoHIDMessageForKeyboardArbitrary not found in SimulatorKit — incompatible Xcode build.";
   return nil;  // crown symbol is optional (watchOS-only; guarded at call site)
 }
 
-- (nullable NSString *)lastSendError { return _lastSendError; }
+- (NSString *)inputTransport { return _modernHID ? @"DTUHID" : @"Indigo"; }
+- (nullable NSString *)lastSendError { return _lastSendError ?: _modernHID.failure; }
 - (void)clearLastSendError { _lastSendError = nil; }
 
 @end

@@ -1,6 +1,6 @@
 #!/bin/bash
-# Wand installer. Builds a release binary, puts it on PATH, installs the Claude
-# Code skill, and registers the MCP server. Re-runnable.
+# Builds a release binary and installs the shared Claude/Codex skill. Re-runnable.
+# MCP registration is optional: wand setup --mcp.
 set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -16,8 +16,12 @@ echo "==> Installing to $PREFIX/wand"
 mkdir -p "$PREFIX"
 install "$BIN" "$PREFIX/wand"
 
-echo "==> Installing skill + registering MCP"
-"$PREFIX/wand" setup || true
+echo "==> Installing shared skill"
+SKILL_SHARE="$PREFIX/../share/wand/skills/wand"
+mkdir -p "$SKILL_SHARE"
+install -m 644 "$DIR/skills/wand/SKILL.md" "$SKILL_SHARE/SKILL.md"
+install -m 644 "$DIR/THIRD_PARTY_NOTICES" "$PREFIX/../share/wand/THIRD_PARTY_NOTICES"
+"$PREFIX/wand" setup
 
 case ":$PATH:" in
   *":$PREFIX:"*) : ;;

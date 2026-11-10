@@ -1,101 +1,82 @@
 ---
 name: wand
-description: Autonomously E2E-test apps in the Apple Simulator (iOS, iPadOS, watchOS) — read the screen (accessibility tree OR on-device OCR), tap/type/swipe/drag-drop/pinch/rotate, manage apps, and assert results. Use when asked to test, QA, drive, or reproduce a flow in an iOS, iPadOS, or watchOS simulator app (React Native, Expo, native SwiftUI, or any app). Token-efficient: reads structured text, not screenshots. Works even with NO accessibility setup via Vision OCR.
+description: Drive and test iOS, iPadOS, and watchOS simulators with Wand. Use for simulator automation, UI QA, touch gestures, and Digital Crown input.
 ---
 
-# Wand — iOS Simulator E2E for agents
+# Wand
 
-Wand drives a **booted iOS Simulator** with real HID touches and reads the
-screen two ways: the **accessibility tree** (precise, semantic) and **on-device
-Vision OCR** (works on any app, even with zero accessibility setup). A warm
-daemon keeps it fast (~60 ms snapshots). No third-party dependencies.
+Use the installed CLI through the normal command tool; `wand help` lists commands.
+`wand setup` updates this shared Claude/Codex skill from the repository/install.
+After a binary update, restart only your task's selected daemon (`stop`) to load it.
 
-## The loop
+## Observe, act, verify
 
-1. **Observe** — `wand ui`. One line per element:
-   `e5 Button "Tap me" #tapButton @102,171`
-   - `e5` ref · role · `"label"` · `#id` (RN `testID` / SwiftUI `accessibilityIdentifier`)
-     · `=value` · `@x,y` **tap-ready center**.
-   - If the tree is sparse (canvas/games/webviews, or an app with no testIDs),
-     use **`wand see`** — OCR of every visible text + tap coordinates.
-2. **Act** — by `ref`, `#id`, `"label"`, raw `x y`, or **visible text**:
-   - `wand tap "#tapButton"` · `wand tap e5` · `wand tap 102 171`
-   - `wand tapocr "Continue"` — taps visible text via OCR (no a11y needed)
-   - `wand tap "Continue"` — tries the tree, then **falls back to OCR**
-   - `wand typein "#email" "me@x.com"` · `wand setvalue "#email" "me@x.com"`
-     (setvalue writes any unicode/emoji directly; great for long/odd strings)
-3. **Verify** — `wand assert "#status" label=done` → `PASS`/`FAIL` (exit 0/1).
+- Choose with `wand devices`. Pass `--udid <ID>` on every command or set task-scoped
+  `WAND_UDID`; Wand refuses an ambiguous default. Follow the app's backup/account rules.
+- Read `info` (point size + scale) and `ui`. With a useful tree, prefer `find <query>`,
+  `ui diff` and `assert <selector> [exists|gone|value=…|label=…]` over full snapshots.
+- Watch AX often exposes only the app. Repeating `ui`/`find`/`wait` will not reveal
+  missing controls. AX runs in a persistent worker with a 5s deadline; a stuck
+  worker does not wedge coordinate input or stop. Try filtered `see "text"` once; use `screenshot <path>` if OCR
+  fails. Accurate Vision currently stalls on the tested Xcode 27.2 host; do not
+  repeatedly retry it. OCR deadlines
+  are 3s fast / 5s accurate; a stall leaves input usable.
+- `tap` accepts `eN`, `#id`, visible labels, or `x y`. Missing refs/IDs fail without
+  OCR. OCR taps require a unique, confident match; duplicate labels fail. Exact
+  fast matches are tried first; uncertain/missing text uses accurate fallback.
+  Accurate Vision model initialization can time out on macOS 27. Use screenshot
+  coordinates then; repeating the same failed query is not progress. Observe after navigation/layout changes
+  before reusing coordinates/refs; eN refs expire after input. Named targets refresh
+  geometry; asynchronous app changes can still require a fresh observation.
+- Screenshots and point coordinates follow the active interface orientation.
+  Unsupported or ambiguous display geometry fails before input.
+- Touches use **points**; screenshot positions use **pixels**. Divide screenshot
+  coordinates by the `info` scale before tapping. `ui`/`see` already report points.
+- `scroll down` uses touch; `drag 80 165 80 65` gives slower, precise scrolling.
+  `crown` sends native Digital Crown events on watchOS; verify the resulting
+  state. Touch scrolling is useful for navigation but is not a Crown test.
 
-After acting, `wand ui` again. Off-screen elements report scrolled positions —
-scroll first, then re-snapshot. To scroll, use **`wand scroll up|down`** (swipe-based;
-iOS · iPadOS · watchOS). On watchOS, **`wand crown up|down`** drives the Digital Crown.
+Batch only known steps whose next action does not depend on an unseen result:
 
-## Works without app changes (important for vibe-coded apps)
-
-You do **not** need the app to add `testID`s. Visible text is enough:
-- Native SwiftUI and RN `Text`/`Pressable`/`TextInput` already expose their text
-  as labels — tap them by `"label"`.
-- For anything else, `wand see` + `wand tapocr "<text>"` reads pixels via Apple
-  Vision (on-device, no network). This covers buttons/labels/fields in almost any
-  app. Only icon-only targets with no text/label are ambiguous — use coordinates.
-
-## Commands
-
-```
-ui [diff|full]       see              find <q>         screenshot [path]
-scrollto <sel>       assert <sel> [exists|gone|value=..|label=..]   wait <sel> [ms]
-tap <sel|x y>        tapocr <text>    longpress <sel|x y>
-typein <sel> <text>  type <text>      setvalue <sel> <text>
-clear <sel>          key <hidUsage>
-swipe <x1 y1 x2 y2>  drag <x1 y1 x2 y2 | fromSel toSel>   dragdrop <…>
-pinch <sel|x y> <scale>     rotate <sel|x y> <radians>
-scroll up|down [clicks]     # swipe-based scroll (iOS · iPadOS · watchOS)
-crown up|down [clicks]      # watchOS Digital Crown (raw: crown <delta> [steps])
-devices  boot <udid|name>  shutdown <udid|all>
-install <app>  launch <bundle>  terminate <bundle>  apps  open <url>
-logs [bundle] [seconds]   crashes [bundle]    # see why a step failed
-permission <grant|revoke|reset> <service> <bundle>   record <start [path]|stop>
-info  status  start  stop          (target a sim with --udid <udid>)
-```
-`<sel>` = `eN` · `#identifier` · `"label"`.
-
-- `ui` shows **on-screen** elements only (token-lean). Use `ui full` for the whole
-  tree (incl. off-screen), `ui diff` for just what changed.
-- To act on something below the fold: `wand scrollto "<sel>"` first, then tap.
-  When a label matches several elements, `ui`/`find` lists each with its own ref —
-  tap the exact `eN`.
-
-## Complex gestures
-
-Use `@x,y` from `ui`, or a selector directly:
-- `wand dragdrop "#card" "#trash"`   (drag-and-drop by element)
-- `wand pinch "#map" 2.0`            (zoom in; <1 zooms out)
-- `wand rotate "#photo" 1.57`        (≈90°)
-
-## A full flow
-
-```
-wand boot "iPhone 17 Pro"
-wand install ./MyApp.app && wand launch com.example.myapp
-wand wait "#welcome" 8000
-wand tap "Continue"            # by visible text — works without testIDs
-wand typein "#email" "a@b.co"
-wand assert "#error" gone
+```sh
+wand --udid <ID> batch '[["tap","40","80"],["ui","diff"]]'
+# Or pipe the same JSON into: wand --udid <ID> batch -
 ```
 
-## Tips
+Batches preserve settling and stop at the first error; earlier steps stay applied.
+Lost replies/ambiguous input are never replayed automatically. Inspect before
+retrying. Successful dispatch alone does not prove the expected app state changed.
 
-- First call boots the daemon + warms accessibility (a few seconds, once); then ~60 ms.
-- Prefer `ui`/`see`/`assert` over `screenshot` to save tokens.
-- **Prefer label/ref taps over raw `x y`.** `tap "<label>"` · `tapocr "<text>"` ·
-  `#id` · `eN` are robust; raw coordinates are the last resort, for targets with
-  no label (icon-only buttons).
-- **Coordinates are *points*, and only `ui`/`see` report them correctly.** The
-  `@x,y` from `ui`/`see` are simulator points. A `screenshot` is at native scale
-  (2×–3× on most devices), so any coordinate you eyeball off a screenshot is ~2×
-  too large and lands off-target — often off-screen entirely, where the tap
-  silently no-ops. Never read tap coordinates from a screenshot; take them from
-  `ui`/`see`.
-- React Native: a plain `View`'s `testID` only shows in the tree if the view is
-  `accessible={true}`; `Pressable`/`TextInput` are fine. When in doubt, tap by
-  visible text (OCR) instead.
+## Watch / cleanup
+
+Xcode 27 uses one persistent host DTUHID connection for touches, multitouch,
+keyboard and Crown; no guest helper is compiled or spawned. `info` reports the
+selected transport. An interrupted connection fails loudly: inspect the screen,
+then `stop` the selected daemon before retrying. Never replay ambiguous input.
+DeviceHub shows real actions: reuse one window and select devices in
+its sidebar. Keep the Mac unlocked for visible checks and app launches; a lock is
+not a reason to spawn windows or reset a watch.
+
+`boot` is headless; add `--show` only when a viewer is needed. Keep only needed sims running. `wand --udid <ID> stop` closes its daemon/HID connection,
+not the simulator. Shut down task-owned throwaways afterward; preserve unrelated
+processes and stateful QA accounts. Erase/delete/uninstall is not routine cleanup.
+Keep requested evidence, remove scratch captures. Watch input regression:
+`examples/watch/touch-smoke.swift`, explicit disposable watch, Settings root visible.
+iOS input regression: `examples/native/e2e.sh` on an explicit disposable
+`WAND_UDID` with the native fixture installed. Both suites check actual app
+outcomes. Compatibility evidence: `docs/validation/hid-closeout-2026-11-10.md`.
+Runtime/device coverage and current limits are recorded in
+`docs/validation/reliability-2026-11-10.md`.
+
+## Optional MCP
+
+CLI plus this skill avoids a tool catalog. `wand mcp --compact` exposes one `run`
+tool with `udid` and `commands` (same batch format). `wand setup --mcp` registers
+compact mode with Claude; `mcp` / `setup --full-mcp` retain legacy tools.
+Cancellation skips queued work and stops subsequent batch steps; earlier input
+may already have applied. Observe before resuming.
+
+`cleanup --dry-run` previews inactive diagnostics; `cleanup` applies retention.
+Startup also runs maintenance at most daily. It preserves active logs, locks,
+recordings and user screenshots. Startup has a 20s total deadline and kills only
+its own unready child. A timeout does not justify retrying an ambiguous gesture.

@@ -1,4 +1,4 @@
-.PHONY: build release install test showcase e2e e2e-watch clean stop
+.PHONY: build release install test protocol-test showcase e2e e2e-watch clean stop
 
 build:
 	swift build
@@ -8,6 +8,11 @@ release:
 
 test:
 	swift test
+
+# Simulator-free client/MCP protocol regression.
+protocol-test: build
+	python3 examples/transport-smoke.py .build/debug/wand
+	python3 examples/protocol-regressions.py .build/debug/wand
 
 install:
 	./install.sh

@@ -23,8 +23,37 @@ final class GestureState: ObservableObject {
 
 struct ContentView: View {
     @StateObject private var s = GestureState()
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
+        GeometryReader { geometry in
+            if horizontalSizeClass == .compact && geometry.size.width > geometry.size.height && geometry.size.height < 500 {
+                VStack {
+                    Text("landscape").accessibilityIdentifier("landscapeReady")
+                    Text(s.status).accessibilityIdentifier("status").accessibilityLabel(s.status)
+                    TapSection(s: s)
+                    TextSection(s: s)
+                }.padding(8)
+            } else { portraitContent }
+        }
+        // Keyboard avoidance must not replace the focused field's view hierarchy.
+        .ignoresSafeArea(.keyboard)
+        .onAppear {
+            let args = ProcessInfo.processInfo.arguments
+            let orientations: [String: UIInterfaceOrientationMask] = [
+                "--portrait": .portrait, "--upside-down": .portraitUpsideDown,
+                "--landscape": .landscapeRight, "--landscape-left": .landscapeLeft
+            ]
+            if let orientation = orientations.first(where: { args.contains($0.key) })?.value {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    (UIApplication.shared.connectedScenes.first as? UIWindowScene)?
+                        .requestGeometryUpdate(.iOS(interfaceOrientations: orientation))
+                }
+            }
+        }
+    }
+
+    private var portraitContent: some View {
         VStack(spacing: 8) {
             Text(s.status)
                 .font(.system(size: 15, weight: .semibold, design: .monospaced))
@@ -212,6 +241,9 @@ private struct TextSection: View {
     var body: some View {
         Card(title: "Text entry") {
             TextField("type here", text: $s.typed)
+                // Keep the HID text oracle independent of keyboard preferences.
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
                 .textFieldStyle(.roundedBorder)
                 .accessibilityIdentifier("textInput")
                 .onChange(of: s.typed) { _, v in s.status = "typed:\(v)" }

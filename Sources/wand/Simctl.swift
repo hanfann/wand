@@ -1,20 +1,20 @@
 import Foundation
+import WandKit
 
 // Thin wrapper over `xcrun simctl` for control-plane operations (boot, install,
 // launch, …). simctl is Apple's own tool — not a third-party dependency.
 enum Simctl {
     @discardableResult
     static func run(_ args: [String]) -> (code: Int32, out: String) {
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
-        p.arguments = ["simctl"] + args
-        let pipe = Pipe()
-        p.standardOutput = pipe
-        p.standardError = pipe
-        do { try p.run() } catch { return (-1, "failed to run simctl: \(error.localizedDescription)") }
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        p.waitUntilExit()
-        return (p.terminationStatus, String(data: data, encoding: .utf8) ?? "")
+        let timeout: TimeInterval
+        switch args.first {
+        case "bootstatus": timeout = 120
+        case "install": timeout = 60
+        case "terminate", "list", "getenv": timeout = 15
+        default: timeout = 30
+        }
+        let result = ProcessRunner.run("/usr/bin/xcrun", ["simctl"] + args, timeout: timeout)
+        return (result.status, result.output)
     }
 
     struct Device { let udid: String; let name: String; let state: String }
@@ -55,9 +55,15 @@ enum Simctl {
 
     // Resolve the target sim: explicit > WAND_UDID env > the single booted device.
     static func resolveUDID(_ explicit: String?) -> String? {
-        if let e = explicit, !e.isEmpty { return e }
-        if let env = ProcessInfo.processInfo.environment["WAND_UDID"], !env.isEmpty { return env }
+        // Simulator identities become local socket filenames. Never accept path components.
+        func valid(_ value: String) -> String? {
+            guard !value.isEmpty, value.utf8.count <= 64,
+                  value.utf8.allSatisfy({ (48...57).contains($0) || (65...90).contains($0) || (97...122).contains($0) || $0 == 45 }) else { return nil }
+            return UUID(uuidString: value)?.uuidString ?? value
+        }
+        if let explicit { return valid(explicit) }
+        if let env = ProcessInfo.processInfo.environment["WAND_UDID"], !env.isEmpty { return valid(env) }
         let booted = bootedDevices()
-        return booted.count == 1 ? booted[0].udid : booted.first?.udid
+        return booted.count == 1 ? booted[0].udid : nil
     }
 }

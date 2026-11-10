@@ -1,0 +1,12 @@
+{
+  "pid": 65505,
+  "measured_pids": [
+    65505,
+    65544
+  ],
+  "samples": 1000,
+  "rss_before_kb": 56832,
+  "rss_after_kb": 57136,
+  "growth_mb": 0.296875,
+  "idle_cpu_percent": 0.0
+}

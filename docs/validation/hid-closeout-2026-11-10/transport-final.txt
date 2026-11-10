@@ -1,0 +1,3 @@
+PASS: lost reply fails without replaying input
+PASS: full and compact MCP catalogs support explicit targets
+Catalog bytes: 7103 -> 502 (92.9% reduction); 27 -> 1 tools

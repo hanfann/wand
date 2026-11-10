@@ -1,0 +1,2 @@
+daemon did not start (see ~/.wand/daemon-6FBFF791-4CE6-4AEC-AED9-3827A1274E6E.log)
+FAIL: could not launch the native fixture

@@ -67,6 +67,7 @@ public struct Snapshot {
             n += 1
             let x = (e["x"] as? Double) ?? 0
             let y = (e["y"] as? Double) ?? 0
+            guard [x, y, w, h].allSatisfy({ $0.isFinite && abs($0) < 1_000_000 }) else { continue }
             // On-screen if the rect intersects the viewport (with a small margin).
             let onScreen = screenW <= 0 || screenH <= 0
                 || (x + w > -1 && x < screenW + 1 && y + h > -1 && y < screenH + 1)
@@ -105,7 +106,8 @@ public struct Snapshot {
     /// Prefers on-screen, top-most matches.
     public func resolve(_ selector: String) -> UIElement? {
         let sel = selector.trimmingCharacters(in: .whitespaces)
-        if sel.hasPrefix("e"), byRef[sel] != nil { return byRef[sel] }
+        guard !sel.isEmpty, sel != "#" else { return nil }
+        if sel.hasPrefix("e"), Int(sel.dropFirst()) != nil { return byRef[sel] }
         func pick(_ pred: (UIElement) -> Bool) -> UIElement? {
             all.filter { pred($0) && $0.onScreen }.min(by: { $0.y < $1.y })
                 ?? all.first(where: pred)
@@ -131,13 +133,26 @@ public struct Snapshot {
 
     /// Token-saving diff: what changed vs a previous snapshot, keyed by identity.
     public func diff(from prev: Snapshot) -> String {
-        let prevByKey = Dictionary(prev.all.map { ($0.key, $0) }, uniquingKeysWith: { a, _ in a })
-        let curByKey = Dictionary(all.map { ($0.key, $0) }, uniquingKeysWith: { a, _ in a })
+        // Occurrence-qualified identities preserve repeated labels/IDs instead
+        // of collapsing a list of identical controls into one dictionary entry.
+        func keyed(_ elements: [UIElement]) -> [(String, UIElement)] {
+            var counts: [String: Int] = [:]
+            return elements.map { element in
+                let index = counts[element.key, default: 0]
+                counts[element.key] = index + 1
+                return ("\(element.key)|occurrence:\(index)", element)
+            }
+        }
+        let old = keyed(prev.all), current = keyed(all)
+        let prevByKey = Dictionary(uniqueKeysWithValues: old)
+        let curByKey = Dictionary(uniqueKeysWithValues: current)
         var lines: [String] = []
-        for e in all where prevByKey[e.key] == nil { lines.append("+ \(line(e))") }
-        for e in prev.all where curByKey[e.key] == nil { lines.append("- \(prev.line(e))") }
-        for e in all {
-            if let p = prevByKey[e.key], p.value != e.value || p.label != e.label {
+        for (key, e) in current where prevByKey[key] == nil { lines.append("+ \(line(e))") }
+        for (key, e) in old where curByKey[key] == nil { lines.append("- \(prev.line(e))") }
+        for (key, e) in current {
+            if let p = prevByKey[key], p.value != e.value || p.label != e.label
+                || p.ref != e.ref || p.role != e.role || p.enabled != e.enabled
+                || p.onScreen != e.onScreen || p.x != e.x || p.y != e.y || p.w != e.w || p.h != e.h {
                 lines.append("~ \(line(e))")
             }
         }

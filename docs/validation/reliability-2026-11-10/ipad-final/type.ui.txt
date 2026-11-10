@@ -1,0 +1,57 @@
+56 elements (full tree)
+e1 Application "Wand Native" @579,378
+e2 StaticText "typed:hello" #status @579,59
+e3 StaticText "Tap" @28,103
+e4 StaticText "Long press" @624,110
+e5 Button "Tap me" #tapButton @292,141
+e6 StaticText "count: 1" #tapCount @41,178
+e7 StaticText "held" #longPressBox @867,151
+e8 StaticText "Pinch / Zoom" @55,221
+e9 StaticText "Rotate" @612,221
+e10 GenericElement #pinchBox @292,294
+e11 GenericElement #rotateBox @867,294
+e12 Button "undo" #assistantUndo @39,354
+e13 Button "Redo" #assistantRedo @85,354 (disabled)
+e14 Button "Paste" #assistantPaste:forEvent: @131,354 (disabled)
+e15 Button "“hello”" @312,359
+e16 Button "hello’s" @579,359
+e17 Button "hellos" @846,359
+e18 Button "q" @56,436
+e19 Button "w" @159,436
+e20 Button "e" @263,436
+e21 Button "r" @366,436
+e22 Button "t" @469,436
+e23 Button "y" @573,436
+e24 Button "u" @676,436
+e25 Button "i" @780,436
+e26 Button "o" @883,436
+e27 Button "p" @986,436
+e28 Button "delete" #delete @1100,436
+e29 Button "a" @97,522
+e30 Button "s" @201,522
+e31 Button "d" @304,522
+e32 Button "f" @407,522
+e33 Button "g" @511,522
+e34 Button "h" @614,522
+e35 Button "j" @717,522
+e36 Button "k" @821,522
+e37 Button "l" @924,522
+e38 Button "return" #Return @1069,522
+e39 Button "shift" #shift @56,608
+e40 Button "z" @159,608
+e41 Button "x" @263,608
+e42 Button "c" @366,608
+e43 Button "v" @469,608
+e44 Button "b" @573,608
+e45 Button "n" @676,608
+e46 Button "m" @780,608
+e47 Button "," @883,608
+e48 Button "." @986,608
+e49 Button "shift" @1100,608
+e50 Button "Emoji" #emoji @56,693
+e51 Button "numbers" #more @159,693
+e52 Button "Dictate" #dictation @261,693
+e53 Button "space" @583,693
+e54 Button " " @583,693
+e55 Button "numbers" #more @931,693
+e56 Button "Hide keyboard" @1085,693

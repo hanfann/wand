@@ -10,6 +10,7 @@ final class Daemon {
     private let ownerLock: Int32
     let sim: WNDSimulator
     var last: Snapshot?
+    var referencesValid = false
     var recorder: Process?
     var recorderPath: String?
     var lastBundle: String?
@@ -23,38 +24,29 @@ final class Daemon {
     // set, the daemon refuses input with this message instead of sending wrong
     // bytes — fail loud, never silent-wrong.
     let startupError: String?
-    var guestHID: GuestHIDTransport?
+    let ocr = OCRService()
+    let accessibility: AccessibilityService
+    private var activeClient: Int32 = -1
 
     // Commands that inject HID events; their replies are checked for send errors.
     static let inputCommands: Set<String> = [
         "tap", "tapocr", "type", "typein", "setvalue", "clear", "key",
-        "swipe", "drag", "dragdrop", "longpress", "pinch", "rotate", "crown", "scroll",
+        "swipe", "drag", "dragdrop", "longpress", "pinch", "rotate", "crown", "scroll", "scrollto", "scrollTo",
     ]
 
-    static func commandOf(_ line: String) -> String? {
-        guard let d = line.data(using: .utf8),
-              let argv = (try? JSONSerialization.jsonObject(with: d)) as? [String] else { return nil }
-        return argv.first
+    static func acquireOwnership(udid: String) -> Int32 {
+        let lock = open(Net.socketPath(udid) + ".owner.lock", O_CREAT | O_RDWR | O_CLOEXEC, 0o600)
+        guard lock >= 0, flock(lock, LOCK_EX | LOCK_NB) == 0 else { exit(1) }
+        return lock
     }
 
-    init(sim: WNDSimulator) {
-        let lock = open(Net.socketPath(sim.udid) + ".owner.lock", O_CREAT | O_RDWR | O_CLOEXEC, 0o600)
-        guard lock >= 0, flock(lock, LOCK_EX | LOCK_NB) == 0 else { exit(0) }
-        self.ownerLock = lock
+    init(sim: WNDSimulator, ownerLock: Int32) {
+        self.ownerLock = ownerLock
         signal(SIGPIPE, SIG_IGN)
         self.sim = sim
+        self.accessibility = AccessibilityService(udid: sim.udid)
         self.bootPids = Client.deviceBootPids(sim.udid)
-        var error = WNDSimulator.wireFormatError()
-        if error == nil, sim.isWatch {
-            do {
-                if try GuestHIDTransport.isNeeded(udid: sim.udid) {
-                    let transport = try GuestHIDTransport(udid: sim.udid)
-                    self.guestHID = transport
-                    sim.setGuestTouchSender { transport.send($0) }
-                }
-            } catch let failure { error = failure.localizedDescription }
-        }
-        self.startupError = error ?? sim.readinessError()
+        self.startupError = WNDSimulator.wireFormatError() ?? sim.readinessError()
     }
 
     // Stale if the device shut down, or if every launchd_sim we bound to is gone
@@ -65,155 +57,146 @@ final class Daemon {
         return !bootPids.contains { kill($0, 0) == 0 }
     }
 
-    struct Reply { var ok: Bool; var text: String }
+    struct Reply { var ok: Bool; var text: String; var exitAfterReply = false }
 
-    func serve() {
+    func serve(startupMonitor: DispatchSourceTimer? = nil) {
         let path = Net.socketPath(sim.udid)
         let fd = Net.listen(path)
         guard fd >= 0 else {
             FileHandle.standardError.write("wandd: cannot bind \(path)\n".data(using: .utf8)!)
             exit(1)
         }
-        // Warm the AXPTranslator so the first client call is fast (~66ms not ~3.5s).
-        last = try? snapshot()
+        // Once listening, the daemon intentionally outlives its launching client.
+        // Before this point, a dead client must not leave a stalled startup owner.
+        startupMonitor?.cancel()
+        // Read accessibility on demand. Its first private call can stall during
+        // simulator startup; info/launch/stop must remain usable without it.
         FileHandle.standardError.write("wandd: ready on \(path) [\(sim.name)]\n".data(using: .utf8)!)
 
         while true {
             let c = accept(fd, nil, nil)
             if c < 0 { continue }
-            if let line = Net.readLine(c) {
-                var reply = handle(line)
-                // P0: if an input command reported success but the HID send failed,
-                // surface that instead of a misleading "ok" (no silent failures).
-                if reply.ok, let cmd = Daemon.commandOf(line),
-                   Daemon.inputCommands.contains(cmd), let se = sim.lastSendError() {
-                    reply = Reply(ok: false, text: "input may not have landed (HID send error): \(se)")
-                }
-                let obj: [String: Any] = ["ok": reply.ok, "text": reply.text]
-                if let data = try? JSONSerialization.data(withJSONObject: obj),
-                   let s = String(data: data, encoding: .utf8) {
-                    Net.writeLine(c, s)
+            Net.configure(c)
+            var shouldExit = false
+            autoreleasepool {
+                if let line = Net.readLine(c, timeout: 5) {
+                    activeClient = c
+                    accessibility.cancelled = { [weak self] in self?.clientDisconnected() ?? true }
+                    ocr.cancelled = accessibility.cancelled
+                    let reply = handle(line)
+                    activeClient = -1
+                    shouldExit = reply.exitAfterReply
+                    if shouldExit {
+                        // Release resources before acknowledging stop/stale, so
+                        // an immediate restart cannot connect to a dying owner.
+                        unlink(path)
+                        close(fd)
+                        accessibility.stop()
+                        sim.closeInput()
+                        stopRecorder()
+                        flock(ownerLock, LOCK_UN)
+                    }
+                    let obj: [String: Any] = ["ok": reply.ok, "text": reply.text]
+                    if let data = try? JSONSerialization.data(withJSONObject: obj),
+                       let s = String(data: data, encoding: .utf8) {
+                        Net.writeLine(c, s)
+                    }
                 }
             }
             close(c)
+            if shouldExit { exit(0) }
         }
+    }
+
+    private func clientDisconnected() -> Bool {
+        guard activeClient >= 0 else { return false }
+        var byte: UInt8 = 0
+        return recv(activeClient, &byte, 1, MSG_PEEK | MSG_DONTWAIT) == 0
+    }
+
+    private func checkCancellation() throws {
+        if clientDisconnected() {
+            throw NSError(domain: "wand.cancelled", code: 1, userInfo: [NSLocalizedDescriptionKey:
+                "client disconnected; remaining actions stopped; earlier input may have applied"])
+        }
+    }
+
+    private func stopRecorder() {
+        guard let process = recorder else { return }
+        process.interrupt()
+        let deadline = ProcessInfo.processInfo.systemUptime + 3
+        while process.isRunning && ProcessInfo.processInfo.systemUptime < deadline { usleep(20_000) }
+        if process.isRunning { process.terminate(); usleep(50_000) }
+        if process.isRunning { kill(process.processIdentifier, SIGKILL) }
+        // Foundation reaps asynchronously; shutdown must remain bounded.
+        recorder = nil
     }
 
     // --- snapshot helpers ---
 
-    func snapshot() throws -> Snapshot {
-        let tree = try sim.accessibilityTree()
+    func snapshot(timeout: TimeInterval = 5) throws -> Snapshot {
+        let tree = try accessibility.tree(timeout: timeout)
+        try sim.refreshDisplayGeometry()
         let snap = Snapshot(elements: tree,
                             screenW: Double(sim.screenPointSize.width),
                             screenH: Double(sim.screenPointSize.height))
+        guard !snap.all.isEmpty else {
+            throw NSError(domain: "wand.ax", code: 1, userInfo: [NSLocalizedDescriptionKey:
+                "accessibility returned no usable root; retry observation after the app is ready"])
+        }
         last = snap
+        referencesValid = true
         return snap
     }
 
-    func currentForResolve() -> Snapshot {
-        if let l = last { return l }
-        return (try? snapshot()) ?? Snapshot(elements: [])
+    func currentForResolve(_ selector: String) throws -> Snapshot {
+        if selector.hasPrefix("e"), Int(selector.dropFirst()) != nil {
+            return referencesValid ? (last ?? Snapshot(elements: [])) : Snapshot(elements: [])
+        }
+        // IDs/labels resolve against current geometry. Positional refs require a
+        // new explicit observation after an action, never silent reassignment.
+        return try snapshot()
     }
 
-    // Poll the tree until two consecutive reads are identical (UI quiescent) or
-    // the timeout elapses — waits out animations/navigation without guessing.
+    // Observe rendered stability without monopolizing/restarting the AX worker.
+    // Slow private AX reads during animation must not turn successful input into
+    // a cycle of worker kills and false "not found" errors.
     func settle(maxMs: Int = 1500) {
-        var previous = ""
-        var stableReads = 0
-        let start = Date()
-        while Date().timeIntervalSince(start) * 1000 < Double(maxMs) {
-            guard let tree = try? sim.accessibilityTree() else { break }
-            let sparse = tree.count <= 1
-            var signature = "\(tree.count)|" + tree.prefix(80).compactMap {
-                ($0["label"] as? String) ?? ($0["value"] as? String) ?? ($0["role"] as? String)
-            }.joined(separator: "·")
-            if sparse { signature += "|pixels:\(sim.screenFingerprint())" }
+        let start = ProcessInfo.processInfo.systemUptime
+        let deadline = start + Double(maxMs) / 1000
+        let minimum = sim.isWatch ? 0.65 : 0.18
+        var previous: UInt64 = 0, stableReads = 0
+        while ProcessInfo.processInfo.systemUptime < deadline && !clientDisconnected() {
+            let signature = sim.screenFingerprint()
+            guard signature != 0 else { return }
             stableReads = signature == previous ? stableReads + 1 : 0
-            if stableReads >= (sparse ? 3 : 1),
-               Date().timeIntervalSince(start) >= (sparse ? 0.65 : 0.09) { return }
+            if stableReads >= 2 && ProcessInfo.processInfo.systemUptime - start >= minimum { return }
             previous = signature
-            usleep(90 * 1000)
+            usleep(90_000)
         }
-    }
-
-    // The app's executable (process) name, from its installed Info.plist.
-    func appExecutable(_ bundle: String) -> String? {
-        let (c, path) = Simctl.run(["get_app_container", sim.udid, bundle, "app"])
-        guard c == 0 else { return nil }
-        let plist = path.trimmingCharacters(in: .whitespacesAndNewlines) + "/Info.plist"
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: "/usr/libexec/PlistBuddy")
-        p.arguments = ["-c", "Print CFBundleExecutable", plist]
-        let pipe = Pipe(); p.standardOutput = pipe; p.standardError = Pipe()
-        guard (try? p.run()) != nil else { return nil }
-        let d = pipe.fileHandleForReading.readDataToEndOfFile()
-        p.waitUntilExit()
-        let exe = String(data: d, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return (exe?.isEmpty == false) ? exe : nil
-    }
-
-    // Newest crash report (.ips) for the sim, optionally filtered by process name.
-    func latestCrash(matching exe: String?) -> (String?, String) {
-        let home = NSHomeDirectory()
-        let dirs = [
-            "\(home)/Library/Developer/CoreSimulator/Devices/\(sim.udid)/data/Library/Logs/DiagnosticReports",
-            "\(home)/Library/Logs/DiagnosticReports",
-        ]
-        let fm = FileManager.default
-        var candidates: [(String, Date)] = []
-        for dir in dirs {
-            guard let names = try? fm.contentsOfDirectory(atPath: dir) else { continue }
-            for n in names where n.hasSuffix(".ips") || n.hasSuffix(".crash") {
-                if let exe = exe, !n.hasPrefix(exe) { continue }
-                let full = dir + "/" + n
-                let m = (try? fm.attributesOfItem(atPath: full)[.modificationDate] as? Date) ?? nil
-                candidates.append((full, m ?? .distantPast))
-            }
-        }
-        guard let newest = candidates.max(by: { $0.1 < $1.1 })?.0 else { return (nil, "") }
-        let content = (try? String(contentsOfFile: newest, encoding: .utf8)) ?? ""
-        let head = content.split(separator: "\n").prefix(60).joined(separator: "\n")
-        return (newest, head)
-    }
-
-    // Installed user apps via `simctl listapps` (old-style plist) -> plutil JSON.
-    func userApps() -> [String] {
-        let (_, o) = Simctl.run(["listapps", sim.udid])
-        let tmp = "\(Net.socketDir())/apps.plist"
-        try? o.write(toFile: tmp, atomically: true, encoding: .utf8)
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: "/usr/bin/plutil")
-        p.arguments = ["-convert", "json", "-o", "-", "--", tmp]
-        let pipe = Pipe()
-        p.standardOutput = pipe
-        p.standardError = Pipe()
-        guard (try? p.run()) != nil else { return [] }
-        let d = pipe.fileHandleForReading.readDataToEndOfFile()
-        p.waitUntilExit()
-        guard let obj = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any] else { return [] }
-        return obj.compactMap { (bid, v) -> String? in
-            guard let dict = v as? [String: Any], (dict["ApplicationType"] as? String) == "User" else { return nil }
-            return bid
-        }.sorted()
     }
 
     // Resolve a selector to its element center (for gesture targeting by id/label).
-    func center(_ sel: String) -> (Double, Double)? {
-        guard let el = currentForResolve().resolve(sel) else { return nil }
+    func center(_ sel: String) throws -> (Double, Double)? {
+        guard let el = try currentForResolve(sel).resolve(sel) else { return nil }
         return (Double(el.cx), Double(el.cy))
     }
 
     // OCR fallback: find visible text on screen (works with no app accessibility).
-    func ocrCenter(matching query: String) -> (Double, Double, String)? {
-        let q = query.lowercased()
-        guard let obs = try? sim.recognizeText() else { return nil }
-        let hit = obs.first { (($0["text"] as? String)?.lowercased() == q) }
-            ?? obs.first { (($0["text"] as? String)?.lowercased().contains(q) ?? false) }
-        guard let h = hit,
-              let x = h["x"] as? Double, let y = h["y"] as? Double,
-              let w = h["w"] as? Double, let ht = h["h"] as? Double,
-              let text = h["text"] as? String else { return nil }
-        return (x + w / 2, y + ht / 2, text)
+    func ocrCenter(matching query: String) throws -> (Double, Double, String)? {
+        let width = Double(sim.screenPointSize.width), height = Double(sim.screenPointSize.height)
+        let fast = try ocr.recognize(sim: sim)
+        do {
+            if let hit = try OCRTarget.resolve(query, observations: fast, width: width, height: height,
+                                               exactOnly: true, minConfidence: 0.8) {
+                return (hit.x, hit.y, hit.text)
+            }
+        } catch OCRTarget.Failure.uncertain { /* Ask accurate OCR before accepting uncertain text. */ }
+        // Ambiguous text never chooses an arbitrary occurrence. Accurate fallback
+        // may time out on Apple's model initialization; fail without input then.
+        let observations = try ocr.recognize(sim: sim, accurate: true)
+        guard let hit = try OCRTarget.resolve(query, observations: observations, width: width, height: height) else { return nil }
+        return (hit.x, hit.y, hit.text)
     }
 
     static func clean(_ sel: String) -> String {
@@ -226,17 +209,38 @@ final class Daemon {
 
     func handle(_ line: String) -> Reply {
         guard let data = line.data(using: .utf8),
-              let argv = (try? JSONSerialization.jsonObject(with: data)) as? [String],
-              let cmd = argv.first else {
+              let argv = (try? JSONSerialization.jsonObject(with: data)) as? [String] else {
             return Reply(ok: false, text: "bad request")
         }
+        return execute(argv)
+    }
+
+    // Single commands and batch steps share validation, dispatch and HID-error
+    // handling. A batch stays in memory; only the socket boundary encodes JSON.
+    func execute(_ argv: [String]) -> Reply {
+        let reply = dispatch(argv)
+        if reply.ok, let command = argv.first, Self.inputCommands.contains(command),
+           let error = sim.lastSendError() {
+            return Reply(ok: false, text: "input may not have landed (HID send error): \(error)")
+        }
+        return reply
+    }
+
+    private func dispatch(_ argv: [String]) -> Reply {
+        guard let cmd = argv.first else { return Reply(ok: false, text: "bad request") }
+        do { try CommandValidation.validate(argv) }
+        catch { return Reply(ok: false, text: error.localizedDescription) }
         let a = Array(argv.dropFirst())
         func num(_ i: Int) -> Double { i < a.count ? (Double(a[i]) ?? 0) : 0 }
 
-        // P0: under an unsupported Simulator build (or a device that can't inject)
-        // refuse loudly rather than send wrong bytes. ping/stop stay usable.
-        if let e = startupError, cmd != "ping", cmd != "stop" {
+        // Unsupported input must fail loudly. Read-only diagnostics remain usable.
+        if let e = startupError, Self.inputCommands.contains(cmd) {
             return Reply(ok: false, text: "wand: \(e)")
+        }
+        defer {
+            if Self.inputCommands.contains(cmd) || ["launch", "terminate", "open"].contains(cmd) {
+                referencesValid = false
+            }
         }
         sim.clearLastSendError()
 
@@ -245,15 +249,36 @@ final class Daemon {
             // cleanly and signal the client (via the sentinel) to respawn a fresh
             // daemon and retry — transparently self-healing across sim reboots.
             if cmd != "ping", cmd != "info", cmd != "stop", isSessionStale() {
-                Reply.respondThenExit()
-                return Reply(ok: false, text: Client.staleSentinel)
+                return Reply(ok: false, text: Client.staleSentinel, exitAfterReply: true)
+            }
+            if Self.inputCommands.contains(cmd) || ["info", "ui", "find", "wait", "assert", "see", "screenshot"].contains(cmd) {
+                let previousOrientation = sim.displayOrientation, previousSize = sim.screenPointSize
+                try sim.refreshDisplayGeometry()
+                if previousOrientation != sim.displayOrientation || previousSize != sim.screenPointSize { referencesValid = false }
             }
             switch cmd {
+            case "batch":
+                guard a.count == 1 else { return Reply(ok: false, text: "batch needs a JSON array of command arrays") }
+                let batch = try CommandBatch(json: a[0])
+                var output: [String] = []
+                for (index, command) in batch.commands.enumerated() {
+                    if clientDisconnected() {
+                        return Reply(ok: false, text: "client disconnected; remaining batch steps did not run; prior steps may have applied")
+                    }
+                    let reply = execute(command)
+                    output.append("\(index + 1) \(reply.ok ? "OK" : "FAIL") \(reply.text)")
+                    if !reply.ok {
+                        output.append("stopped; remaining commands did not run. Inspect state before retrying")
+                        return Reply(ok: false, text: output.joined(separator: "\n"), exitAfterReply: reply.exitAfterReply)
+                    }
+                }
+                return Reply(ok: true, text: output.joined(separator: "\n"))
+
             case "ping":
                 return Reply(ok: true, text: "pong \(sim.name)")
 
             case "info":
-                return Reply(ok: true, text: "\(sim.name) [\(sim.udid)] \(Int(sim.screenPointSize.width))x\(Int(sim.screenPointSize.height))pt @\(sim.screenScale)x")
+                return Reply(ok: true, text: "\(sim.name) [\(sim.udid)] \(Int(sim.screenPointSize.width))x\(Int(sim.screenPointSize.height))pt @\(sim.screenScale)x HID=\(sim.inputTransport)")
 
             case "ui":
                 let prev = last
@@ -273,6 +298,7 @@ final class Daemon {
                 let w = Double(sim.screenPointSize.width)
                 let h = Double(sim.screenPointSize.height)
                 for _ in 0..<14 {
+                    try checkCancellation()
                     let snap = try snapshot()
                     if let el = snap.resolve(sel), el.onScreen {
                         return Reply(ok: true, text: "visible \(snap.line(el))")
@@ -292,11 +318,11 @@ final class Daemon {
 
             case "clear" where !a.isEmpty:
                 let sel = a[0]
-                let el = currentForResolve().resolve(sel)
+                let el = try currentForResolve(sel).resolve(sel)
                 let ident = el?.id ?? (sel.hasPrefix("#") ? String(sel.dropFirst()) : nil)
                 let label = el?.label ?? (!sel.hasPrefix("#") && !sel.hasPrefix("e") ? sel : nil)
                 if el != nil { try sim.tap(x: Double(el!.cx), y: Double(el!.cy)); usleep(150 * 1000) }
-                try sim.setValue("", identifier: ident, label: label)
+                try accessibility.setValue("", identifier: ident, label: label)
                 settle()
                 return Reply(ok: true, text: "cleared \(sel)")
 
@@ -307,17 +333,21 @@ final class Daemon {
                 return Reply(ok: true, text: hits.map(snap.line).joined(separator: "\n"))
 
             case "tap":
+                guard !a.isEmpty else { return Reply(ok: false, text: "tap needs a selector or x y point") }
                 if a.count >= 2, Double(a[0]) != nil, Double(a[1]) != nil {
                     try sim.tap(x: num(0), y: num(1)); settle()
                     return Reply(ok: true, text: "tapped @\(Int(num(0))),\(Int(num(1)))")
                 }
                 let sel = a.joined(separator: " ")
-                if let el = currentForResolve().resolve(sel) {
+                if let el = try currentForResolve(sel).resolve(sel) {
                     try sim.tap(x: Double(el.cx), y: Double(el.cy)); settle()
                     return Reply(ok: true, text: "tapped \(el.ref) \(el.shortRole) \(el.label ?? el.id ?? "")")
                 }
-                // Fallback: tap visible text via OCR (no accessibility needed).
-                if let (x, y, text) = ocrCenter(matching: Daemon.clean(sel)) {
+                if sel.hasPrefix("#") || (sel.hasPrefix("e") && Int(sel.dropFirst()) != nil) {
+                    return Reply(ok: false, text: "accessibility target not found: \(sel). Refresh ui; identifiers are not visible text")
+                }
+                // Fallback: bounded OCR of visible labels only.
+                if let (x, y, text) = try ocrCenter(matching: Daemon.clean(sel)) {
                     try sim.tap(x: x, y: y); settle()
                     return Reply(ok: true, text: "tapped (ocr) \"\(text)\" @\(Int(x)),\(Int(y))")
                 }
@@ -325,7 +355,7 @@ final class Daemon {
 
             case "tapocr" where !a.isEmpty:
                 let q = Daemon.clean(a.joined(separator: " "))
-                guard let (x, y, text) = ocrCenter(matching: q) else {
+                guard let (x, y, text) = try ocrCenter(matching: q) else {
                     return Reply(ok: false, text: "no visible text matching: \(q)")
                 }
                 try sim.tap(x: x, y: y); settle()
@@ -336,7 +366,7 @@ final class Daemon {
                 return Reply(ok: true, text: "typed")
 
             case "typein" where a.count >= 2:
-                guard let el = currentForResolve().resolve(a[0]) else {
+                guard let el = try currentForResolve(a[0]).resolve(a[0]) else {
                     return Reply(ok: false, text: "not found: \(a[0])")
                 }
                 try sim.tap(x: Double(el.cx), y: Double(el.cy)); usleep(200 * 1000)
@@ -355,7 +385,7 @@ final class Daemon {
                 let hold = (cmd == "dragdrop") ? 0.7 : 0.0
                 if a.count >= 4, Double(a[0]) != nil {
                     try sim.drag(x1: num(0), y1: num(1), x2: num(2), y2: num(3), hold: hold, move: 0.5)
-                } else if a.count >= 2, let from = center(a[0]), let to = center(a[1]) {
+                } else if a.count >= 2, let from = try center(a[0]), let to = try center(a[1]) {
                     try sim.drag(x1: from.0, y1: from.1, x2: to.0, y2: to.1, hold: hold, move: 0.5)
                 } else {
                     return Reply(ok: false, text: "drag needs <x1 y1 x2 y2> or <fromSel toSel>")
@@ -366,8 +396,8 @@ final class Daemon {
             case "longpress" where !a.isEmpty:
                 if a.count >= 2, Double(a[0]) != nil {
                     try sim.longPress(x: num(0), y: num(1), duration: a.count >= 3 ? num(2) : 1.0)
-                } else if let p = center(a[0]) {
-                    try sim.longPress(x: p.0, y: p.1, duration: 1.0)
+                } else if let p = try center(a[0]) {
+                    try sim.longPress(x: p.0, y: p.1, duration: a.count >= 2 ? num(1) : 1.0)
                 } else { return Reply(ok: false, text: "not found: \(a[0])") }
                 settle()
                 return Reply(ok: true, text: "long-pressed")
@@ -375,7 +405,7 @@ final class Daemon {
             case "pinch" where a.count >= 2:
                 if a.count >= 3, Double(a[0]) != nil {
                     try sim.pinch(x: num(0), y: num(1), scale: num(2), duration: 0.5)
-                } else if let p = center(a[0]) {
+                } else if let p = try center(a[0]) {
                     try sim.pinch(x: p.0, y: p.1, scale: Double(a[1]) ?? 2.0, duration: 0.5)
                 } else { return Reply(ok: false, text: "not found: \(a[0])") }
                 settle()
@@ -384,7 +414,7 @@ final class Daemon {
             case "rotate" where a.count >= 2:
                 if a.count >= 3, Double(a[0]) != nil {
                     try sim.rotate(x: num(0), y: num(1), radians: num(2), duration: 0.5)
-                } else if let p = center(a[0]) {
+                } else if let p = try center(a[0]) {
                     try sim.rotate(x: p.0, y: p.1, radians: Double(a[1]) ?? 0, duration: 0.5)
                 } else { return Reply(ok: false, text: "not found: \(a[0])") }
                 settle()
@@ -398,10 +428,11 @@ final class Daemon {
                 // turns with a settle gap rather than one large delta (which accelerates).
                 let dir = a[0].lowercased()
                 if dir == "up" || dir == "down" {
-                    let clicks = a.count >= 2 ? max(1, Int(a[1]) ?? 1) : 1
+                    let clicks = a.count >= 2 ? Int(Double(a[1]) ?? 1) : 1
                     let detent = 40.0                       // ≈ one comfortable notch (~1–1.5 rows)
                     let delta = (dir == "down") ? detent : -detent   // down = toward end of content
                     for _ in 0..<clicks {
+                        try checkCancellation()
                         try sim.turnCrown(by: delta, steps: 8, duration: 0.10)
                         usleep(120 * 1000)                  // let each detent settle (kills momentum)
                     }
@@ -409,7 +440,7 @@ final class Daemon {
                     return Reply(ok: true, text: "crown \(dir) \(clicks)")
                 }
                 let delta = Double(a[0]) ?? 0
-                let steps = a.count >= 2 ? (UInt(a[1]) ?? 24) : 24
+                let steps = a.count >= 2 ? UInt(Double(a[1]) ?? 24) : 24
                 try sim.turnCrown(by: delta, steps: steps, duration: 0.25)
                 settle(maxMs: 3000)
                 return Reply(ok: true, text: "crowned \(delta)")
@@ -422,10 +453,11 @@ final class Daemon {
                 // hardware Digital Crown. `clicks` = number of drags (default 1).
                 let sdir = a[0].lowercased()
                 guard sdir == "up" || sdir == "down" else { return Reply(ok: false, text: "scroll up|down [clicks]") }
-                let clicks = a.count >= 2 ? max(1, Int(a[1]) ?? 1) : 1
+                let clicks = a.count >= 2 ? Int(Double(a[1]) ?? 1) : 1
                 let w = Double(sim.screenPointSize.width)
                 let h = Double(sim.screenPointSize.height)
                 for _ in 0..<clicks {
+                        try checkCancellation()
                     // down = reveal content below = finger drags upward
                     if sdir == "down" {
                         try sim.swipe(x1: w / 2, y1: h * 0.72, x2: w / 2, y2: h * 0.30, duration: 0.25)
@@ -443,7 +475,11 @@ final class Daemon {
                 return Reply(ok: true, text: path)
 
             case "see":
-                let obs = try sim.recognizeText()
+                let accurate = a.first == "accurate"
+                let query = (accurate ? Array(a.dropFirst()) : a).joined(separator: " ").lowercased()
+                let obs = try ocr.recognize(sim: sim, accurate: accurate).filter {
+                    query.isEmpty || (($0["text"] as? String)?.lowercased().contains(query) ?? false)
+                }
                 if obs.isEmpty { return Reply(ok: true, text: "(no text recognized)") }
                 let lines = obs.compactMap { o -> String? in
                     guard let t = o["text"] as? String,
@@ -456,11 +492,12 @@ final class Daemon {
             case "setvalue" where a.count >= 2:
                 let sel = a[0]
                 let text = a[1...].joined(separator: " ")
-                let el = currentForResolve().resolve(sel)
+                let el = try currentForResolve(sel).resolve(sel)
                 let ident = el?.id ?? (sel.hasPrefix("#") ? String(sel.dropFirst()) : nil)
                 let label = el?.label ?? (!sel.hasPrefix("#") && !sel.hasPrefix("e") ? sel : nil)
-                if el != nil { try sim.tap(x: Double(el!.cx), y: Double(el!.cy)); usleep(150 * 1000) }
-                try sim.setValue(text, identifier: ident, label: label)
+                // AX sets and focuses the field itself. Tapping first can raise
+                // a keyboard that hides the target before AX can resolve it.
+                try accessibility.setValue(text, identifier: ident, label: label)
                 settle()
                 return Reply(ok: true, text: "set value of \(sel)")
 
@@ -475,25 +512,35 @@ final class Daemon {
                 if cond.hasPrefix("value=") {
                     let want = String(cond.dropFirst(6))
                     let got = el?.value ?? ""
-                    return got == want ? Reply(ok: true, text: "PASS value \(want)") : Reply(ok: false, text: "FAIL value got \"\(got)\" want \"\(want)\"")
+                    return el != nil && got == want ? Reply(ok: true, text: "PASS value \(want)") : Reply(ok: false, text: "FAIL value got \"\(got)\" want \"\(want)\"")
                 }
                 if cond.hasPrefix("label=") {
                     let want = String(cond.dropFirst(6))
                     let got = el?.label ?? ""
-                    return got == want ? Reply(ok: true, text: "PASS label \(want)") : Reply(ok: false, text: "FAIL label got \"\(got)\" want \"\(want)\"")
+                    return el != nil && got == want ? Reply(ok: true, text: "PASS label \(want)") : Reply(ok: false, text: "FAIL label got \"\(got)\" want \"\(want)\"")
                 }
                 return el != nil ? Reply(ok: true, text: "PASS exists \(snap.line(el!))") : Reply(ok: false, text: "FAIL not found \(sel)")
 
             case "wait" where !a.isEmpty:
                 let sel = a[0]
                 let timeout = a.count >= 2 ? (Double(a[1]) ?? 5000) : 5000
-                let start = Date()
-                while Date().timeIntervalSince(start) * 1000 < timeout {
-                    let snap = try snapshot()
-                    if let el = snap.resolve(sel) { return Reply(ok: true, text: "appeared \(snap.line(el))") }
+                let deadline = ProcessInfo.processInfo.systemUptime + timeout / 1000
+                var lastObservationError: String?
+                while ProcessInfo.processInfo.systemUptime < deadline {
+                    try checkCancellation()
+                    do {
+                        let snap = try snapshot(timeout: min(5, max(0.01, deadline - ProcessInfo.processInfo.systemUptime)))
+                        lastObservationError = nil
+                        if let el = snap.resolve(sel) { return Reply(ok: true, text: "appeared \(snap.line(el))") }
+                    } catch {
+                        // A newly launched app can briefly have no AX root. That
+                        // is a pending observation, not an immediate wait failure.
+                        lastObservationError = error.localizedDescription
+                    }
                     usleep(120 * 1000)
                 }
-                return Reply(ok: false, text: "timeout waiting for \(sel)")
+                let detail = lastObservationError.map { "; last observation: \($0)" } ?? ""
+                return Reply(ok: false, text: "timeout waiting for \(sel)" + detail)
 
             case "install" where !a.isEmpty:
                 let (c, o) = Simctl.run(["install", sim.udid, a[0]])
@@ -510,8 +557,9 @@ final class Daemon {
                 for x in a { if let n = Int(x) { seconds = n } else { bundle = x } }
                 guard let b = bundle else { return Reply(ok: false, text: "no app launched yet — pass a bundle id: wand logs <bundle> [seconds]") }
                 guard let exe = appExecutable(b) else { return Reply(ok: false, text: "app not installed: \(b)") }
-                let (_, o) = Simctl.run(["spawn", sim.udid, "log", "show", "--style", "compact",
+                let (code, o) = Simctl.run(["spawn", sim.udid, "log", "show", "--style", "compact",
                                          "--last", "\(seconds)s", "--predicate", "process == \"\(exe)\""])
+                guard code == 0 else { return Reply(ok: false, text: o) }
                 let lines = o.split(separator: "\n", omittingEmptySubsequences: true)
                     .filter { !$0.contains("getpwuid_r did not find") }
                     .suffix(120).map { String($0.prefix(300)) }
@@ -529,7 +577,7 @@ final class Daemon {
                 return Reply(ok: c == 0, text: c == 0 ? "terminated \(a[0])" : o)
 
             case "apps":
-                let ids = userApps()
+                let ids = try userApps()
                 return Reply(ok: true, text: ids.isEmpty ? "(no user apps)" : ids.joined(separator: "\n"))
 
             case "open" where !a.isEmpty:
@@ -554,16 +602,15 @@ final class Daemon {
                     recorder = p; recorderPath = path
                     return Reply(ok: true, text: "recording -> \(path)")
                 } else {
-                    guard let p = recorder else { return Reply(ok: false, text: "not recording") }
-                    p.interrupt(); p.waitUntilExit()
+                    guard recorder != nil else { return Reply(ok: false, text: "not recording") }
+                    stopRecorder()
                     let path = recorderPath ?? ""
                     recorder = nil; recorderPath = nil
                     return Reply(ok: true, text: "saved \(path)")
                 }
 
             case "stop":
-                Reply.respondThenExit()
-                return Reply(ok: true, text: "stopping")
+                return Reply(ok: true, text: "stopping", exitAfterReply: true)
 
             default:
                 return Reply(ok: false, text: "unknown command: \(cmd)")
@@ -571,11 +618,5 @@ final class Daemon {
         } catch {
             return Reply(ok: false, text: "error: \(error.localizedDescription)")
         }
-    }
-}
-
-extension Daemon.Reply {
-    static func respondThenExit() {
-        DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) { exit(0) }
     }
 }

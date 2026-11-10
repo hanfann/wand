@@ -1,0 +1,11 @@
+{
+  "xcode": "27.2 (27B52)",
+  "watchOS": "27.2",
+  "iOS": "27.2",
+  "watch": "40mm SE",
+  "iphone": "17 Pro",
+  "transport": "DTUHID, one digitizer connection for touch/keyboard/Crown",
+  "guest_helper_processes": 0,
+  "watch_stress_binary_sha256": "965526b524e81abdfb4dd119931d4f074192f21a049bd3096f20611e62fa8819",
+  "installed_binary_sha256": "028407553f28ae555831c973cb54a826c04c6be224748e5ea36f20cbf95b0c50"
+}

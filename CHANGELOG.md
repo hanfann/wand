@@ -5,7 +5,53 @@ All notable changes to Wand are documented here. Format roughly follows
 
 ## [Unreleased]
 
+- Isolate accessibility in a persistent worker with a 5 s deadline; stop workers
+  after owner death. Bound startup ownership, cancellation and subprocess drains.
+- Keep MCP responsive to cancellation without replaying ambiguous input.
+- Align screenshots, input and AX coordinates using active display orientation;
+  reject ambiguous/malformed display geometry before sending input.
+- Set AX values directly so opening a keyboard cannot hide the target first;
+  reject unsupported HID Unicode before tapping and map printable US ASCII fully.
+- Prefer unique, confident exact fast-OCR targets; reject ambiguous/uncertain hits.
+- Prune only recognized inactive diagnostics, with dry-run and daily maintenance.
+
+- Accessibility initializes on demand, so `info`, `launch`, and `stop` no longer
+  require an eager accessibility snapshot during daemon startup.
+
+- Shared subprocess runner with monotonic deadlines, bounded diagnostic output and
+  no retry on timeout; transient missing AX roots no longer immediately abort `wait`.
+- Shared command dispatch for single calls/batches, without JSON re-encoding each
+  batch step; app diagnostics extracted from UI dispatch.
+- Buffered, bounded NDJSON transport; fragmented UTF-8 and persistent MCP framing
+  tests. Missing replies remain non-replayable.
+- Validate numeric input and batch steps before action; preserve MCP integer values
+  and selector long-press durations; reject missing gesture coordinates.
+- UI diffs retain duplicate controls and expose geometry/ref/enabled changes.
+  Named targets refresh geometry; positional refs expire after input.
+- One process scan for boot identity; native plist parsing; per-command autorelease
+  pools; recorder cleanup on stop. Concurrent `start` uses the startup lock.
+- Headless boot by default, opt-in `--show` for DeviceHub/Simulator, and real failure
+  exit codes. Reproducible performance and resource budgets in `docs/performance.md`.
+
+### Added
+- Ordered `batch` commands and optional one-tool `mcp --compact`, with explicit
+  per-call simulator targeting and stop-on-failure semantics.
+- Shared Claude/Codex skill installation. MCP registration is now opt-in with
+  `setup --mcp`; source installs retain the skill beside the installed binary.
+- Filtered `see [accurate] [query]`; bounded CPU OCR worker with exact-image caching.
+
+### Changed
+- Multiple booted devices require an explicit target rather than choosing the first.
+
 ### Fixed
+- Xcode 27 uses one persistent host DTUHID connection for touch, multitouch,
+  keyboard and native Watch Crown. Removed the guest helper and its SDK/compiler
+  subprocesses. Bounded liveness probes precede input; interruptions fail without
+  replay. Xcode 26 and earlier retain the legacy Indigo path.
+- Lost command replies never trigger an automatic replay of potentially applied input.
+- Missing AX identifiers/refs do not invoke OCR for strings that are not visible labels.
+- OCR initialization stalls no longer wedge the input daemon.
+
 - Load SimulatorKit from `Contents/SharedFrameworks` too. Newer Xcodes moved it
   there, so the daemon failed to start with `SimulatorKit=0x0`.
 

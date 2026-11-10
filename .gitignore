@@ -15,3 +15,6 @@ examples/*/build/
 
 # Logs / runtime
 *.log
+
+# Local/CI simulator evidence (curated reports live under docs/)
+live-evidence/
